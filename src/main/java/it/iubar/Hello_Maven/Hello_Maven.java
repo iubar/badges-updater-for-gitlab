@@ -74,12 +74,13 @@ public class Hello_Maven {
 		// System.out.println(json);
 		
 		JSONArray jsonArray = new JSONArray(json);
-		for (int i = 0; i < 1 ; i++) {
-			//jsonArray.length()
+		System.out.println("Numero di progetti: " + jsonArray.length());
+		
+		for (int i = 0; i < jsonArray.length() ; i++) {
+			
 			JSONObject object = jsonArray.getJSONObject(i);
 			
-			//System.out.println("#" + (i + 1) + "  " + object.toString());
-			//System.out.println("Numero di progetti: " + jsonArray.length());
+			
 			int id = object.getInt("id");
 			String name = object.getString("name");
 			JSONObject namespace = object.getJSONObject("namespace");
@@ -93,10 +94,10 @@ public class Hello_Maven {
 			badgesImage = createBadgesImages(name, group);
 			badgesLink = createBadgesLinks(name, group);
 
-			// Faccio il posto dei babges
+			// Elimino badges precedenti e faccio il POST di quelli nuovi
+			doDelete(id,token);
 			doPost(id, token, badgesLink, badgesImage);
-			delateBadge(id);
-			doDelete(61,token);
+			
 			
 		}
 
@@ -116,26 +117,42 @@ public class Hello_Maven {
 					.header("PRIVATE-TOKEN", token)
 					.get(Response.class);
 			String json = response.readEntity(String.class);
-			
+			System.out.println("\nElimino i badges del progetto: " + id);
 			JSONArray badges = new JSONArray(json);
 			
+			int stato_eliminazione = 0; 
 			for (int i = 0; i < badges.length(); i++) {						
 					JSONObject object = badges.getJSONObject(i);
 					int id_badge = object.getInt("id");
 					String id_badgeStr=""+id_badge;
-					System.out.print("\n\n"+id_badgeStr);
+					//System.out.print("\n\n"+id_badgeStr);
 					
 							try {
 								WebTarget webTarget = client.target(getBaseURI()+"projects/"+id+"/badges/"+id_badgeStr);
-								System.out.print("\n"+webTarget);
+								//System.out.print("\n"+webTarget);
 								Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", token).delete();
-								System.out.print("\n"+response2);
+								//System.out.print("\n"+response2);
+								
+								if(response2.getStatus()!=stato_eliminazione)
+								{
+									stato_eliminazione = response2.getStatus();
+								}
+								//System.out.println("Eliminazione - STATO : " + response2.getStatus());
 								
 							} catch (Exception e) {
 								System.out.print("errore");
 							}
 									
-			}		
+			}
+			if(stato_eliminazione==204)
+			{
+				System.out.println("Eliminazione: SUCCESS (" + stato_eliminazione + ")");
+			}
+			else if(stato_eliminazione!=204)
+			{
+				System.out.println("Eliminazione: ERROR (" + stato_eliminazione + ")");
+			}
+
 		
 	}
 	
@@ -145,6 +162,7 @@ public class Hello_Maven {
 		Client client = factoryClient();
 		WebTarget target = client.target(getBaseURI());
 		System.out.println("Inserisco i badges del progetto con ID: " + id);
+		int stato_inserimento = 0;
 		for (int i=0; i<7; i++)
 		{
 			//Creo l'oggetto JSON dove copio i links di un singolo badge dalle ArrayList
@@ -152,18 +170,28 @@ public class Hello_Maven {
 					.put("link_url", links.get(i))
 		            .put("image_url", images.get(i));
 			
-			System.out.println("File JSON:" + badge);
+			//System.out.println("Inserisco l'" + i + "^ badge.");
 			
 			// Faccio il post passando l'oggetto JSON sopra creato come stringa
 			Response response = target.path("projects").path(""+id).path("badges").request().accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", token).post(Entity.json(badge.toString()));
-
-			int statusCode = response.getStatus();
-			System.out.println(statusCode);
+			if(response.getStatus()!=stato_inserimento)
+			{
+				stato_inserimento = response.getStatus();
+			}
+			
 		}
 		//String json = response.readEntity(String.class);
 		//JSONObject jsonObject = new JSONObject(json);
 		//String message = jsonObject.getString("response");
+		if(stato_inserimento==201)
+		{
+			System.out.println("Eliminazione: SUCCESS (" + stato_inserimento + ")");
+		}
+		else if(stato_inserimento!=201)
+		{
+			System.out.println("Eliminazione: ERROR (" + stato_inserimento + ")");
+		}
 	}
 	
 	private static ArrayList createBadgesImages(String name, String group)
