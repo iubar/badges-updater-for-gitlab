@@ -94,8 +94,8 @@ public class Hello_Maven {
 			badgesLink = createBadgesLinks(name, group);
 
 			// Faccio il posto dei babges
-			//doPost(id, token, badgesLink, badgesImage);
-			//delateBadge(id);
+			doPost(id, token, badgesLink, badgesImage);
+			delateBadge(id);
 			doDelete(61,token);
 			
 		}
@@ -117,8 +117,6 @@ public class Hello_Maven {
 					.get(Response.class);
 			String json = response.readEntity(String.class);
 			
-			System.out.print(json+"\n");
-			
 			JSONArray badges = new JSONArray(json);
 			
 			for (int i = 0; i < badges.length(); i++) {						
@@ -128,14 +126,6 @@ public class Hello_Maven {
 					System.out.print("\n\n"+id_badgeStr);
 					
 							try {
-								/*
-								Response response2 = target.path("projects")
-										.path(idString)
-										.path("badges")
-										.path(id_badgeStr)
-										.request()
-										.accept(MediaType.APPLICATION_JSON)
-										.delete();*/
 								WebTarget webTarget = client.target(getBaseURI()+"projects/"+id+"/badges/"+id_badgeStr);
 								System.out.print("\n"+webTarget);
 								Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", token).delete();
