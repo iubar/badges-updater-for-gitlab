@@ -35,7 +35,8 @@ public class Hello_Maven {
 
 			public void checkServerTrusted(X509Certificate[] certs, String authType) {
 			}
-		} };
+		} 
+	};
 
 		SSLContext sslContext = null;
 		try {
@@ -57,54 +58,76 @@ public class Hello_Maven {
 
 	public static void main(String[] args) {
 
+		// Creo variabili per il token e la rotta
 		String token = "7ALqC2FSMxyV2zGe2EBu";
 		String route = "projects?per_page=200";
-		// Client client = ClientBuilder.newClient(new ClientConfig());
+
+		//Creo il client utilizzando la funzione factoryClient() che ignora la validità del certificato SSL
 		Client client = factoryClient();
 
+		// Creo il target utilizzando getBaseURI, che ha l'indirizzo base, più la rotta
 		WebTarget target = client.target(getBaseURI()+route);
 
+		//Effettuo la chiamata GET
 		Response response = target.request().accept(MediaType.APPLICATION_JSON)
 				.header("PRIVATE-TOKEN", token).get(Response.class);
+		
+		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
 		
-		//System.out.println("STATUS : " + statusCode);
-		
+		//Dalla chiamata GET prendo il file JSON che ci restituisce e lo scrivo in una stringa
 		String json = response.readEntity(String.class);
-		// System.out.println(json);
-		
+
+		//Il file JSON è un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
 		JSONArray jsonArray = new JSONArray(json);
+		
+		//Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
+		//il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
 		System.out.println("Numero di progetti: " + jsonArray.length());
 		
+		//Ciclo FOR utilizzatto per effettuare una seire di operazioni a tutti i progetti
 		for (int i = 0; i < jsonArray.length() ; i++) {
 			
+			//Dall'array JSON estraggo l'ennesimo oggetto JSON
 			JSONObject object = jsonArray.getJSONObject(i);
 			
+			//Dall'oggetto JSON, ovverro un singolo progetto, etraggo i seguenti valori:
 			
+			//Estraggo il valore della KEY "id", ovvero l'ID del progetto
 			int id = object.getInt("id");
+			
+			//Estraggo il valore della KEY "name", ovvero il nome del progetto
 			String name = object.getString("name");
+			
+			//Il nome del gruppo di appartenenza del progetto è racchiuso in un altro oggetto JSON chiamato "namespace"
+			//lo vado quindi a mettere in un JSONObject
 			JSONObject namespace = object.getJSONObject("namespace");
+			
+			//All'interno dell'oggetto JSON "namespace" estraggo appunto il nome del gruppo di appartenenza, dalla key "name"
 			String group = namespace.getString("name");
-			//System.out.println("GROUP : " + group);
-			//System.out.println("ID : " + id);
+			
 			
 			//Creo due ArrayList, una con i links dei 7 badges e una con le relative images
 			ArrayList badgesImage = new ArrayList();
 			ArrayList badgesLink = new ArrayList();
+			
+			//Chiamo le due funzioni che generano i links in base al nome e al gruppo del progetto
 			badgesImage = createBadgesImages(name, group);
 			badgesLink = createBadgesLinks(name, group);
 
-			// Elimino badges precedenti e faccio il POST di quelli nuovi
+			//Elimino i badges precedenti del progetto, passo alla funzione il suo ID e il TOKEN per l'autorizzazione
 			doDelete(id,token);
-			doPost(id, token, badgesLink, badgesImage);
 			
+			//Faccio il POST con i 7 badges relativi al progetto, passo alla funzione il suo ID, il TOKEN per l'autorizzazione,
+			//la lista dei links e quella delle images
+			doPost(id, token, badgesLink, badgesImage);
 			
 		}
 
 	}
 	
 	private static void doDelete (int id, String token) {
-		ClientConfig config = new ClientConfig();
+	
 		Client client = factoryClient();
 
 		WebTarget target = client.target(getBaseURI());
@@ -158,39 +181,48 @@ public class Hello_Maven {
 	
 	
 	private static void doPost(int id, String token, ArrayList links, ArrayList images) {
-		//Creo il client
+		
+		//Creo il client utilizzando la funzione factoryClient() che ignora la validità del certificato SSL
 		Client client = factoryClient();
+		
+		// Creo il target utilizzando getBaseURI, che ha l'indirizzo base
 		WebTarget target = client.target(getBaseURI());
+		
+		//Stampo a video l'ID del progetto al quale sto inserendo i badges
 		System.out.println("Inserisco i badges del progetto con ID: " + id);
+		
+		//Dichiaro una variabile di stato, per controllare lo stato delle chiamate
 		int stato_inserimento = 0;
+		
+		//Creo un ciclo FOR per i 7 badges
 		for (int i=0; i<7; i++)
 		{
-			//Creo l'oggetto JSON dove copio i links di un singolo badge dalle ArrayList
+			//Creo un oggetto JSON dove metto i links dell'ennesimo badge dalle ArrayLists
 			JSONObject badge = new JSONObject()
 					.put("link_url", links.get(i))
 		            .put("image_url", images.get(i));
 			
-			//System.out.println("Inserisco l'" + i + "^ badge.");
-			
-			// Faccio il post passando l'oggetto JSON sopra creato come stringa
+
+			// Faccio il post passando l'oggetto JSON sopra creato convertendolo in stringa
 			Response response = target.path("projects").path(""+id).path("badges").request().accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", token).post(Entity.json(badge.toString()));
+			
+			//Ogni ciclo for scrivere lo stato del POST, se uguale non lo sovrascrive
 			if(response.getStatus()!=stato_inserimento)
 			{
 				stato_inserimento = response.getStatus();
 			}
 			
 		}
-		//String json = response.readEntity(String.class);
-		//JSONObject jsonObject = new JSONObject(json);
-		//String message = jsonObject.getString("response");
+		
+		//Stampo a video lo stato finale, se corrisponde al 201 si aggiunge la scritta "SUCCESS" altrimenti "ERROR"
 		if(stato_inserimento==201)
 		{
-			System.out.println("Eliminazione: SUCCESS (" + stato_inserimento + ")");
+			System.out.println("Inserimento: SUCCESS (" + stato_inserimento + ")");
 		}
 		else if(stato_inserimento!=201)
 		{
-			System.out.println("Eliminazione: ERROR (" + stato_inserimento + ")");
+			System.out.println("Inserimento: ERROR (" + stato_inserimento + ")");
 		}
 	}
 	
