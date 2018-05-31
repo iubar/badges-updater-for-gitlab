@@ -105,11 +105,11 @@ public class Hello_Maven {
 	private static void doDelete (int id, String token) {
 		ClientConfig config = new ClientConfig();
 		Client client = factoryClient();
-		String idString =""+id;
+
 		WebTarget target = client.target(getBaseURI());
 		//try {
 			Response response = target.path("projects")
-					.path(idString)
+					.path(""+id)
 					.path("badges")
 					.request()
 					.accept(MediaType.APPLICATION_JSON)
@@ -136,10 +136,11 @@ public class Hello_Maven {
 										.request()
 										.accept(MediaType.APPLICATION_JSON)
 										.delete();*/
-								WebTarget webTarget = client.target(getBaseURI()+"project/"+idString+"/badges/"+id_badgeStr);
+								WebTarget webTarget = client.target(getBaseURI()+"projects/"+id+"/badges/"+id_badgeStr);
 								System.out.print("\n"+webTarget);
-								Response response2 = webTarget.request().delete();
+								Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", token).delete();
 								System.out.print("\n"+response2);
+								
 							} catch (Exception e) {
 								System.out.print("errore");
 							}
