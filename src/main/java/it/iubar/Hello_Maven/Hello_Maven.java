@@ -58,67 +58,79 @@ public class Hello_Maven {
 	public static void main(String[] args) {
 
 		String token = "7ALqC2FSMxyV2zGe2EBu";
-		String route = "projects";
+		String route = "projects?per_page=200";
 		// Client client = ClientBuilder.newClient(new ClientConfig());
 		Client client = factoryClient();
 
-		WebTarget target = client.target(getBaseURI());
+		WebTarget target = client.target(getBaseURI()+route);
 
-		Response response = target.path(route).request().accept(MediaType.APPLICATION_JSON)
+		Response response = target.request().accept(MediaType.APPLICATION_JSON)
 				.header("PRIVATE-TOKEN", token).get(Response.class);
 		int statusCode = response.getStatus();
+		
 		System.out.println("STATUS : " + statusCode);
+		
 		String json = response.readEntity(String.class);
 		// System.out.println(json);
+		
 		JSONArray jsonArray = new JSONArray(json);
-		for (int i = 0; i < jsonArray.length(); i++) {
+		for (int i = 0; i < 1 ; i++) {
+			//jsonArray.length()
 			JSONObject object = jsonArray.getJSONObject(i);
-			System.out.println("#" + (i + 1) + "  " + object.toString());
+			
+			//System.out.println("#" + (i + 1) + "  " + object.toString());
+			System.out.println("Numero di progetti: " + jsonArray.length());
 			int id = object.getInt("id");
 			String name = object.getString("name");
 			JSONObject namespace = object.getJSONObject("namespace");
 			String group = namespace.getString("name");
-			System.out.println("GROUP : " + group);
-			System.out.println("ID : " + id);
-			// POST: ...
-			// doPost(id, );
-			// eliminateBadge(id)
+			//System.out.println("GROUP : " + group);
+			//System.out.println("ID : " + id);
+			
+			//Creo due ArrayList, una con i links dei 7 badges e una con le relative images
 			ArrayList badgesImage = new ArrayList();
 			ArrayList badgesLink = new ArrayList();
 			badgesImage = createBadgesImages(name, group);
 			badgesLink = createBadgesLinks(name, group);
-			//System.out.println("LINK : " + badgesLink.get(1));
-			//System.out.println("IMAGE : " + badgesImage.get(1));
-			
-			
 
-
+			// Faccio il posto dei babges
+			//doPost(id, token, badgesLink, badgesImage);
+			//delateBadge(id);
+			
 		}
 
 	}
-
-	private static void doPost(int id, ArrayList links, ArrayList images) {
-		ClientConfig config = new ClientConfig();
-		Client client = ClientBuilder.newClient(config);
-		URI baseUri = UriBuilder.fromUri("https://gitlab.example.com/api/v4/projects/" + id + "/badges").build();
-		WebTarget target = client.target(baseUri);
+	
+	
+	private static void doPost(int id, String token, ArrayList links, ArrayList images) {
+		//Creo il client
+		Client client = factoryClient();
+		WebTarget target = client.target(getBaseURI());
+		System.out.println("Inserisco i badges del progetto con ID: " + id);
 		for (int i=0; i<7; i++)
 		{
-			String input = "link_url="+ links.get(i) + "&image_url=" + images.get(i);
-			Response response = target.path("register-client").path("1").request().accept(MediaType.APPLICATION_JSON)
-					.post(Entity.json(input));
+			//Creo l'oggetto JSON dove copio i links di un singolo badge dalle ArrayList
+			JSONObject badge = new JSONObject()
+					.put("link_url", links.get(i))
+		            .put("image_url", images.get(i));
+			
+			System.out.println("File JSON:" + badge);
+			
+			// Faccio il post passando l'oggetto JSON sopra creato come stringa
+			Response response = target.path("projects").path(""+id).path("badges").request().accept(MediaType.APPLICATION_JSON)
+					.header("PRIVATE-TOKEN", token).post(Entity.json(badge.toString()));
+
+			int statusCode = response.getStatus();
+			System.out.println(statusCode);
 		}
-		
-
-		int statusCode = response.getStatus();
-
-		String json = response.readEntity(String.class);
-		JSONObject jsonObject = new JSONObject(json);
-		String message = jsonObject.getString("response");
+		//String json = response.readEntity(String.class);
+		//JSONObject jsonObject = new JSONObject(json);
+		//String message = jsonObject.getString("response");
 	}
 	
 	private static ArrayList createBadgesImages(String name, String group)
 	{
+		//Creo un'ArrayList con 7 elementi, ogni elemento è il link d'immagine del badge
 		ArrayList badges = new ArrayList();
 		badges.add("https://gitlab.iubar.it/" + group + "/" + name + "/badges/master/build.svg");
 		badges.add("http://192.168.0.117:9000/api/badges/gate?key=" + group + ":" + name);
@@ -132,6 +144,7 @@ public class Hello_Maven {
 	
 	private static ArrayList createBadgesLinks(String name, String group)
 	{
+		//Creo un'ArrayList con 7 elementi, ogni elemento è il link del badge
 		ArrayList badges = new ArrayList();
 		badges.add("https://gitlab.iubar.it/" + group + "/" + name + "/commits/master");
 		badges.add("http://192.168.0.117:9000/dashboard?id=" + group + ":" + name);
