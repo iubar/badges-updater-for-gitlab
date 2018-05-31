@@ -68,7 +68,7 @@ public class Hello_Maven {
 				.header("PRIVATE-TOKEN", token).get(Response.class);
 		int statusCode = response.getStatus();
 		
-		System.out.println("STATUS : " + statusCode);
+		//System.out.println("STATUS : " + statusCode);
 		
 		String json = response.readEntity(String.class);
 		// System.out.println(json);
@@ -79,7 +79,7 @@ public class Hello_Maven {
 			JSONObject object = jsonArray.getJSONObject(i);
 			
 			//System.out.println("#" + (i + 1) + "  " + object.toString());
-			System.out.println("Numero di progetti: " + jsonArray.length());
+			//System.out.println("Numero di progetti: " + jsonArray.length());
 			int id = object.getInt("id");
 			String name = object.getString("name");
 			JSONObject namespace = object.getJSONObject("namespace");
@@ -96,9 +96,56 @@ public class Hello_Maven {
 			// Faccio il posto dei babges
 			//doPost(id, token, badgesLink, badgesImage);
 			//delateBadge(id);
+			doDelete(61,token);
 			
 		}
 
+	}
+	
+	private static void doDelete (int id, String token) {
+		ClientConfig config = new ClientConfig();
+		Client client = factoryClient();
+		String idString =""+id;
+		WebTarget target = client.target(getBaseURI());
+		//try {
+			Response response = target.path("projects")
+					.path(idString)
+					.path("badges")
+					.request()
+					.accept(MediaType.APPLICATION_JSON)
+					.header("PRIVATE-TOKEN", token)
+					.get(Response.class);
+			String json = response.readEntity(String.class);
+			
+			System.out.print(json+"\n");
+			
+			JSONArray badges = new JSONArray(json);
+			
+			for (int i = 0; i < badges.length(); i++) {						
+					JSONObject object = badges.getJSONObject(i);
+					int id_badge = object.getInt("id");
+					String id_badgeStr=""+id_badge;
+					System.out.print("\n\n"+id_badgeStr);
+					
+							try {
+								/*
+								Response response2 = target.path("projects")
+										.path(idString)
+										.path("badges")
+										.path(id_badgeStr)
+										.request()
+										.accept(MediaType.APPLICATION_JSON)
+										.delete();*/
+								WebTarget webTarget = client.target(getBaseURI()+"project/"+idString+"/badges/"+id_badgeStr);
+								System.out.print("\n"+webTarget);
+								Response response2 = webTarget.request().delete();
+								System.out.print("\n"+response2);
+							} catch (Exception e) {
+								System.out.print("errore");
+							}
+									
+			}		
+		
 	}
 	
 	
