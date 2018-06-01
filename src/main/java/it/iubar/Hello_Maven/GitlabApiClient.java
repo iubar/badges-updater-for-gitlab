@@ -28,12 +28,18 @@ public class GitlabApiClient {
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());  
 	
 	private String sonarHost = null;
-	
-	public void GitlabApiClient() {
+	private String gitlabHost = null;
+	private String gitlabToken = null;
+
+
+	public GitlabApiClient() {
 		// Read config.properties
 		ReadPropertiesFile objPropertiesFile = new ReadPropertiesFile();
 		String configFile = "config.properties";	 
 		this.sonarHost = objPropertiesFile.readKey(configFile, "sonar.host");
+		this.gitlabHost = objPropertiesFile.readKey(configFile, "gitlab.host");
+		this.gitlabToken = objPropertiesFile.readKey(configFile, "gitlab.token");
+
 		LOGGER.config("Ho letto sonarHost = " + this.sonarHost);
 	}
 	
@@ -69,8 +75,7 @@ public class GitlabApiClient {
 
 	public void run() {
 
-		// Creo variabili per il token e la rotta
-		String token = "7ALqC2FSMxyV2zGe2EBu";
+		// Creo la variabile per la rotta
 		String route = "projects?per_page=200";
 
 		//Creo il client utilizzando la funzione factoryClient() che ignora la validità del certificato SSL
@@ -81,7 +86,7 @@ public class GitlabApiClient {
 
 		//Effettuo la chiamata GET
 		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", token).get(Response.class);
+				.header("PRIVATE-TOKEN", gitlabToken).get(Response.class);
 		
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
@@ -107,37 +112,26 @@ public class GitlabApiClient {
 			//Estraggo il valore della KEY "id", ovvero l'ID del progetto
 			int id = object.getInt("id");
 			
-			//Estraggo il valore della KEY "name", ovvero il nome del progetto
-			String name = object.getString("name");
-			
-			//Il nome del gruppo di appartenenza del progetto è racchiuso in un altro oggetto JSON chiamato "namespace"
-			//lo vado quindi a mettere in un JSONObject
-			JSONObject namespace = object.getJSONObject("namespace");
-			
-			//All'interno dell'oggetto JSON "namespace" estraggo appunto il nome del gruppo di appartenenza, dalla key "name"
-			String group = namespace.getString("name");
-			
-			
 			//Creo due ArrayList, una con i links dei 7 badges e una con le relative images
-			List badgesImage = new ArrayList();
-			List badgesLink = new ArrayList();
+			List<String> badgesImage = new ArrayList<String>();
+			List<String> badgesLink = new ArrayList<String>();
 			
 			//Chiamo le due funzioni che generano i links in base al nome e al gruppo del progetto
 			badgesImage = createBadgesImages(object);
 			badgesLink = createBadgesLinks(object);
 
 			//Elimino i badges precedenti del progetto, passo alla funzione il suo ID e il TOKEN per l'autorizzazione
-			doDelete(id,token);
+			doDelete(id);
 			
 			//Faccio il POST con i 7 badges relativi al progetto, passo alla funzione il suo ID, il TOKEN per l'autorizzazione,
 			//la lista dei links e quella delle images
-			doPost(id, token, badgesLink, badgesImage);
+			doPost(id, badgesLink, badgesImage);
 			
 		}
 
 	}
 	
-	private void doDelete (int id, String token) {
+	private void doDelete (int id) {
 	
 		Client client = factoryClient();
 
@@ -148,7 +142,7 @@ public class GitlabApiClient {
 					.path("badges")
 					.request()
 					.accept(MediaType.APPLICATION_JSON)
-					.header("PRIVATE-TOKEN", token)
+					.header("PRIVATE-TOKEN", gitlabToken)
 					.get(Response.class);
 			String json = response.readEntity(String.class);
 			LOGGER.info("Elimino i badges del progetto: " + id);
@@ -164,7 +158,7 @@ public class GitlabApiClient {
 							try {
 								WebTarget webTarget = client.target(getBaseURI()+"projects/"+id+"/badges/"+id_badgeStr);
 								//System.out.print("\n"+webTarget);
-								Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", token).delete();
+								Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete();
 								//System.out.print("\n"+response2);
 								
 								if(response2.getStatus()!=stato_eliminazione)
@@ -191,7 +185,7 @@ public class GitlabApiClient {
 	}
 	
 	
-	private void doPost(int id, String token, List<String> links, List<String> images) {
+	private void doPost(int id, List<String> links, List<String> images) {
 		
 		//Creo il client utilizzando la funzione factoryClient() che ignora la validità del certificato SSL
 		Client client = factoryClient();
@@ -203,7 +197,6 @@ public class GitlabApiClient {
 		System.out.println("Inserisco i badges del progetto con ID: " + id);
 		
 		//Dichiaro una variabile di stato, per controllare lo stato delle chiamate
-		int stato_inserimento = 0;
 		
 		//Creo un ciclo FOR per i 7 badges
 		for (int i=0; i<7; i++)
@@ -216,23 +209,10 @@ public class GitlabApiClient {
 
 			// Faccio il post passando l'oggetto JSON sopra creato convertendolo in stringa
 			Response response = target.path("projects").path(""+id).path("badges").request().accept(MediaType.APPLICATION_JSON)
-					.header("PRIVATE-TOKEN", token).post(Entity.json(badge.toString()));
-			
-			//Ogni ciclo for scrivere lo stato del POST, se uguale non lo sovrascrive
-			if(response.getStatus()!=stato_inserimento)
-				stato_inserimento = response.getStatus();
-			
+					.header("PRIVATE-TOKEN", gitlabToken).post(Entity.json(badge.toString()));
+					
 		}
 		
-		//Stampo a video lo stato finale, se corrisponde al 201 si aggiunge la scritta "SUCCESS" altrimenti "ERROR"
-		if(stato_inserimento==201)
-		{
-			System.out.println("Inserimento: SUCCESS (" + stato_inserimento + ")");
-		}
-		else if(stato_inserimento!=201)
-		{
-			System.out.println("Inserimento: ERROR (" + stato_inserimento + ")");
-		}
 	}
 	
 	private List createBadgesImages(JSONObject object)
@@ -240,8 +220,9 @@ public class GitlabApiClient {
 
 		int id = object.getInt("id");
 		String name = object.getString("name");
-		JSONObject namespace = object.getJSONObject("namespace");
-		String group = namespace.getString("name");
+		//JSONObject namespace = object.getJSONObject("namespace");
+		//String group = namespace.getString("name");
+		String group ="a";
 		
 		
 		//Creo un'ArrayList con 7 elementi, ogni elemento è il link d'immagine del badge
@@ -265,8 +246,8 @@ public class GitlabApiClient {
 
 		int id = object.getInt("id");
 		String name = object.getString("name");
-		JSONObject namespace = object.getJSONObject("namespace");
-		String group = namespace.getString("name");
+		//JSONObject namespace = object.getJSONObject("namespace");
+		String group = "a"; //namespace.getString("name");
 		
 		//Creo un'ArrayList con 7 elementi, ogni elemento è il link del badge
 		List<String> badges = new ArrayList<String>();
