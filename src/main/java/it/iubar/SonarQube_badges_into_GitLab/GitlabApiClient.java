@@ -102,7 +102,7 @@ public class GitlabApiClient {
 		System.out.println("\nNumero di progetti: " + jsonArray.length());
 		
 		//Ciclo FOR utilizzatto per effettuare una seire di operazioni a tutti i progetti
-		/*for (int i = 0; i < 0  ; i++) {
+		for (int i = 0; i < 1 ; i++) {
 			
 			//Dall'array JSON estraggo l'ennesimo oggetto JSON
 			JSONObject object = jsonArray.getJSONObject(i);
@@ -127,8 +127,7 @@ public class GitlabApiClient {
 			//la lista dei links e quella delle images
 			doPost(id, badgesLink, badgesImage);
 			
-		}*/
-		System.out.print("\n\n"+isGitlabci(61)+"\n\n");
+		}
 
 	}
 	
@@ -178,12 +177,10 @@ public class GitlabApiClient {
 		WebTarget target = client.target(getBaseURI());
 		
 		//Stampo a video l'ID del progetto al quale sto inserendo i badges
-<<<<<<< HEAD
+
 		LOGGER.info("Inserisco i badges del progetto con ID: " + id);
-=======
-		System.out.println("\nInserisco i badges del progetto con ID: " + id);
->>>>>>> 80fc53d59c816f8aae00359570b7989b2225acd6
-		
+
+	
 		//Dichiaro una variabile di stato, per controllare lo stato delle chiamate
 		
 		//Creo un ciclo FOR per i 7 badges
@@ -218,10 +215,10 @@ public class GitlabApiClient {
 
 		//Creo un'ArrayList con 7 elementi, ogni elemento � il link d'immagine del badge
 		List<String> badges = new ArrayList<String>();
-		if(isGitlabci(id) || true==true) {
+		if(isGitlabci(id)) {
 		badges.add("https://" + this.gitlabHost + "/" + group + "/" + name + "/badges/master/build.svg");
 		}
-		if(isSonar(id) || true==true) {
+		if(isSonar(id)) {
 		badges.add("http://" + this.sonarHost + "/api/badges/gate?key=" + group + ":" + name);
 		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
 		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
@@ -243,10 +240,10 @@ public class GitlabApiClient {
 		
 		//Creo un'ArrayList con 7 elementi, ogni elemento � il link del badge
 		List<String> badges = new ArrayList<String>();
-		if(isGitlabci(id) || true==true) {
+		if(isGitlabci(id)) {
 		badges.add("https://" + this.gitlabHost +"/" + group + "/" + name + "/commits/master");
 		}
-		if(isSonar(id) || true==true) {
+		if(isSonar(id)) {
 		badges.add("http://" + this.sonarHost + " /dashboard?id=" + group + ":" + name);
 		badges.add("http://" + this.sonarHost + "/component_measures/domain/Reliability?id=" + group + ":" + name);
 		badges.add("http://" + this.sonarHost + "/component_measures/domain/Maintainability?id=" + group + ":" + name);
@@ -258,14 +255,10 @@ public class GitlabApiClient {
 	}
 	
 
-<<<<<<< HEAD
+
 	private URI getBaseURI() {
 
 		return UriBuilder.fromUri("https://" + this.gitlabHost + "/api/v4/").build();
-=======
-	private static URI getBaseURI() {
-		return UriBuilder.fromUri("https://gitlab.iubar.it/api/v4/").build();
->>>>>>> 80fc53d59c816f8aae00359570b7989b2225acd6
 	}
 	
 	private boolean isGitlabci(int id) {
@@ -274,12 +267,12 @@ public class GitlabApiClient {
 	private boolean isSonar(int id) {
 		return isFile(id, "sonar-project.properties");
 	}	
-	private static boolean isFile(int id, String filename) {
+	private boolean isFile(int id, String filename) {
 		boolean b = false;
-		Client client = factoryClient();
+		 Client client = factoryClient();
 		//creo il link per la richiesta
 		WebTarget target = client.target(getBaseURI());
-		//invio la richiesta di get per avere i badges di un progetto	
+		//invio la richiesta di get per avere il tree di un progetto	
 		Response response = target.path("projects")
 					.path(""+id)
 					.path("repository")
@@ -292,7 +285,8 @@ public class GitlabApiClient {
 			JSONArray files = new JSONArray(json);
 			for (int i=0; i<files.length(); i++) {
 				JSONObject object = files.getJSONObject(i);
-				if (object.getString("name")==filename) {
+				String file_name = object.getString("name");
+				if (file_name.equals(filename)) {
 					b=true;
 				}
 			}
