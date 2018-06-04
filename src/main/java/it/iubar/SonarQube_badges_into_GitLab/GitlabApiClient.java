@@ -36,8 +36,8 @@ public class GitlabApiClient {
 		// Read config.properties
 		ReadPropertiesFile objPropertiesFile = new ReadPropertiesFile();
 		String configFile = "config.properties";	 
-		this.sonarHost = objPropertiesFile.readKey(configFile, "sonar.host");
-		this.gitlabHost = objPropertiesFile.readKey(configFile, "gitlab.host");
+		//this.sonarHost = objPropertiesFile.readKey(configFile, "sonar.host");
+		//this.gitlabHost = objPropertiesFile.readKey(configFile, "gitlab.host");
 		//this.gitlabToken = objPropertiesFile.readKey(configFile, "gitlab.token");
 
 		LOGGER.config("Ho letto sonarHost = " + this.sonarHost);
@@ -178,7 +178,7 @@ public class GitlabApiClient {
 		WebTarget target = client.target(getBaseURI());
 		
 		//Stampo a video l'ID del progetto al quale sto inserendo i badges
-		System.out.println("Inserisco i badges del progetto con ID: " + id);
+		LOGGER.info("Inserisco i badges del progetto con ID: " + id);
 		
 		//Dichiaro una variabile di stato, per controllare lo stato delle chiamate
 		
@@ -215,15 +215,15 @@ public class GitlabApiClient {
 		//Creo un'ArrayList con 7 elementi, ogni elemento � il link d'immagine del badge
 		List<String> badges = new ArrayList<String>();
 		if(isGitlabci(id) || true==true) {
-		badges.add("https://gitlab.iubar.it/" + group + "/" + name + "/badges/master/build.svg");
+		badges.add("https://" + this.gitlabHost + "/" + group + "/" + name + "/badges/master/build.svg");
 		}
 		if(isSonar(id) || true==true) {
 		badges.add("http://" + this.sonarHost + "/api/badges/gate?key=" + group + ":" + name);
 		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
-		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
-		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=ncloc_language_distribution");
-		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=classes");
-		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=functions");
+		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
+		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=ncloc_language_distribution");
+		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=classes");
+		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=functions");
 		}
 		return badges;
 	}
@@ -240,22 +240,23 @@ public class GitlabApiClient {
 		//Creo un'ArrayList con 7 elementi, ogni elemento � il link del badge
 		List<String> badges = new ArrayList<String>();
 		if(isGitlabci(id) || true==true) {
-		badges.add("https://gitlab.iubar.it/" + group + "/" + name + "/commits/master");
+		badges.add("https://" + this.gitlabHost +"/" + group + "/" + name + "/commits/master");
 		}
 		if(isSonar(id) || true==true) {
-		badges.add("http://192.168.0.117:9000/dashboard?id=" + group + ":" + name);
-		badges.add("http://192.168.0.117:9000/component_measures/domain/Reliability?id=" + group + ":" + name);
-		badges.add("http://192.168.0.117:9000/component_measures/domain/Maintainability?id=" + group + ":" + name);
-		badges.add("http://192.168.0.117:9000/component_measures/domain/Size?id=" + group + ":" + name);
-		badges.add("http://192.168.0.117:9000/component_measures/domain/Size?id=" + group + ":" + name);
-		badges.add("http://192.168.0.117:9000/component_measures/domain/Size?id=" + group + ":" + name);
+		badges.add("http://" + this.sonarHost + " /dashboard?id=" + group + ":" + name);
+		badges.add("http://" + this.sonarHost + "/component_measures/domain/Reliability?id=" + group + ":" + name);
+		badges.add("http://" + this.sonarHost + "/component_measures/domain/Maintainability?id=" + group + ":" + name);
+		badges.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		badges.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		badges.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
 		}
 		return badges;
 	}
 	
 
 	private URI getBaseURI() {
-		return UriBuilder.fromUri("https://gitlab.iubar.it/api/v4/").build();
+
+		return UriBuilder.fromUri("https://" + this.gitlabHost + "/api/v4/").build();
 	}
 	
 	private boolean isGitlabci(int id) {

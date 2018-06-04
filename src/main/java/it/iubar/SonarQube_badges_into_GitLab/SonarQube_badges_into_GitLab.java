@@ -8,6 +8,4 @@ public class SonarQube_badges_into_GitLab {
 		client.run();
 	}
 	
-	
-	
 }

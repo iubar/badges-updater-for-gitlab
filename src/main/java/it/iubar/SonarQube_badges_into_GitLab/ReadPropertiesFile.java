@@ -16,9 +16,8 @@ public class ReadPropertiesFile {
         objClassLoader = getClass().getClassLoader();
     }
     
-    public String readKey(String propertiesFilename, String key){
+    public String readKey(String propertiesFilename, String key){    	
     	
-/*
         // Simple validation
         if (propertiesFilename != null && !propertiesFilename.trim().isEmpty()
                 && key != null && !key.trim().isEmpty()) {
@@ -47,7 +46,8 @@ public class ReadPropertiesFile {
                     }
                 }
             }
-        } */
+        } 
+        
         return null; 
     }
     
