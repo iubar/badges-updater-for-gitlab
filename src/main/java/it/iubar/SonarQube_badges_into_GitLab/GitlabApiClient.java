@@ -29,7 +29,7 @@ public class GitlabApiClient {
 	
 	private String sonarHost = null;
 	private String gitlabHost = null;
-	private String gitlabToken = null;
+	private String gitlabToken = "7ALqC2FSMxyV2zGe2EBu";
 
 
 	public GitlabApiClient() {
@@ -38,7 +38,7 @@ public class GitlabApiClient {
 		String configFile = "config.properties";	 
 		this.sonarHost = objPropertiesFile.readKey(configFile, "sonar.host");
 		this.gitlabHost = objPropertiesFile.readKey(configFile, "gitlab.host");
-		this.gitlabToken = objPropertiesFile.readKey(configFile, "gitlab.token");
+		//this.gitlabToken = objPropertiesFile.readKey(configFile, "gitlab.token");
 
 		LOGGER.config("Ho letto sonarHost = " + this.sonarHost);
 	}
@@ -102,7 +102,7 @@ public class GitlabApiClient {
 		System.out.println("Numero di progetti: " + jsonArray.length());
 		
 		//Ciclo FOR utilizzatto per effettuare una seire di operazioni a tutti i progetti
-		for (int i = 0; i < jsonArray.length() ; i++) {
+		for (int i = 0; i < 1 /* jsonArray.length()*/ ; i++) {
 			
 			//Dall'array JSON estraggo l'ennesimo oggetto JSON
 			JSONObject object = jsonArray.getJSONObject(i);
@@ -147,8 +147,7 @@ public class GitlabApiClient {
 			String json = response.readEntity(String.class);
 			LOGGER.info("Elimino i badges del progetto: " + id);
 			JSONArray badges = new JSONArray(json);
-			
-			int stato_eliminazione = 0; 
+
 			for (int i = 0; i < badges.length(); i++) {						
 					JSONObject object = badges.getJSONObject(i);
 					int id_badge = object.getInt("id");
@@ -161,26 +160,11 @@ public class GitlabApiClient {
 								Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete();
 								//System.out.print("\n"+response2);
 								
-								if(response2.getStatus()!=stato_eliminazione)
-								{
-									stato_eliminazione = response2.getStatus();
-								}
-								//System.out.println("Eliminazione - STATO : " + response2.getStatus());
 								
 							} catch (Exception e) {
 								LOGGER.severe("Errore: " + e.getMessage());
 							}
-									
 			}
-			if(stato_eliminazione==204)
-			{
-				System.out.println("Eliminazione: SUCCESS (" + stato_eliminazione + ")");
-			}
-			else if(stato_eliminazione!=204)
-			{
-				System.out.println("Eliminazione: ERROR (" + stato_eliminazione + ")");
-			}
-
 		
 	}
 	
@@ -199,12 +183,14 @@ public class GitlabApiClient {
 		//Dichiaro una variabile di stato, per controllare lo stato delle chiamate
 		
 		//Creo un ciclo FOR per i 7 badges
+		
 		for (int i=0; i<7; i++)
 		{
 			//Creo un oggetto JSON dove metto i links dell'ennesimo badge dalle ArrayLists
 			JSONObject badge = new JSONObject()
 					.put("link_url", links.get(i))
 		            .put("image_url", images.get(i));
+			
 			
 
 			// Faccio il post passando l'oggetto JSON sopra creato convertendolo in stringa
@@ -215,22 +201,24 @@ public class GitlabApiClient {
 		
 	}
 	
-	private List createBadgesImages(JSONObject object)
+	private List<String> createBadgesImages(JSONObject object)
 	{
 
+		System.out.println("oggetto=" + object);
 		int id = object.getInt("id");
+		
 		String name = object.getString("name");
-		//JSONObject namespace = object.getJSONObject("namespace");
-		//String group = namespace.getString("name");
-		String group ="a";
-		
-		
+		JSONObject namespace = object.getJSONObject("namespace");
+		String group = namespace.getString("path");
+
+
+
 		//Creo un'ArrayList con 7 elementi, ogni elemento � il link d'immagine del badge
 		List<String> badges = new ArrayList<String>();
-		if(isGitlabci(id)) {
+		if(isGitlabci(id) || true==true) {
 		badges.add("https://gitlab.iubar.it/" + group + "/" + name + "/badges/master/build.svg");
 		}
-		if(isSonar(id)) {
+		if(isSonar(id) || true==true) {
 		badges.add("http://" + this.sonarHost + "/api/badges/gate?key=" + group + ":" + name);
 		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
 		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
@@ -241,20 +229,22 @@ public class GitlabApiClient {
 		return badges;
 	}
 	
-	private List createBadgesLinks(JSONObject object)
+	private List<String> createBadgesLinks(JSONObject object)
 	{
 
+		System.out.println("oggetto=" + object);
 		int id = object.getInt("id");
+		
 		String name = object.getString("name");
-		//JSONObject namespace = object.getJSONObject("namespace");
-		String group = "a"; //namespace.getString("name");
+		JSONObject namespace = object.getJSONObject("namespace");
+		String group = namespace.getString("path");
 		
 		//Creo un'ArrayList con 7 elementi, ogni elemento � il link del badge
 		List<String> badges = new ArrayList<String>();
-		if(isGitlabci(id)) {
+		if(isGitlabci(id) || true==true) {
 		badges.add("https://gitlab.iubar.it/" + group + "/" + name + "/commits/master");
 		}
-		if(isSonar(id)) {
+		if(isSonar(id) || true==true) {
 		badges.add("http://192.168.0.117:9000/dashboard?id=" + group + ":" + name);
 		badges.add("http://192.168.0.117:9000/component_measures/domain/Reliability?id=" + group + ":" + name);
 		badges.add("http://192.168.0.117:9000/component_measures/domain/Maintainability?id=" + group + ":" + name);
