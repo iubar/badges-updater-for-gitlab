@@ -43,7 +43,7 @@ public class GitlabApiClient {
 		LOGGER.config("Ho letto sonarHost = " + this.sonarHost);
 	}
 	
-	public Client factoryClient() {
+	public static Client factoryClient() {
 		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
 			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
 				return null;
@@ -99,10 +99,10 @@ public class GitlabApiClient {
 		
 		//Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 		//il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
-		System.out.println("Numero di progetti: " + jsonArray.length());
+		System.out.println("\nNumero di progetti: " + jsonArray.length());
 		
 		//Ciclo FOR utilizzatto per effettuare una seire di operazioni a tutti i progetti
-		for (int i = 0; i < 1 /* jsonArray.length()*/ ; i++) {
+		/*for (int i = 0; i < 0  ; i++) {
 			
 			//Dall'array JSON estraggo l'ennesimo oggetto JSON
 			JSONObject object = jsonArray.getJSONObject(i);
@@ -127,7 +127,8 @@ public class GitlabApiClient {
 			//la lista dei links e quella delle images
 			doPost(id, badgesLink, badgesImage);
 			
-		}
+		}*/
+		System.out.print("\n\n"+isGitlabci(61)+"\n\n");
 
 	}
 	
@@ -152,7 +153,6 @@ public class GitlabApiClient {
 					JSONObject object = badges.getJSONObject(i);
 					int id_badge = object.getInt("id");
 					String id_badgeStr=""+id_badge;
-					//System.out.print("\n\n"+id_badgeStr);
 					
 							try {
 								WebTarget webTarget = client.target(getBaseURI()+"projects/"+id+"/badges/"+id_badgeStr);
@@ -178,7 +178,7 @@ public class GitlabApiClient {
 		WebTarget target = client.target(getBaseURI());
 		
 		//Stampo a video l'ID del progetto al quale sto inserendo i badges
-		System.out.println("Inserisco i badges del progetto con ID: " + id);
+		System.out.println("\nInserisco i badges del progetto con ID: " + id);
 		
 		//Dichiaro una variabile di stato, per controllare lo stato delle chiamate
 		
@@ -254,7 +254,7 @@ public class GitlabApiClient {
 	}
 	
 
-	private URI getBaseURI() {
+	private static URI getBaseURI() {
 		return UriBuilder.fromUri("https://gitlab.iubar.it/api/v4/").build();
 	}
 	
@@ -266,7 +266,28 @@ public class GitlabApiClient {
 	}	
 	private static boolean isFile(int id, String filename) {
 		boolean b = false;
-		// ....
+		Client client = factoryClient();
+		//creo il link per la richiesta
+		WebTarget target = client.target(getBaseURI());
+		//invio la richiesta di get per avere i badges di un progetto	
+		Response response = target.path("projects")
+					.path(""+id)
+					.path("repository")
+					.path("tree")
+					.request()
+					.accept(MediaType.APPLICATION_JSON)
+					.header("PRIVATE-TOKEN", "7ALqC2FSMxyV2zGe2EBu")
+					.get(Response.class);
+			String json = response.readEntity(String.class);
+			JSONArray files = new JSONArray(json);
+			for (int i=0; i<files.length(); i++) {
+				JSONObject object = files.getJSONObject(i);
+				if (object.getString("name")==filename) {
+					b=true;
+				}
+			}
+			
+		
 		return b;		
 		
 	}	
