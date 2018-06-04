@@ -27,8 +27,8 @@ public class GitlabApiClient {
 
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());  
 	
-	private String sonarHost = null;
-	private String gitlabHost = null;
+	private String sonarHost = "192.168.0.117:9000";
+	private String gitlabHost = "gitlab.iubar.it";
 	private String gitlabToken = "7ALqC2FSMxyV2zGe2EBu";
 
 
@@ -204,7 +204,6 @@ public class GitlabApiClient {
 	private List<String> createBadgesImages(JSONObject object)
 	{
 
-		System.out.println("oggetto=" + object);
 		int id = object.getInt("id");
 		
 		String name = object.getString("name");
@@ -220,7 +219,7 @@ public class GitlabApiClient {
 		}
 		if(isSonar(id) || true==true) {
 		badges.add("http://" + this.sonarHost + "/api/badges/gate?key=" + group + ":" + name);
-		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
+		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
 		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
 		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=ncloc_language_distribution");
 		badges.add("http://192.168.0.117:9000/api/badges/measure?key=" + group + ":" + name + "&metric=classes");
@@ -232,7 +231,6 @@ public class GitlabApiClient {
 	private List<String> createBadgesLinks(JSONObject object)
 	{
 
-		System.out.println("oggetto=" + object);
 		int id = object.getInt("id");
 		
 		String name = object.getString("name");
