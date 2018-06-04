@@ -1,6 +1,6 @@
-package it.iubar.Hello_Maven;
+package it.iubar.SonarQube_badges_into_GitLab;
 
-public class Hello_Maven {
+public class SonarQube_badges_into_GitLab {
 
 
 	public static void main(String[] args) {

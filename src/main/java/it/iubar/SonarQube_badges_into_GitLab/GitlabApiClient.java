@@ -1,4 +1,4 @@
-package it.iubar.Hello_Maven;
+package it.iubar.SonarQube_badges_into_GitLab;
 
 import java.net.URI;
 import java.security.KeyManagementException;
@@ -78,10 +78,10 @@ public class GitlabApiClient {
 		// Creo la variabile per la rotta
 		String route = "projects?per_page=200";
 
-		//Creo il client utilizzando la funzione factoryClient() che ignora la validità del certificato SSL
+		//Creo il client utilizzando la funzione factoryClient() che ignora la validitï¿½ del certificato SSL
 		Client client = factoryClient();
 
-		// Creo il target utilizzando getBaseURI, che ha l'indirizzo base, più la rotta
+		// Creo il target utilizzando getBaseURI, che ha l'indirizzo base, piï¿½ la rotta
 		WebTarget target = client.target(getBaseURI()+route);
 
 		//Effettuo la chiamata GET
@@ -94,7 +94,7 @@ public class GitlabApiClient {
 		//Dalla chiamata GET prendo il file JSON che ci restituisce e lo scrivo in una stringa
 		String json = response.readEntity(String.class);
 
-		//Il file JSON è un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
+		//Il file JSON ï¿½ un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
 		JSONArray jsonArray = new JSONArray(json);
 		
 		//Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
@@ -187,7 +187,7 @@ public class GitlabApiClient {
 	
 	private void doPost(int id, List<String> links, List<String> images) {
 		
-		//Creo il client utilizzando la funzione factoryClient() che ignora la validità del certificato SSL
+		//Creo il client utilizzando la funzione factoryClient() che ignora la validitï¿½ del certificato SSL
 		Client client = factoryClient();
 		
 		// Creo il target utilizzando getBaseURI, che ha l'indirizzo base
@@ -225,7 +225,7 @@ public class GitlabApiClient {
 		String group ="a";
 		
 		
-		//Creo un'ArrayList con 7 elementi, ogni elemento è il link d'immagine del badge
+		//Creo un'ArrayList con 7 elementi, ogni elemento ï¿½ il link d'immagine del badge
 		List<String> badges = new ArrayList<String>();
 		if(isGitlabci(id)) {
 		badges.add("https://gitlab.iubar.it/" + group + "/" + name + "/badges/master/build.svg");
@@ -249,7 +249,7 @@ public class GitlabApiClient {
 		//JSONObject namespace = object.getJSONObject("namespace");
 		String group = "a"; //namespace.getString("name");
 		
-		//Creo un'ArrayList con 7 elementi, ogni elemento è il link del badge
+		//Creo un'ArrayList con 7 elementi, ogni elemento ï¿½ il link del badge
 		List<String> badges = new ArrayList<String>();
 		if(isGitlabci(id)) {
 		badges.add("https://gitlab.iubar.it/" + group + "/" + name + "/commits/master");

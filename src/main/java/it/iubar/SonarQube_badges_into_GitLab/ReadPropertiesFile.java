@@ -1,4 +1,4 @@
-package it.iubar.Hello_Maven;
+package it.iubar.SonarQube_badges_into_GitLab;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
