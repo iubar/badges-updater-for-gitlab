@@ -27,20 +27,20 @@ public class GitlabApiClient {
 
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());  
 	
-	private String sonarHost = "192.168.0.117:9000";
+	private String sonarHost = null;//"192.168.0.117:9000";
 	private String gitlabHost = "gitlab.iubar.it";
 	private String gitlabToken = "7ALqC2FSMxyV2zGe2EBu";
 
 
 	public GitlabApiClient() {
 		// Read config.properties
-		ReadPropertiesFile objPropertiesFile = new ReadPropertiesFile();
+		//ReadPropertiesFile objPropertiesFile = new ReadPropertiesFile();
 		String configFile = "config.properties";	 
-		//this.sonarHost = objPropertiesFile.readKey(configFile, "sonar.host");
+		this.sonarHost = ReadProperties.getKey(configFile, "sonar.host");
 		//this.gitlabHost = objPropertiesFile.readKey(configFile, "gitlab.host");
 		//this.gitlabToken = objPropertiesFile.readKey(configFile, "gitlab.token");
 
-		LOGGER.config("Ho letto sonarHost = " + this.sonarHost);
+		LOGGER.info("Ho letto sonarHost = " + this.sonarHost);
 	}
 	
 	public static Client factoryClient() {
