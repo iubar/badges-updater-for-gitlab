@@ -1,6 +1,6 @@
 # API - SonarQube badges into GitLab
 
-This java application insert SonarCube badges inside a project uploaded on GitLab.
+This java application insert SonarCube badges inside projects uploaded on GitLab.
 
 ### Configuration
 
@@ -8,7 +8,7 @@ By the config file called "config.properties" inside this directory "src\main\re
 ```sh
   sonar.host = 127.0.0.1
   gitlab.host = gitlab.example.com
-  gitlab.token= ABCDEFG1234567
+  gitlab.token = your_token
 ```
 > With `sonar.host` you set up the address of the SonarQube Server
 
