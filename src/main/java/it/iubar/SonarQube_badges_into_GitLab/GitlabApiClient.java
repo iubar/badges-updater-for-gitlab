@@ -5,7 +5,10 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+//import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 import javax.net.ssl.SSLContext;
@@ -27,20 +30,23 @@ public class GitlabApiClient {
 
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());  
 	
-	private String sonarHost = null;//"192.168.0.117:9000";
-	private String gitlabHost = "gitlab.iubar.it";
-	private String gitlabToken = "7ALqC2FSMxyV2zGe2EBu";
+	private String sonarHost = null;
+	private String gitlabHost = null;
+	private String gitlabToken = null;
 
 
 	public GitlabApiClient() {
 		// Read config.properties
-		//ReadPropertiesFile objPropertiesFile = new ReadPropertiesFile();
+		ReadPropertiesFile objPropertiesFile = new ReadPropertiesFile();
 		String configFile = "config.properties";	 
-		this.sonarHost = ReadProperties.getKey(configFile, "sonar.host");
-		//this.gitlabHost = objPropertiesFile.readKey(configFile, "gitlab.host");
-		//this.gitlabToken = objPropertiesFile.readKey(configFile, "gitlab.token");
+		this.sonarHost = objPropertiesFile.readKey(configFile, "sonar.host");
+		this.gitlabHost = objPropertiesFile.readKey(configFile, "gitlab.host");
+		this.gitlabToken = objPropertiesFile.readKey(configFile, "gitlab.token");
 
 		LOGGER.info("Ho letto sonarHost = " + this.sonarHost);
+		LOGGER.info("Ho letto gitlabHost = " + this.gitlabHost);
+		LOGGER.info("Ho letto gitlabToken = " + this.gitlabToken);
+
 	}
 	
 	public static Client factoryClient() {
@@ -99,7 +105,7 @@ public class GitlabApiClient {
 		
 		//Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 		//il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
-		System.out.println("\nNumero di progetti: " + jsonArray.length());
+		LOGGER.info("Numero di progetti: " + jsonArray.length());
 		
 		//Ciclo FOR utilizzatto per effettuare una seire di operazioni a tutti i progetti
 		for (int i = 0; i < 1 ; i++) {
@@ -107,25 +113,14 @@ public class GitlabApiClient {
 			//Dall'array JSON estraggo l'ennesimo oggetto JSON
 			JSONObject object = jsonArray.getJSONObject(i);
 			
-			//Dall'oggetto JSON, ovverro un singolo progetto, etraggo i seguenti valori:
-			
 			//Estraggo il valore della KEY "id", ovvero l'ID del progetto
 			int id = object.getInt("id");
 			
-			//Creo due ArrayList, una con i links dei 7 badges e una con le relative images
-			List<String> badgesImage = new ArrayList<String>();
-			List<String> badgesLink = new ArrayList<String>();
-			
-			//Chiamo le due funzioni che generano i links in base al nome e al gruppo del progetto
-			badgesImage = createBadgesImages(object);
-			badgesLink = createBadgesLinks(object);
-
 			//Elimino i badges precedenti del progetto, passo alla funzione il suo ID e il TOKEN per l'autorizzazione
 			doDelete(id);
 			
-			//Faccio il POST con i 7 badges relativi al progetto, passo alla funzione il suo ID, il TOKEN per l'autorizzazione,
-			//la lista dei links e quella delle images
-			doPost(id, badgesLink, badgesImage);
+			//Faccio il POST con i 7 badges relativi al progetto, passo alla funzione l'ID del progetto e la mappa dei links generati dalla funzione createBadges
+			doPost(id, createBadges(object));
 			
 		}
 
@@ -145,7 +140,6 @@ public class GitlabApiClient {
 					.header("PRIVATE-TOKEN", gitlabToken)
 					.get(Response.class);
 			String json = response.readEntity(String.class);
-			LOGGER.info("Elimino i badges del progetto: " + id);
 			JSONArray badges = new JSONArray(json);
 
 			for (int i = 0; i < badges.length(); i++) {						
@@ -155,33 +149,25 @@ public class GitlabApiClient {
 					
 							try {
 								WebTarget webTarget = client.target(getBaseURI()+"projects/"+id+"/badges/"+id_badgeStr);
-								//System.out.print("\n"+webTarget);
 								Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete();
-								//System.out.print("\n"+response2);
-								
-								
+		
 							} catch (Exception e) {
 								LOGGER.severe("Errore: " + e.getMessage());
 							}
 			}
-		
+			LOGGER.info("Eliminati i badges del progetto: " + id);
 	}
 	
 	
-	private void doPost(int id, List<String> links, List<String> images) {
+	private void doPost(int id, Map<String,List<String>> badges) {
 		
+		List<String> links = badges.get("links");
+		List<String> images = badges.get("images");
 		//Creo il client utilizzando la funzione factoryClient() che ignora la validit� del certificato SSL
 		Client client = factoryClient();
 		
 		// Creo il target utilizzando getBaseURI, che ha l'indirizzo base
 		WebTarget target = client.target(getBaseURI());
-		
-		//Stampo a video l'ID del progetto al quale sto inserendo i badges
-
-		LOGGER.info("Inserisco i badges del progetto con ID: " + id);
-
-	
-		//Dichiaro una variabile di stato, per controllare lo stato delle chiamate
 		
 		//Creo un ciclo FOR per i 7 badges
 		
@@ -192,72 +178,66 @@ public class GitlabApiClient {
 					.put("link_url", links.get(i))
 		            .put("image_url", images.get(i));
 			
-			
-
 			// Faccio il post passando l'oggetto JSON sopra creato convertendolo in stringa
 			Response response = target.path("projects").path(""+id).path("badges").request().accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", gitlabToken).post(Entity.json(badge.toString()));
-					
+			
 		}
+		LOGGER.info("Inseriti i badges del progetto: " + id);
 		
 	}
-	
-	private List<String> createBadgesImages(JSONObject object)
-	{
-
-		int id = object.getInt("id");
 		
-		String name = object.getString("name");
-		JSONObject namespace = object.getJSONObject("namespace");
-		String group = namespace.getString("path");
-
-
-
-		//Creo un'ArrayList con 7 elementi, ogni elemento � il link d'immagine del badge
-		List<String> badges = new ArrayList<String>();
-		if(isGitlabci(id)) {
-		badges.add("https://" + this.gitlabHost + "/" + group + "/" + name + "/badges/master/build.svg");
-		}
-		if(isSonar(id)) {
-		badges.add("http://" + this.sonarHost + "/api/badges/gate?key=" + group + ":" + name);
-		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
-		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
-		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=ncloc_language_distribution");
-		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=classes");
-		badges.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=functions");
-		}
-		return badges;
-	}
-	
-	private List<String> createBadgesLinks(JSONObject object)
+	private Map<String,List<String>> createBadges(JSONObject object)
 	{
-
-		int id = object.getInt("id");
+		// Creo un mappa con due chiavi, una per le images e una per i link, come valore avranno le relative liste
+		Map<String,List<String>> map=new HashMap<String,List<String>>();
 		
+		//Estraggo l'id del progetto e altri valori come il suo nome ed il gruppo
+		int id = object.getInt("id");	
 		String name = object.getString("name");
 		JSONObject namespace = object.getJSONObject("namespace");
 		String group = namespace.getString("path");
 		
-		//Creo un'ArrayList con 7 elementi, ogni elemento � il link del badge
-		List<String> badges = new ArrayList<String>();
+		//genero la lista delle images
+		List<String> images = new ArrayList<String>();
 		if(isGitlabci(id)) {
-		badges.add("https://" + this.gitlabHost +"/" + group + "/" + name + "/commits/master");
+		images.add("https://" + this.gitlabHost + "/" + group + "/" + name + "/badges/master/build.svg");
 		}
 		if(isSonar(id)) {
-		badges.add("http://" + this.sonarHost + " /dashboard?id=" + group + ":" + name);
-		badges.add("http://" + this.sonarHost + "/component_measures/domain/Reliability?id=" + group + ":" + name);
-		badges.add("http://" + this.sonarHost + "/component_measures/domain/Maintainability?id=" + group + ":" + name);
-		badges.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
-		badges.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
-		badges.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		images.add("http://" + this.sonarHost + "/api/badges/gate?key=" + group + ":" + name);
+		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
+		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
+		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=ncloc_language_distribution");
+		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=classes");
+		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=functions");
 		}
-		return badges;
+		
+		//inserisco la lista appena creata come valore della prima chiave nella mappa
+		map.put("images",images);
+		
+		//genero la lista dei links
+		List<String> links = new ArrayList<String>();
+		if(isGitlabci(id)) {
+		links.add("https://" + this.gitlabHost +"/" + group + "/" + name + "/commits/master");
+		}
+		if(isSonar(id)) {
+		links.add("http://" + this.sonarHost + " /dashboard?id=" + group + ":" + name);
+		links.add("http://" + this.sonarHost + "/component_measures/domain/Reliability?id=" + group + ":" + name);
+		links.add("http://" + this.sonarHost + "/component_measures/domain/Maintainability?id=" + group + ":" + name);
+		links.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		links.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		links.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		}
+		
+		//inserisco la lista appena creata come valore della seconda chiave nella mappa
+		map.put("links",links);
+		
+		return map;
 	}
 	
 
 
 	private URI getBaseURI() {
-
 		return UriBuilder.fromUri("https://" + this.gitlabHost + "/api/v4/").build();
 	}
 	
@@ -291,7 +271,6 @@ public class GitlabApiClient {
 				}
 			}
 			
-		
 		return b;		
 		
 	}	

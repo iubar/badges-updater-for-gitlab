@@ -3,7 +3,9 @@ package it.iubar.SonarQube_badges_into_GitLab;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 public class ReadPropertiesFile {
 
@@ -27,9 +29,25 @@ public class ReadPropertiesFile {
            
             try {
                 // Read file from resources folder 
-                objFileInputStream = new FileInputStream(objClassLoader.getResource(propertiesFilename).getFile());
+            	String fileName = objClassLoader.getResource(propertiesFilename).getFile();
+                objFileInputStream = new FileInputStream(fileName);
+                
+                //Metodo 1 (OK - Dalla cartella resource)
+//                ClassLoader loader = Thread.currentThread().getContextClassLoader();
+//                InputStream objInputStream = loader.getResourceAsStream(propertiesFilename);
+        
+                //Metodo 2 (OK - Dalla cartella resource)
+//                objFileInputStream = new FileInputStream("src/main/resources/config.properties");
+             
+                //Metodo 3 (OK - Dalla cartella resource)
+                InputStream objInputStream = ClassLoader.getSystemResourceAsStream(propertiesFilename);
+
                 // Load file into commonProperties
-                commonProperties.load(objFileInputStream);
+                commonProperties.load(objInputStream);
+                
+                //System.out.print(commonProperties.toString());
+                //System.exit(0);
+                
                 // Get the value of key
                 return String.valueOf(commonProperties.get(key));
             } catch (FileNotFoundException ex) {
