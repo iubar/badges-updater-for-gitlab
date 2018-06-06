@@ -126,9 +126,10 @@ public class GitlabApiClient {
 	private void doDelete (int id) {
 	
 		Client client = factoryClient();
-
+		//Creo il link per la richiesta
 		WebTarget target = client.target(getBaseURI());
 		//try {
+			//Continuo la richiesta per ricevere i badges di un progetto
 			Response response = target.path("projects")
 					.path(""+id)
 					.path("badges")
@@ -136,9 +137,10 @@ public class GitlabApiClient {
 					.accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", gitlabToken)
 					.get(Response.class);
+			//Inserisco i dati in un JSONArray
 			String json = response.readEntity(String.class);
 			JSONArray badges = new JSONArray(json);
-
+			//Elimino i badges inserendo nella chiamata l'id di un badges
 			for (int i = 0; i < badges.length(); i++) {						
 					JSONObject object = badges.getJSONObject(i);
 					int id_badge = object.getInt("id");
