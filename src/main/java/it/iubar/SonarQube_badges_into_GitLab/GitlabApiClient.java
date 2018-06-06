@@ -4,10 +4,6 @@ import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-//import java.util.Map;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -96,6 +92,7 @@ public class GitlabApiClient {
 		
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
+		LOGGER.info("Lettura dei progetti: CODE(" + statusCode +")");
 		
 		//Dalla chiamata GET prendo il file JSON che ci restituisce e lo scrivo in una stringa
 		String json = response.readEntity(String.class);
