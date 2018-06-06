@@ -171,7 +171,8 @@ public class GitlabApiClient {
 		
 		//Creo un ciclo FOR per i 7 badges
 		
-		for (int i=0; i<7; i++)
+		
+		for (int i=0; i < links.size() ; i++)
 		{
 			//Creo un oggetto JSON dove metto i links dell'ennesimo badge dalle ArrayLists
 			JSONObject badge = new JSONObject()
