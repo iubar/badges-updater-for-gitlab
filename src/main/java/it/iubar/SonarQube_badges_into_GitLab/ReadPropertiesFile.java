@@ -18,6 +18,14 @@ public class ReadPropertiesFile {
         objClassLoader = getClass().getClassLoader();
     }
     
+    /**
+     * 
+     * @see https://stackoverflow.com/questions/7615040/difference-between-classloader-getsystemresourceasstream-and-getclass-getresou
+     * 
+     * @param propertiesFilename nome del file di configurazione
+     * @param key la chiave del parametro da leggere
+     * @return String il valore della corrispondente chiave
+     */
     public  String readKey(String propertiesFilename, String key){    	
     	
         // Simple validation
@@ -33,11 +41,11 @@ public class ReadPropertiesFile {
                 objFileInputStream = new FileInputStream(fileName);
                 
                 //Metodo 1 (OK - Dalla cartella resource)
-//                ClassLoader loader = Thread.currentThread().getContextClassLoader();
-//                InputStream objInputStream = loader.getResourceAsStream(propertiesFilename);
+                //ClassLoader loader = Thread.currentThread().getContextClassLoader();
+                //InputStream objInputStream = loader.getResourceAsStream(propertiesFilename);
         
                 //Metodo 2 (OK - Dalla cartella resource)
-//                objFileInputStream = new FileInputStream("src/main/resources/config.properties");
+                //objFileInputStream = new FileInputStream("src/main/resources/config.properties");
              
                 //Metodo 3 (OK - Dalla cartella resource)
                 InputStream objInputStream = ClassLoader.getSystemResourceAsStream(propertiesFilename);

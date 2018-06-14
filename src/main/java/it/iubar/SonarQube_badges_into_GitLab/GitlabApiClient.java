@@ -105,7 +105,7 @@ public class GitlabApiClient {
 		LOGGER.info("Numero di progetti: " + jsonArray.length());
 		
 		//Ciclo FOR utilizzatto per effettuare una seire di operazioni a tutti i progetti
-		for (int i = 0; i < 1 ; i++) {
+		for (int i = 0; i < 1 /**jsonArray.length() */; i++) {
 			
 			//Dall'array JSON estraggo l'ennesimo oggetto JSON
 			JSONObject object = jsonArray.getJSONObject(i);
