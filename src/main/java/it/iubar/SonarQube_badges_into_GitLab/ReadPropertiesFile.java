@@ -10,12 +10,11 @@ import java.util.logging.Logger;
 public class ReadPropertiesFile {
 
     /* Create basic object */
-    ClassLoader objClassLoader = null;
+ 
     Properties commonProperties = new Properties();
     
     public ReadPropertiesFile() {
-        /* Initialize 'objClassLoader' once so same object used for multiple files. */
-        objClassLoader = getClass().getClassLoader();
+        super();
     }
     
     /**
@@ -33,28 +32,40 @@ public class ReadPropertiesFile {
                 && key != null && !key.trim().isEmpty()) {
 
             FileInputStream objFileInputStream = null;
-            
+            InputStream objInputStream = null;
            
             try {
-                // Read file from resources folder 
-            	String fileName = objClassLoader.getResource(propertiesFilename).getFile();
-                objFileInputStream = new FileInputStream(fileName);
+                // Metodo 0
+            	// String fileName = getClass().getClassLoader().getResource(propertiesFilename).getFile();
+                // objFileInputStream = new FileInputStream(fileName);
                 
-                //Metodo 1 (OK - Dalla cartella resource)
-                //ClassLoader loader = Thread.currentThread().getContextClassLoader();
-                //InputStream objInputStream = loader.getResourceAsStream(propertiesFilename);
+                // Metodo 1 (OK - Dalla cartella resource)
+                // ClassLoader loader = Thread.currentThread().getContextClassLoader();
+                // objInputStream = loader.getResourceAsStream(propertiesFilename);
         
-                //Metodo 2 (OK - Dalla cartella resource)
-                //objFileInputStream = new FileInputStream("src/main/resources/config.properties");
+                // Metodo 2 (OK - Dalla cartella resource)
+                // objFileInputStream = new FileInputStream(propertiesFilename);
              
-                //Metodo 3 (OK - Dalla cartella resource)
-                InputStream objInputStream = ClassLoader.getSystemResourceAsStream(propertiesFilename);
+                // Metodo 3 (OK - Dalla cartella resource)
+                // objInputStream = ClassLoader.getSystemResourceAsStream(propertiesFilename);
 
+                // Metodo 4
+                // URL url = ClassLoader.getSystemResource("/" . propertiesFilename);
+                // objInputStream = url.openStream());
+
+                // Metodo 5 (leggo dalla cartella corrente, ovverto "target" a runtime)
+                // File propertiesFile = new File(propertiesFilename);
+                // if (!propertiesFile.exists()) {
+                //    System.out.println("ERROR: properties file " + propertiesFilename + " was not found !");
+                // } else {
+                //     objFileInputStream = new FileInputStream(propertiesFile);
+                // }
+                
                 // Load file into commonProperties
                 commonProperties.load(objInputStream);
                 
-                //System.out.print(commonProperties.toString());
-                //System.exit(0);
+                System.out.print(commonProperties.toString());
+                System.exit(0);
                 
                 // Get the value of key
                 return String.valueOf(commonProperties.get(key));
