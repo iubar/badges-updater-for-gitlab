@@ -29,15 +29,18 @@ public class GitlabApiClient {
 	private String sonarHost = null;
 	private String gitlabHost = null;
 	private String gitlabToken = null;
+	Properties fileProperties = new Properties();
+	
+	public void setProperties(Properties config)
+	{
+		this.fileProperties = config;
+	}
 
+	public void loadConfig() {
 
-	public GitlabApiClient() {
-		// Read config.properties
-		ReadPropertiesFile objPropertiesFile = new ReadPropertiesFile();
-		String configFile = "config.properties";	 
-		this.sonarHost = objPropertiesFile.readKey(configFile, "sonar.host");
-		this.gitlabHost = objPropertiesFile.readKey(configFile, "gitlab.host");
-		this.gitlabToken = objPropertiesFile.readKey(configFile, "gitlab.token");
+		this.sonarHost = String.valueOf(fileProperties.get("sonar.host"));
+		this.gitlabHost = String.valueOf(fileProperties.get("gitlab.host"));
+		this.gitlabToken = String.valueOf(fileProperties.get("gitlab.token"));
 
 		LOGGER.info("Ho letto sonarHost = " + this.sonarHost);
 		LOGGER.info("Ho letto gitlabHost = " + this.gitlabHost);
@@ -76,7 +79,9 @@ public class GitlabApiClient {
 	}
 
 	public void run() {
-
+		
+		loadConfig();
+		
 		// Creo la variabile per la rotta
 		String route = "projects?per_page=200";
 
@@ -105,7 +110,7 @@ public class GitlabApiClient {
 		LOGGER.info("Numero di progetti: " + jsonArray.length());
 		
 		//Ciclo FOR utilizzatto per effettuare una seire di operazioni a tutti i progetti
-		for (int i = 0; i < 1 /**jsonArray.length() */; i++) {
+		for (int i = 0; i < jsonArray.length(); i++) {
 			
 			//Dall'array JSON estraggo l'ennesimo oggetto JSON
 			JSONObject object = jsonArray.getJSONObject(i);
