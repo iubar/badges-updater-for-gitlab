@@ -208,15 +208,15 @@ public class GitlabApiClient {
 		//genero la lista delle images
 		List<String> images = new ArrayList<String>();
 		if(isGitlabci(id)) {
-		images.add("https://" + this.gitlabHost + "/" + group + "/" + name + "/badges/master/build.svg");
+		images.add(this.gitlabHost + "/" + group + "/" + name + "/badges/master/build.svg");
 		}
 		if(isSonar(id)) {
-		images.add("http://" + this.sonarHost + "/api/badges/gate?key=" + group + ":" + name);
-		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
-		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
-		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=ncloc_language_distribution");
-		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=classes");
-		images.add("http://" + this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=functions");
+		images.add(this.sonarHost + "/api/badges/gate?key=" + group + ":" + name);
+		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
+		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
+		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=ncloc_language_distribution");
+		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=classes");
+		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=functions");
 		}
 		
 		//inserisco la lista appena creata come valore della prima chiave nella mappa
@@ -228,12 +228,12 @@ public class GitlabApiClient {
 		links.add("https://" + this.gitlabHost +"/" + group + "/" + name + "/commits/master");
 		}
 		if(isSonar(id)) {
-		links.add("http://" + this.sonarHost + " /dashboard?id=" + group + ":" + name);
-		links.add("http://" + this.sonarHost + "/component_measures/domain/Reliability?id=" + group + ":" + name);
-		links.add("http://" + this.sonarHost + "/component_measures/domain/Maintainability?id=" + group + ":" + name);
-		links.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
-		links.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
-		links.add("http://" + this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		links.add(this.sonarHost + " /dashboard?id=" + group + ":" + name);
+		links.add(this.sonarHost + "/component_measures/domain/Reliability?id=" + group + ":" + name);
+		links.add(this.sonarHost + "/component_measures/domain/Maintainability?id=" + group + ":" + name);
+		links.add(this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		links.add(this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		links.add(this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
 		}
 		
 		//inserisco la lista appena creata come valore della seconda chiave nella mappa
