@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 
 public class PropertiesFile {
 
-	
+	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 	
 	public PropertiesFile() {
         super();
@@ -50,8 +50,10 @@ public class PropertiesFile {
              
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
+            LOGGER.warning("File di configurazione vuoto");
         }catch (IOException ex) {
             ex.printStackTrace();
+            LOGGER.warning("Errori interni al file, controlla la sintassi ed i valori inseriti");
         }
 
         return fileProperties;

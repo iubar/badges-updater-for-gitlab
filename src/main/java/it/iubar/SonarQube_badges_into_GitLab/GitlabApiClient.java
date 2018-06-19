@@ -24,23 +24,25 @@ import org.json.JSONObject;
 public class GitlabApiClient {
 
 
-	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());  
+	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
+
+	private static final int MAX_PROJECT_PER_PAGE = 200;  
 	
 	private String sonarHost = null;
 	private String gitlabHost = null;
 	private String gitlabToken = null;
-	Properties fileProperties = new Properties();
+	private Properties config = null;
 	
 	public void setProperties(Properties config)
 	{
-		this.fileProperties = config;
+		this.config = config;
 	}
 
 	public void loadConfig() {
 
-		this.sonarHost = String.valueOf(fileProperties.get("sonar.host"));
-		this.gitlabHost = String.valueOf(fileProperties.get("gitlab.host"));
-		this.gitlabToken = String.valueOf(fileProperties.get("gitlab.token"));
+		this.sonarHost = String.valueOf(config.get("sonar.host"));
+		this.gitlabHost = String.valueOf(config.get("gitlab.host"));
+		this.gitlabToken = String.valueOf(config.get("gitlab.token"));
 
 		LOGGER.info("Ho letto sonarHost = " + this.sonarHost);
 		LOGGER.info("Ho letto gitlabHost = " + this.gitlabHost);
@@ -83,7 +85,7 @@ public class GitlabApiClient {
 		loadConfig();
 		
 		// Creo la variabile per la rotta
-		String route = "projects?per_page=200";
+		String route = "projects?per_page=" + MAX_PROJECT_PER_PAGE;
 
 		//Creo il client utilizzando la funzione factoryClient() che ignora la validit� del certificato SSL
 		Client client = factoryClient();
@@ -93,7 +95,7 @@ public class GitlabApiClient {
 
 		//Effettuo la chiamata GET
 		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", gitlabToken).get(Response.class);
+				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
 		
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
@@ -140,7 +142,7 @@ public class GitlabApiClient {
 					.path("badges")
 					.request()
 					.accept(MediaType.APPLICATION_JSON)
-					.header("PRIVATE-TOKEN", gitlabToken)
+					.header("PRIVATE-TOKEN", this.gitlabToken)
 					.get(Response.class);
 			//Inserisco i dati in un JSONArray
 			String json = response.readEntity(String.class);
@@ -185,7 +187,7 @@ public class GitlabApiClient {
 			
 			// Faccio il post passando l'oggetto JSON sopra creato convertendolo in stringa
 			Response response = target.path("projects").path(""+id).path("badges").request().accept(MediaType.APPLICATION_JSON)
-					.header("PRIVATE-TOKEN", gitlabToken).post(Entity.json(badge.toString()));
+					.header("PRIVATE-TOKEN", this.gitlabToken).post(Entity.json(badge.toString()));
 			
 		}
 		LOGGER.info("Inseriti i badges del progetto: " + id);
@@ -264,7 +266,7 @@ public class GitlabApiClient {
 					.path("tree")
 					.request()
 					.accept(MediaType.APPLICATION_JSON)
-					.header("PRIVATE-TOKEN", "7ALqC2FSMxyV2zGe2EBu")
+					.header("PRIVATE-TOKEN", this.gitlabToken)
 					.get(Response.class);
 			String json = response.readEntity(String.class);
 			JSONArray files = new JSONArray(json);
