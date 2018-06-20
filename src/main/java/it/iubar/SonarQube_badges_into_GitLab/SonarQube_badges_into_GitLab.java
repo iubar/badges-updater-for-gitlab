@@ -13,9 +13,9 @@ public class SonarQube_badges_into_GitLab {
 		if(areEnvVarsSet()) {
 			// Reading config from enviroment variables....
 			config = new Properties();
-			config.setProperty("sonar.host", System.getenv("SONAR-HOST"));
-			config.setProperty("gitlab.host", System.getenv("GITLAB-HOST"));
-			config.setProperty("gitlab.token", System.getenv("GITLAB-TOKEN"));					  
+			config.setProperty("sonar.host", System.getenv("SONAR_HOST"));
+			config.setProperty("gitlab.host", System.getenv("GITLAB_HOST"));
+			config.setProperty("gitlab.token", System.getenv("GITLAB_TOKEN"));					  
 		}else {
 			// Reading config from file...
 			PropertiesFile properties = new PropertiesFile();
