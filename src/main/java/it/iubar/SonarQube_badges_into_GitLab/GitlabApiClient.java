@@ -225,7 +225,7 @@ public class GitlabApiClient {
 		//genero la lista dei links
 		List<String> links = new ArrayList<String>();
 		if(isGitlabci(id)) {
-		links.add("https://" + this.gitlabHost +"/" + group + "/" + name + "/commits/master");
+		links.add(this.gitlabHost +"/" + group + "/" + name + "/commits/master");
 		}
 		if(isSonar(id)) {
 		links.add(this.sonarHost + " /dashboard?id=" + group + ":" + name);
@@ -245,7 +245,7 @@ public class GitlabApiClient {
 
 
 	private URI getBaseURI() {
-		return UriBuilder.fromUri("https://" + this.gitlabHost + "/api/v4/").build();
+		return UriBuilder.fromUri(this.gitlabHost + "/api/v4/").build();
 	}
 	
 	private boolean isGitlabci(int id) {
