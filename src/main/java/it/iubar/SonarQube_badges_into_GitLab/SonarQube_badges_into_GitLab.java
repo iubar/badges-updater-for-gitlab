@@ -33,7 +33,7 @@ public class SonarQube_badges_into_GitLab {
 	}
 
 	private static boolean areEnvVarsSet() {
-		if(System.getenv("SONAR-HOST")!=null && System.getenv("GITLAB-HOST")!=null && System.getenv("GITLAB-TOKEN")!=null) {
+		if(System.getenv("SONAR_HOST")!=null && System.getenv("GITLAB_HOST")!=null && System.getenv("GITLAB_TOKEN")!=null) {
 			return true;
 		}
 		return false;
