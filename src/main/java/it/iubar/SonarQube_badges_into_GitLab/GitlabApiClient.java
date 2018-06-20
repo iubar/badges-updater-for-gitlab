@@ -106,7 +106,7 @@ public class GitlabApiClient {
 
 		//Il file JSON � un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
 		JSONArray jsonArray = new JSONArray(json);
-		
+				
 		//Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 		//il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
 		LOGGER.info("Numero di progetti: " + jsonArray.length());
@@ -119,6 +119,8 @@ public class GitlabApiClient {
 			
 			//Estraggo il valore della KEY "id", ovvero l'ID del progetto
 			int id = object.getInt("id");
+			String path_with_ns = object.getString("path_with_namespace");
+			LOGGER.info("Progetto " + path_with_ns + " (id " + id + ")");
 			
 			//Elimino i badges precedenti del progetto, passo alla funzione il suo ID e il TOKEN per l'autorizzazione
 			doDelete(id);
@@ -268,7 +270,9 @@ public class GitlabApiClient {
 					.accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", this.gitlabToken)
 					.get(Response.class);
-			String json = response.readEntity(String.class);
+		
+		if (response.getStatus() == 200) {
+			String json = response.readEntity(String.class);			
 			JSONArray files = new JSONArray(json);
 			for (int i=0; i<files.length(); i++) {
 				JSONObject object = files.getJSONObject(i);
@@ -277,6 +281,7 @@ public class GitlabApiClient {
 					b=true;
 				}
 			}
+		}
 			
 		return b;		
 		
