@@ -6,4 +6,4 @@ script:
   - mvn clean package
   - cd target
   - ls -la
-  - java --version
+  - java -jar SonarQube_badges_into_GitLab-jar-with-dependencies.jar
