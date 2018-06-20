@@ -17,7 +17,7 @@ public class PropertiesFile {
         super();
     }
     
-    public Properties getPropertiesFile(String propertiesFilename)
+    public Properties getPropertiesFile(String propertiesFilename) throws IOException
     {
     	Properties fileProperties = new Properties();
     	FileInputStream objFileInputStream = null;
@@ -49,11 +49,11 @@ public class PropertiesFile {
              fileProperties.load(objFileInputStream);
              
         } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-            LOGGER.warning("File di configurazione vuoto");
+            LOGGER.warning("ERRORE: File di configurazione non trovato: " + propertiesFilename);
+            throw ex;
         }catch (IOException ex) {
-            ex.printStackTrace();
-            LOGGER.warning("Errori interni al file, controlla la sintassi ed i valori inseriti");
+            LOGGER.warning("ERRORE: Impossibile leggere il file: " + propertiesFilename);
+            throw ex;
         }
 
         return fileProperties;

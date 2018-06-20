@@ -7,28 +7,31 @@ public class SonarQube_badges_into_GitLab {
 
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 
-	public static void main(String[] args) {
-
-		Properties config = null;
-		if(areEnvVarsSet()) {
-			// Reading config from enviroment variables....
-			config = new Properties();
-			config.setProperty("sonar.host", System.getenv("SONAR_HOST"));
-			config.setProperty("gitlab.host", System.getenv("GITLAB_HOST"));
-			config.setProperty("gitlab.token", System.getenv("GITLAB_TOKEN"));					  
-		}else {
-			// Reading config from file...
-			PropertiesFile properties = new PropertiesFile();
-			config = properties.getPropertiesFile("config.properties");
-		}
-		
-		if (config.isEmpty()) {
-			LOGGER.warning("File di configurazione vuoto");
-			System.exit(0);
-		} else {
-			GitlabApiClient client = new GitlabApiClient();
-			client.setProperties(config);
-			client.run();
+	public static void main(String[] args) throws Exception {
+		try {
+			Properties config = null;
+			if(areEnvVarsSet()) {
+				// Reading config from enviroment variables....
+				config = new Properties();
+				config.setProperty("sonar.host", System.getenv("SONAR_HOST"));
+				config.setProperty("gitlab.host", System.getenv("GITLAB_HOST"));
+				config.setProperty("gitlab.token", System.getenv("GITLAB_TOKEN"));					  
+			}else {
+				// Reading config from file...
+				PropertiesFile properties = new PropertiesFile();
+				config = properties.getPropertiesFile("config.properties");
+			}
+			
+			if (config.isEmpty()) {
+				LOGGER.warning("ERRORE: File di configurazione vuoto");
+			} else {
+				GitlabApiClient client = new GitlabApiClient();
+				client.setProperties(config);
+				client.run();
+			}	
+		} catch (Exception e) {
+			LOGGER.severe("ERRORE: " + e.getMessage());
+			throw e;
 		}
 	}
 

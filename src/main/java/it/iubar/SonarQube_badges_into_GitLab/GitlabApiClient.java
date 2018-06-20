@@ -50,7 +50,7 @@ public class GitlabApiClient {
 
 	}
 	
-	public static Client factoryClient() {
+	public static Client factoryClient() throws NoSuchAlgorithmException, KeyManagementException {
 		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
 			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
 				return null;
@@ -70,9 +70,11 @@ public class GitlabApiClient {
 			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
 			// HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();			
+			LOGGER.severe("ERRORE: " + e.getMessage());
+			throw e;
 		} catch (KeyManagementException e) {
-			e.printStackTrace();
+			LOGGER.severe("ERRORE: " + e.getMessage());
+			throw e;
 		}
 
 		ClientBuilder builder = ClientBuilder.newBuilder();
@@ -80,7 +82,7 @@ public class GitlabApiClient {
 		return client;
 	}
 
-	public void run() {
+	public void run() throws KeyManagementException, NoSuchAlgorithmException {
 		
 		loadConfig();
 		
@@ -132,7 +134,7 @@ public class GitlabApiClient {
 
 	}
 	
-	private void doDelete (int id) {
+	private void doDelete (int id) throws KeyManagementException, NoSuchAlgorithmException {
 	
 		Client client = factoryClient();
 		//Creo il link per la richiesta
@@ -160,14 +162,15 @@ public class GitlabApiClient {
 								Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete();
 		
 							} catch (Exception e) {
-								LOGGER.severe("Errore: " + e.getMessage());
+								LOGGER.severe("ERRORE: " + e.getMessage());
+								throw e;
 							}
 			}
 			LOGGER.info("Eliminati i badges del progetto: " + id);
 	}
 	
 	
-	private void doPost(int id, Map<String,List<String>> badges) {
+	private void doPost(int id, Map<String,List<String>> badges) throws KeyManagementException, NoSuchAlgorithmException {
 		
 		List<String> links = badges.get("links");
 		List<String> images = badges.get("images");
@@ -196,7 +199,7 @@ public class GitlabApiClient {
 		
 	}
 		
-	private Map<String,List<String>> createBadges(JSONObject object)
+	private Map<String,List<String>> createBadges(JSONObject object) throws KeyManagementException, NoSuchAlgorithmException
 	{
 		// Creo un mappa con due chiavi, una per le images e una per i link, come valore avranno le relative liste
 		Map<String,List<String>> map=new HashMap<String,List<String>>();
@@ -250,13 +253,13 @@ public class GitlabApiClient {
 		return UriBuilder.fromUri(this.gitlabHost + "/api/v4/").build();
 	}
 	
-	private boolean isGitlabci(int id) {
+	private boolean isGitlabci(int id) throws KeyManagementException, NoSuchAlgorithmException {
 		return isFile(id, ".gitlab-ci.yml");
 	}
-	private boolean isSonar(int id) {
+	private boolean isSonar(int id) throws KeyManagementException, NoSuchAlgorithmException {
 		return isFile(id, "sonar-project.properties");
 	}	
-	private boolean isFile(int id, String filename) {
+	private boolean isFile(int id, String filename) throws KeyManagementException, NoSuchAlgorithmException {
 		boolean b = false;
 		 Client client = factoryClient();
 		//creo il link per la richiesta
