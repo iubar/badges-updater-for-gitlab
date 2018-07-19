@@ -211,17 +211,20 @@ public class GitlabApiClient {
 		String group = namespace.getString("path");
 		
 		//genero la lista delle images
-		List<String> images = new ArrayList<String>();
+		List<String> images = new ArrayList<String>();		
 		if(isGitlabci(id)) {
-		images.add(this.gitlabHost + "/" + group + "/" + name + "/badges/master/build.svg");
+			images.add(this.gitlabHost + "/" + group + "/" + name + "/badges/master/build.svg");
 		}
+		
+		String key = group + ":" + name; // Nota che sto generando la chiave di ogni singolo progetto Sonar a partire da una convenzione. Non ho quindi la certezza matematica che sia proprio la stessa salvata nel file sonar-project.properties
+		
 		if(isSonar(id)) {
-		images.add(this.sonarHost + "/api/badges/gate?key=" + group + ":" + name);
-		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=bugs");
-		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=code_smells");
-		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=ncloc_language_distribution");
-		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=classes");
-		images.add(this.sonarHost + "/api/badges/measure?key=" + group + ":" + name + "&metric=functions");
+		images.add(this.sonarHost + "/api/badges/gate?key=" + key);
+		images.add(this.sonarHost + "/api/badges/measure?key=" + key + "&metric=bugs");
+		images.add(this.sonarHost + "/api/badges/measure?key=" + key + "&metric=code_smells");
+		images.add(this.sonarHost + "/api/badges/measure?key=" + key + "&metric=ncloc_language_distribution");
+		images.add(this.sonarHost + "/api/badges/measure?key=" + key + "&metric=classes");
+		images.add(this.sonarHost + "/api/badges/measure?key=" + key + "&metric=functions");
 		}
 		
 		//inserisco la lista appena creata come valore della prima chiave nella mappa
@@ -233,12 +236,12 @@ public class GitlabApiClient {
 		links.add(this.gitlabHost +"/" + group + "/" + name + "/commits/master");
 		}
 		if(isSonar(id)) {
-		links.add(this.sonarHost + " /dashboard?id=" + group + ":" + name);
-		links.add(this.sonarHost + "/component_measures/domain/Reliability?id=" + group + ":" + name);
-		links.add(this.sonarHost + "/component_measures/domain/Maintainability?id=" + group + ":" + name);
-		links.add(this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
-		links.add(this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
-		links.add(this.sonarHost + "/component_measures/domain/Size?id=" + group + ":" + name);
+		links.add(this.sonarHost + " /dashboard?id=" + key);
+		links.add(this.sonarHost + "/component_measures/domain/Reliability?id=" + key);
+		links.add(this.sonarHost + "/component_measures/domain/Maintainability?id=" + key);
+		links.add(this.sonarHost + "/component_measures/domain/Size?id=" + key);
+		links.add(this.sonarHost + "/component_measures/domain/Size?id=" + key);
+		links.add(this.sonarHost + "/component_measures/domain/Size?id=" + key);
 		}
 		
 		//inserisco la lista appena creata come valore della seconda chiave nella mappa
