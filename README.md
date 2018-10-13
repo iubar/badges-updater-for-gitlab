@@ -30,5 +30,5 @@ Running the application it'll delete all the previous badges in each project, an
 - Classes badge
 - Functions badge
 
-# Other projects
+# Other related projects
  * https://github.com/m4tthumphrey/php-gitlab-api
