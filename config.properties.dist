@@ -1,7 +1,4 @@
 sonar.host=127.0.0.1:9000
 gitlab.host=gitlab.example.com
-<<<<<<< HEAD
-gitlab.token=
-=======
-gitlab.token=
->>>>>>> e2434f8f6b71e73fa2d566559e4dac1578b5d70f
+gitlab.token=CHANGEME
+
