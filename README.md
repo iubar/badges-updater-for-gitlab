@@ -30,5 +30,10 @@ Running the application it'll delete all the previous badges in each project, an
 - Classes badge
 - Functions badge
 
+# Riferimenti
+
+ - https://docs.gitlab.com/ee/api/project_badges.html
+ - https://docs.gitlab.com/ee/user/project/pipelines/settings.html#pipeline-badges
+
 # Other related projects
  * https://github.com/m4tthumphrey/php-gitlab-api
