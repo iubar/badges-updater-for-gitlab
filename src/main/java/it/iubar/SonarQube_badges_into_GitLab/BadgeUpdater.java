@@ -1,11 +1,12 @@
 package it.iubar.SonarQube_badges_into_GitLab;
 
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response.Status;
 
-public class SonarQube_badges_into_GitLab {
+public class BadgeUpdater {
 
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 	private static final String CONFIG_FILE = "config.properties";
@@ -31,13 +32,13 @@ public class SonarQube_badges_into_GitLab {
 			} else {
 				GitlabApiClient client = new GitlabApiClient();
 				client.setProperties(config);
-				int statusCode = client.run();	
-				if(statusCode!=Status.OK.getStatusCode()) {
-					LOGGER.severe("Status code: " + statusCode);
+				client.run();
+				List<Integer> errors = client.getErrors();
+				if(!errors.isEmpty()) {
+					LOGGER.severe("Done with errors");
 					System.exit(1);
 				}else {
-					LOGGER.info("Status code: " + statusCode);
-					// OK: nothing to do
+					LOGGER.info("All done without errors");
 				}
 			}	
 		} catch (Exception e) {

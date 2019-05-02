@@ -43,12 +43,14 @@ public class GitlabApiClient {
 	
 	private static final boolean DELETE_PIPELINE = false;
 		
-	private static final boolean FAST_FAIL = true;
+	private static final boolean FAIL_FAST = true;
 
 	private String sonarHost = null;
 	private String gitlabHost = null;
 	private String gitlabToken = null;
 	private Properties config = null;
+
+	private List<Integer> errors = new ArrayList<Integer>();
 
 	public void setProperties(Properties config)
 	{
@@ -98,7 +100,7 @@ public class GitlabApiClient {
 		return client;
 	}
 
-	public int run() throws KeyManagementException, NoSuchAlgorithmException {
+	public void run() throws KeyManagementException, NoSuchAlgorithmException {
 
 		loadConfig();
 
@@ -145,10 +147,11 @@ public class GitlabApiClient {
 				if(DELETE_BADGES){
 				// Elimino i badges precedenti del progetto
 				statusCode = doDelete(projectId);
-				if(statusCode!=Status.OK.getStatusCode()) {
-					if(FAST_FAIL) {
+				if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
+					if(FAIL_FAST) {
 						System.exit(1);
 					}else {
+						this.errors.add(projectId);
 						break;
 					}
 				}
@@ -160,9 +163,10 @@ public class GitlabApiClient {
 					if(!badges.isEmpty()) {
 					statusCode = doPost(projectId, badges);
 					if(statusCode!=Status.CREATED.getStatusCode()) {
-						if(FAST_FAIL) {
+						if(FAIL_FAST) {
 							System.exit(1);
 						}else {
+							this.errors.add(projectId);
 							break;
 						}
 					}
@@ -181,9 +185,10 @@ public class GitlabApiClient {
 					statusCode = response2.getStatus();
 					if(statusCode!=Status.OK.getStatusCode()) {
 						LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode);
-						if(FAST_FAIL) {
+						if(FAIL_FAST) {
 							System.exit(1);
 						}else {
+							this.errors.add(projectId);
 							break;
 						}
 					}else {					
@@ -228,9 +233,10 @@ public class GitlabApiClient {
 					statusCode = response3.getStatus();
 					if(statusCode!=Status.OK.getStatusCode()) {
 						LOGGER.severe("Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode);
-						if(FAST_FAIL) {
+						if(FAIL_FAST) {
 							System.exit(1);
 						}else {
+							this.errors .add(projectId);
 							break;
 						}
 					}					
@@ -247,7 +253,7 @@ public class GitlabApiClient {
 				}
 			}
 		}
-		return statusCode;
+
 	}
 
 	private int doDelete(int projectId) throws KeyManagementException, NoSuchAlgorithmException {
@@ -266,7 +272,7 @@ public class GitlabApiClient {
 		if(statusCode==Status.NO_CONTENT.getStatusCode()) {
 			LOGGER.info("Nessun badge presente per il progetto " + projectId + ". Status code: " + statusCode);
 		}else if(statusCode!=Status.OK.getStatusCode()) {
-			LOGGER.info("Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode);			
+			LOGGER.severe("Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode);			
 		}else {
 			
 			// Inserisco i dati in un JSONArray
@@ -280,7 +286,9 @@ public class GitlabApiClient {
 					WebTarget webTarget = client.target(getBaseURI() + "projects/" + projectId + "/badges/" + badgeId);
 					Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete(Response.class);
 					statusCode = response2.getStatus();
-					if(statusCode!=Status.OK.getStatusCode()) {
+					if(statusCode==Status.NO_CONTENT.getStatusCode()) {
+						LOGGER.severe("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
+					}else if(statusCode!=Status.OK.getStatusCode()) {
 						LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);						 
 						break;						 
 					}
@@ -425,5 +433,9 @@ public class GitlabApiClient {
 
 		return b;		
 
+	}
+
+	public List<Integer> getErrors() {
+		return this.errors;
 	}	
 }
