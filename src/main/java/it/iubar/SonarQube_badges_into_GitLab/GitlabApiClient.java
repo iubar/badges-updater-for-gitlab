@@ -34,12 +34,19 @@ public class GitlabApiClient {
 	private static final String GITLAB_FILE = ".gitlab-ci.yml";
 
 	private static final String SONAR_FILE = "sonar-project.properties";
-
+	
+	private static final boolean DELETE_BADGES = true;
+	
+	private static final boolean ADD_BADGES = false;
+	
+	private static final boolean PRINT_PIPELINE = false;
+	
 	private static final boolean DELETE_PIPELINE = false;
 	
-	private static final boolean ADD_BADGES = true;
 	
 	private static final boolean FAST_FAIL = true;
+
+
 
 	private String sonarHost = null;
 	private String gitlabHost = null;
@@ -135,9 +142,10 @@ public class GitlabApiClient {
 
 				// Estraggo il valore della KEY "id", ovvero l'ID del progetto
 				int id = object.getInt("id");
-				String path_with_ns = object.getString("path_with_namespace");
-				LOGGER.info("Progetto " + path_with_ns + " (id " + id + ")");
+				String path = object.getString("path_with_namespace");
+				LOGGER.info("Progetto " + path + " (id " + id + ")");
 
+				if(DELETE_BADGES){
 				// Elimino i badges precedenti del progetto
 				statusCode = doDelete(id);
 				if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
@@ -146,8 +154,10 @@ public class GitlabApiClient {
 					}else {
 						break;
 					}
-				}else if(ADD_BADGES){
+				}
+				}				
 
+				if(ADD_BADGES){
 					// Aggiungo i badges relativi al progetto
 					List<JSONObject> badges = createBadges(object);
 					if(badges.size()>0) {
@@ -162,23 +172,30 @@ public class GitlabApiClient {
 					}
 				}
 
-				// Stampo l'elenco delle piplelines
-				// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines				
-				String route2 = "/projects/" + id + "/pipelines";
-				WebTarget target2 = client.target(getBaseURI() + route2);
-				Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
-						.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
-				statusCode = response2.getStatus();
-				if(statusCode!=Status.OK.getStatusCode()) {
-					LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + id + ". Status code: " + statusCode);
-					if(FAST_FAIL) {
-						System.exit(1);
-					}else {
-						break;
+				String json2 = null;
+					// Stampo l'elenco delle pipelines
+					// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines				
+					String route2 = "/projects/" + id + "/pipelines";
+					WebTarget target2 = client.target(getBaseURI() + route2);
+					Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
+							.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
+					statusCode = response2.getStatus();
+					if(statusCode!=Status.OK.getStatusCode()) {
+						LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + id + ". Status code: " + statusCode);
+						if(FAST_FAIL) {
+							System.exit(1);
+						}else {
+							break;
+						}
+					}else {					
+						json2 = response2.readEntity(String.class);	
+						if(PRINT_PIPELINE) {
+							LOGGER.log(Level.INFO, json2);
+						}
+						 
 					}
-				}else {
-					String json2 = response2.readEntity(String.class);
-					LOGGER.log(Level.INFO, json2);
+			 				
+				if(DELETE_PIPELINE && json2!=null) {
 
 					//					[
 					//					  {
@@ -200,7 +217,7 @@ public class GitlabApiClient {
 
 					JSONArray jsonArray2 = new JSONArray(json2);
 					LOGGER.info("Numero di pipeline per il progetto " + id + ": " + jsonArray.length());
-					if(DELETE_PIPELINE) {
+					
 					for (int j = 0; j < jsonArray2.length(); j++) {
 					JSONObject object2 = jsonArray2.getJSONObject(j);
 					int pipelineId = object2.getInt("id");						
@@ -229,8 +246,6 @@ public class GitlabApiClient {
 					}
 
 				}
-				}
-
 			}
 		}
 		return statusCode;
