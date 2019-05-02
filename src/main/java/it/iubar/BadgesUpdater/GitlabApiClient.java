@@ -237,7 +237,7 @@ public class GitlabApiClient {
 		List<Integer> pipelineIds = new ArrayList<Integer>();
 		JSONArray pipelines = new JSONArray(json2);			
 		if(pipelines.length()<=SKIP_PIPELINES_QNT) {
-			LOGGER.info("#" + pipelines.length() + " <= " + SKIP_PIPELINES_QNT + " so there is no pipelines to delete");
+			LOGGER.info("#" + pipelines.length() + " pipelines <= " + SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
 		}else {
 			LOGGER.info("#" + pipelines.length() + " pipelines read for project id " + projectId);
 		for (int j = 0 + SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
@@ -409,11 +409,11 @@ public class GitlabApiClient {
 			image = this.sonarHost + "/api/badges/measure?key=" + key + "&metric=ncloc_language_distribution";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=metric=classes&id=" + key;
+			link = this.sonarHost + "/component_measures?metric=classes&id=" + key;
 			image = this.sonarHost + "/api/badges/measure?key=" + key + "&metric=classes";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=metric=functions&id=" + key;
+			link = this.sonarHost + "/component_measures?metric=functions&id=" + key;
 			image = this.sonarHost + "/api/badges/measure?key=" + key + "&metric=functions";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
