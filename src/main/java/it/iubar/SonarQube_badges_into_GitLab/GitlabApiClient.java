@@ -135,13 +135,13 @@ public class GitlabApiClient {
 
 				// Elimino i badges precedenti del progetto
 				statusCode = doDelete(id);
-				if(statusCode!=Status.OK.getStatusCode()) {
+				if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
 					break;
 				}else {
 
 					// Aggiungo i badges relativi al progetto
 					statusCode = doPost(id, createBadges(object));
-					if(statusCode!=Status.OK.getStatusCode()) {
+					if(statusCode!=Status.CREATED.getStatusCode()) {
 						break;
 					}
 				}
@@ -193,7 +193,6 @@ public class GitlabApiClient {
 	}
 
 	private int doDelete (int id) throws KeyManagementException, NoSuchAlgorithmException {
-
 		Client client = factoryClient();
 		//Creo il link per la richiesta
 		WebTarget target = client.target(getBaseURI());
@@ -208,7 +207,7 @@ public class GitlabApiClient {
 				.get(Response.class);
 
 		int statusCode = response.getStatus();
-		if(statusCode!=Status.OK.getStatusCode()) {
+		if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
 			LOGGER.severe("Status code: " + statusCode);
 		}else {
 
@@ -251,14 +250,14 @@ public class GitlabApiClient {
 
 		for (JSONObject badge : badges) {			
 			// Faccio il post passando l'oggetto JSON sopra creato convertendolo in stringa
-			Response response = target.path("projects").path(""+id).path("badges").request().accept(MediaType.APPLICATION_JSON)
+			Response response = target.path("projects").path("" + id).path("badges").request().accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", this.gitlabToken).post(Entity.json(badge.toString()));
 			statusCode = response.getStatus();
 			if(statusCode!=Status.CREATED.getStatusCode()) {
 				LOGGER.severe("Status code: " + statusCode);
 				break;
 			}else {
-				LOGGER.info("Creati i badges del progetto: " + id);
+				LOGGER.info("Badges aggiunti con successo al progetto: " + id);
 			}
 		}
 		return statusCode;
@@ -363,8 +362,8 @@ public class GitlabApiClient {
 			JSONArray files = new JSONArray(json);
 			for (int i=0; i<files.length(); i++) {
 				JSONObject object = files.getJSONObject(i);
-				String file_name = object.getString("name");
-				if (file_name.equals(filename)) {
+				String fileName = object.getString("name");
+				if (fileName.equals(filename)) {
 					b=true;
 				}
 			}
