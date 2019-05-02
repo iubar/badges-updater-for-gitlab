@@ -248,7 +248,7 @@ public class GitlabApiClient {
 				.get(Response.class);
 
 		int statusCode = response.getStatus();
-		if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
+		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recupearare l'elenco dei badge del progetto " + id + ". Status code: " + statusCode);
 		}else {
 
@@ -264,8 +264,8 @@ public class GitlabApiClient {
 					WebTarget webTarget = client.target(getBaseURI()+"projects/"+id+"/badges/"+id_badgeStr);
 					Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete();
 					statusCode = response2.getStatus();
-					if(statusCode!=Status.OK.getStatusCode()) {
-						LOGGER.severe("Impossibile eliminare il badge " + id_badge + " del progetto " + id + ".Status code: " + statusCode);
+					if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
+						LOGGER.severe("Impossibile eliminare il badge " + id_badge + " del progetto " + id + ". Status code: " + statusCode);
 						if(FAST_FAIL) {
 							System.exit(1);
 						}else {
