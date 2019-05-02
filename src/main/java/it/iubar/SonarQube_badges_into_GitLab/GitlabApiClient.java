@@ -37,13 +37,12 @@ public class GitlabApiClient {
 	
 	private static final boolean DELETE_BADGES = true;
 	
-	private static final boolean ADD_BADGES = false;
+	private static final boolean ADD_BADGES = true;
 	
 	private static final boolean PRINT_PIPELINE = false;
 	
 	private static final boolean DELETE_PIPELINE = false;
-	
-	
+		
 	private static final boolean FAST_FAIL = true;
 
 
@@ -160,7 +159,7 @@ public class GitlabApiClient {
 				if(ADD_BADGES){
 					// Aggiungo i badges relativi al progetto
 					List<JSONObject> badges = createBadges(object);
-					if(badges.size()>0) {
+					if(!badges.isEmpty()) {
 					statusCode = doPost(id, badges);
 					if(statusCode!=Status.CREATED.getStatusCode()) {
 						if(FAST_FAIL) {
@@ -172,7 +171,9 @@ public class GitlabApiClient {
 					}
 				}
 
-				String json2 = null;
+				
+				if(PRINT_PIPELINE || DELETE_PIPELINE) {
+					String json2 = null;
 					// Stampo l'elenco delle pipelines
 					// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines				
 					String route2 = "/projects/" + id + "/pipelines";
@@ -244,7 +245,7 @@ public class GitlabApiClient {
 					//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 					//
 					}
-
+				}
 				}
 			}
 		}
@@ -280,12 +281,8 @@ public class GitlabApiClient {
 					Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete();
 					statusCode = response2.getStatus();
 					if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
-						LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
-						if(FAST_FAIL) {
-							System.exit(1);
-						}else {
-							break;
-						}
+						LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);						 
+						break;						 
 					}
 				} catch (Exception e) {
 					LOGGER.severe("ERRORE: " + e.getMessage());
