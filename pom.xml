@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>it.iubar</groupId>
-	<artifactId>SonarQube_badges_into_GitLab</artifactId>
+	<artifactId>BadgeUpdater</artifactId>
 	<version>1.0.1-RELEASE</version>
 	<packaging>jar</packaging>
 	<build>
@@ -36,7 +36,7 @@
 							<archive>
 								<manifest>
 									<mainClass>
-										it.iubar.SonarQube_badges_into_GitLab.SonarQube_badges_into_GitLab
+										it.iubar.BadgeUpdater.BadgeUpdater
 									</mainClass>
 								</manifest>
 							</archive>
@@ -78,7 +78,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>libs/</classpathPrefix>
-							<mainClass>it.iubar.SonarQube_badges_into_GitLab.SonarQube_badges_into_GitLab</mainClass>
+							<mainClass>it.iubar.BadgeUpdater.BadgeUpdater</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

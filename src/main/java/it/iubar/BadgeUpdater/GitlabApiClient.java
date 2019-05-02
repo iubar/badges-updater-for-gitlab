@@ -1,4 +1,4 @@
-package it.iubar.SonarQube_badges_into_GitLab;
+package it.iubar.BadgeUpdater;
 
 import java.net.URI;
 import java.security.KeyManagementException;
