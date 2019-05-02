@@ -157,7 +157,7 @@ public class GitlabApiClient {
 					LOGGER.severe("Status code: " + statusCode);
 					break;
 				}else {
-					String json2 = response.readEntity(String.class);
+					String json2 = response2.readEntity(String.class);
 					LOGGER.log(Level.INFO, json2);
 
 					//					[
@@ -181,7 +181,15 @@ public class GitlabApiClient {
 
 					//					foreach (){
 					//					    // https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline
-					//						DELETE /projects/:id/pipelines/:pipeline_id						
+					//						DELETE /projects/:id/pipelines/:pipeline_id		
+					//						Verificare poi su disco se gli artifacts sono stati effettivamente cancellati
+					//						/var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
+					//						Lo sorage path può variare, vedi:
+					//						https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
+					//
+					//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
+					//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
+					//
 					//					}
 
 				}
@@ -257,7 +265,7 @@ public class GitlabApiClient {
 				LOGGER.severe("Status code: " + statusCode);
 				break;
 			}else {
-				LOGGER.info("Badges aggiunti con successo al progetto: " + id);
+				LOGGER.info("Badge aggiunto con successo al progetto: " + id);
 			}
 		}
 		return statusCode;
