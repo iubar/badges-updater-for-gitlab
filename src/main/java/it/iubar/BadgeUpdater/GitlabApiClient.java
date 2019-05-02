@@ -39,7 +39,7 @@ public class GitlabApiClient {
 	
 	private static final boolean ADD_BADGES = true;
 	
-	private static final boolean PRINT_PIPELINE = false;
+	private static final boolean PRINT_PIPELINE = true;
 	
 	private static final boolean DELETE_PIPELINE = false;
 		
@@ -269,9 +269,7 @@ public class GitlabApiClient {
 				.get(Response.class);
 
 		int statusCode = response.getStatus();
-		if(statusCode==Status.NO_CONTENT.getStatusCode()) {
-			LOGGER.info("Nessun badge presente per il progetto " + projectId + ". Status code: " + statusCode);
-		}else if(statusCode!=Status.OK.getStatusCode()) {
+		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode);			
 		}else {
 			
@@ -287,7 +285,8 @@ public class GitlabApiClient {
 					Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete(Response.class);
 					statusCode = response2.getStatus();
 					if(statusCode==Status.NO_CONTENT.getStatusCode()) {
-						LOGGER.severe("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
+						// LOGGER.info("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
+						// ok nothing to do
 					}else if(statusCode!=Status.OK.getStatusCode()) {
 						LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);						 
 						break;						 
