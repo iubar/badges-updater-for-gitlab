@@ -34,6 +34,7 @@ Running the application it'll delete all the previous badges in each project, an
 
  - https://docs.gitlab.com/ee/api/project_badges.html
  - https://docs.gitlab.com/ee/user/project/pipelines/settings.html#pipeline-badges
+ - https://docs.gitlab.com/ee/api/pipelines.html#cancel-a-pipelines-jobs
 
 # Other related projects
  * https://github.com/m4tthumphrey/php-gitlab-api
