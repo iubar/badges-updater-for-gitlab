@@ -135,35 +135,39 @@ public class GitlabApiClient {
 			String json = response.readEntity(String.class);
 
 			// Il file JSON è un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
-			JSONArray jsonArray = new JSONArray(json);
+			JSONArray projects = new JSONArray(json);
 
 			// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 			// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
-			LOGGER.info("#" + jsonArray.length() + " projects read from repository");
+			LOGGER.info("#" + projects.length() + " projects read from repository");
 
 			// Effettuo una serie di operazioni su tutti i progetti
 			for (int i = 0; i < jsonArray.length(); i++) {
 
-				JSONObject object = jsonArray.getJSONObject(i);
-				int projectId = object.getInt("id");
-				String path = object.getString("path_with_namespace");
-				LOGGER.info("Progetto " + path + " (id " + projectId + ")");
+				JSONObject project = projects.getJSONObject(i);
+				int projectId = project.getInt("id");
+				String path = project.getString("path_with_namespace");
+				LOGGER.info("Project " + path + " (id " + projectId + ")");
 
 				if(DELETE_BADGES){
 					// Elimino i badges precedenti del progetto
 					List<Integer> results = removeBadges(projectId);
 					if(results.isEmpty()) {
 						LOGGER.warning("removeBadges() returns no results for project id " + projectId);
+					}else {
+						LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted from project id " + projectId);
 					}
 				}				
 
 				if(ADD_BADGES){
 					// Aggiungo i badges relativi al progetto
-					List<JSONObject> badges = createBadges(object);
+					List<JSONObject> badges = createBadges(project);
 					if(!badges.isEmpty()) {
 						List<Integer> results = insertBadges(projectId, badges);
 						if(results.isEmpty()) {
 							LOGGER.severe("insertBadges() returns no results for project id " + projectId);
+						}else {
+							LOGGER.log(Level.INFO, "#" + results.size() + " badges added to project id " + projectId);
 						}
 					}
 				}
@@ -220,8 +224,7 @@ public class GitlabApiClient {
 						if(results.isEmpty()) {
 							LOGGER.warning("removePipelines() returns no results for project id " + projectId);
 						}else {
-							JSONArray jsonArray2 = new JSONArray(json2);
-							LOGGER.log(Level.INFO, "#" + jsonArray2.length() + " pipelines removed from project id " + projectId);
+							LOGGER.log(Level.INFO, "#" + results.size() + " pipelines removed from project id " + projectId);
 						}					
 					}
 				}
@@ -232,8 +235,11 @@ public class GitlabApiClient {
 
 	private List<Integer> removePipelines(int projectId, String json2) {
 		List<Integer> pipelineIds = new ArrayList<Integer>();
-		JSONArray pipelines = new JSONArray(json2);
-		LOGGER.info("#" + pipelines.length() + " pipelines read for project id " + projectId);		
+		JSONArray pipelines = new JSONArray(json2);			
+		if(pipelines.length()<=SKIP_PIPELINES_QNT) {
+			LOGGER.info("#" + pipelines.length() + " <= " + SKIP_PIPELINES_QNT + " so there is no pipelines to delete");
+		}else {
+			LOGGER.info("#" + pipelines.length() + " pipelines read for project id " + projectId);
 		for (int j = 0 + SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
 			JSONObject pipeline = pipelines.getJSONObject(j);
 			int pipelineId = pipeline.getInt("id");						
@@ -262,6 +268,7 @@ public class GitlabApiClient {
 			//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 			//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 			//
+		}
 		}
 		return pipelineIds;
 	}
