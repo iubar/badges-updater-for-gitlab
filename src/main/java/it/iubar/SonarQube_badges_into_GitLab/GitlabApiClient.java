@@ -34,7 +34,11 @@ public class GitlabApiClient {
 
 	private static final String GITLAB_FILE = ".gitlab-ci.yml";
 
-	private static final String SONAR_FILE = "sonar-project.properties";  
+	private static final String SONAR_FILE = "sonar-project.properties";
+
+	private static final boolean DELETE_PIPELINE = false;
+
+	private static final boolean FAST_FAIL = true;
 
 	private String sonarHost = null;
 	private String gitlabHost = null;
@@ -119,8 +123,8 @@ public class GitlabApiClient {
 			// Il file JSON è un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
 			JSONArray jsonArray = new JSONArray(json);
 
-			//Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
-			//il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
+			// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
+			// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
 			LOGGER.info("Numero di progetti: " + jsonArray.length());
 
 			// Effettuo una serie di operazioni su tutti i progetti
@@ -136,13 +140,24 @@ public class GitlabApiClient {
 				// Elimino i badges precedenti del progetto
 				statusCode = doDelete(id);
 				if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
-					break;
+					if(FAST_FAIL) {
+						System.exit(1);
+					}else {
+						break;
+					}
 				}else {
 
 					// Aggiungo i badges relativi al progetto
-					statusCode = doPost(id, createBadges(object));
+					List<JSONObject> badges = createBadges(object);
+					if(badges.size()>0) {
+					statusCode = doPost(id, badges);
 					if(statusCode!=Status.CREATED.getStatusCode()) {
-						break;
+						if(FAST_FAIL) {
+							System.exit(1);
+						}else {
+							break;
+						}
+					}
 					}
 				}
 
@@ -155,7 +170,11 @@ public class GitlabApiClient {
 				statusCode = response2.getStatus();
 				if(statusCode!=Status.OK.getStatusCode()) {
 					LOGGER.severe("Status code: " + statusCode);
-					break;
+					if(FAST_FAIL) {
+						System.exit(1);
+					}else {
+						break;
+					}
 				}else {
 					String json2 = response2.readEntity(String.class);
 					LOGGER.log(Level.INFO, json2);
@@ -178,11 +197,27 @@ public class GitlabApiClient {
 					//					]
 
 
-
-					//					foreach (){
-					//					    // https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline
-					//						DELETE /projects/:id/pipelines/:pipeline_id		
-					//						Verificare poi su disco se gli artifacts sono stati effettivamente cancellati
+					JSONArray jsonArray2 = new JSONArray(json2);
+					LOGGER.info("Numero di pipeline per il progetto " + id + ": " + jsonArray.length());
+					if(DELETE_PIPELINE) {
+					for (int j = 0; j < jsonArray2.length(); j++) {
+					JSONObject object2 = jsonArray2.getJSONObject(j);
+					int pipelineId = object2.getInt("id");						
+					// https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline						
+					String route3 = "/projects/" + id + "/pipelines/" + pipelineId;
+					WebTarget target3 = client.target(getBaseURI() + route3);					
+					Response response3 = target3.request().accept(MediaType.APPLICATION_JSON)
+							.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
+					statusCode = response3.getStatus();
+					if(statusCode!=Status.OK.getStatusCode()) {
+						LOGGER.severe("Status code: " + statusCode);
+						if(FAST_FAIL) {
+							System.exit(1);
+						}else {
+							break;
+						}
+					}					
+					//						Verificare poi su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
 					//						/var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
 					//						Lo sorage path può variare, vedi:
 					//						https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
@@ -190,10 +225,10 @@ public class GitlabApiClient {
 					//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 					//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 					//
-					//					}
+					}
 
 				}
-
+				}
 
 			}
 		}
@@ -300,7 +335,7 @@ public class GitlabApiClient {
 		String key = group + ":" + name; 
 
 		if(!isGitlabci(id)) {
-			LOGGER.severe("File " + GITLAB_FILE + " assente per il progetto " + key + " (" + id + ")");
+			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + key + " (" + id + ")");
 		}else {
 			String link = this.gitlabHost +"/" + group + "/" + name + "/commits/%{default_branch}";
 			String  image = this.gitlabHost + "/" + group + "/" + name + "/badges/%{default_branch}/build.svg";			
@@ -309,7 +344,7 @@ public class GitlabApiClient {
 		}
 
 		if(!isSonar(id)) {
-			LOGGER.severe("File " + SONAR_FILE + " assente per il progetto " + key + " (" + id + ")");
+			LOGGER.warning("File " + SONAR_FILE + " assente per il progetto " + key + " (" + id + ")");
 		}else {	 		
 			String link = this.sonarHost + "/dashboard?id=" + key;
 			String image = this.sonarHost + "/api/badges/gate?key=" + key;
