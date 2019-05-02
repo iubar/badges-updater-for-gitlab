@@ -136,19 +136,18 @@ public class GitlabApiClient {
 				// Elimino i badges precedenti del progetto
 				statusCode = doDelete(id);
 				if(statusCode!=Status.OK.getStatusCode()) {
-					LOGGER.severe("Status code: " + statusCode);
 					break;
 				}else {
 
 					// Aggiungo i badges relativi al progetto
 					statusCode = doPost(id, createBadges(object));
 					if(statusCode!=Status.OK.getStatusCode()) {
-						LOGGER.severe("Status code: " + statusCode);
 						break;
 					}
 				}
 
 				// Stampo l'elenco delle piplelines
+				// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines				
 				String route2 = "/projects/" + id + "/pipelines";
 				WebTarget target2 = client.target(getBaseURI() + route2);
 				Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
@@ -160,6 +159,31 @@ public class GitlabApiClient {
 				}else {
 					String json2 = response.readEntity(String.class);
 					LOGGER.log(Level.INFO, json2);
+
+					//					[
+					//					  {
+					//					    "id": 47,
+					//					    "status": "pending",
+					//					    "ref": "new-pipeline",
+					//					    "sha": "a91957a858320c0e17f3a0eca7cfacbff50ea29a",
+					//					    "web_url": "https://example.com/foo/bar/pipelines/47"
+					//					  },
+					//					  {
+					//					    "id": 48,
+					//					    "status": "pending",
+					//					    "ref": "new-pipeline",
+					//					    "sha": "eb94b618fb5865b26e80fdd8ae531b7a63ad851a",
+					//					    "web_url": "https://example.com/foo/bar/pipelines/48"
+					//					  }
+					//					]
+
+
+
+					//					foreach (){
+					//					    // https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline
+					//						DELETE /projects/:id/pipelines/:pipeline_id						
+					//					}
+
 				}
 
 
@@ -199,17 +223,18 @@ public class GitlabApiClient {
 				try {
 					WebTarget webTarget = client.target(getBaseURI()+"projects/"+id+"/badges/"+id_badgeStr);
 					Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete();
-					statusCode = response.getStatus();
+					statusCode = response2.getStatus();
 					if(statusCode!=Status.OK.getStatusCode()) {
 						LOGGER.severe("Status code: " + statusCode);
 						break;
+					}else {
+						LOGGER.info("Eliminati i badges del progetto: " + id);
 					}
 				} catch (Exception e) {
 					LOGGER.severe("ERRORE: " + e.getMessage());
 					throw e;
 				}
 			}
-			LOGGER.info("Eliminati i badges del progetto: " + id);
 		}
 		return statusCode;
 	}
@@ -229,13 +254,13 @@ public class GitlabApiClient {
 			Response response = target.path("projects").path(""+id).path("badges").request().accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", this.gitlabToken).post(Entity.json(badge.toString()));
 			statusCode = response.getStatus();
-			if(statusCode!=Status.OK.getStatusCode()) {
+			if(statusCode!=Status.CREATED.getStatusCode()) {
 				LOGGER.severe("Status code: " + statusCode);
 				break;
+			}else {
+				LOGGER.info("Creati i badges del progetto: " + id);
 			}
-
 		}
-		LOGGER.info("Inseriti i badges del progetto: " + id);
 		return statusCode;
 	}
 
@@ -321,11 +346,9 @@ public class GitlabApiClient {
 	private boolean isFile(int id, String filename) throws KeyManagementException, NoSuchAlgorithmException {
 		boolean b = false;
 		Client client = factoryClient();
-		//creo il link per la richiesta
 		WebTarget target = client.target(getBaseURI());
-		//invio la richiesta di get per avere il tree di un progetto	
 		Response response = target.path("projects")
-				.path(""+id)
+				.path("" + id)
 				.path("repository")
 				.path("tree")
 				.request()
