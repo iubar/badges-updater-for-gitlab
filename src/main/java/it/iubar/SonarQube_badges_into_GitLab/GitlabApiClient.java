@@ -27,7 +27,6 @@ import org.json.JSONObject;
 
 public class GitlabApiClient {
 
-
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 
 	private static final int MAX_PROJECT_PER_PAGE = 200;
@@ -37,7 +36,9 @@ public class GitlabApiClient {
 	private static final String SONAR_FILE = "sonar-project.properties";
 
 	private static final boolean DELETE_PIPELINE = false;
-
+	
+	private static final boolean ADD_BADGES = true;
+	
 	private static final boolean FAST_FAIL = true;
 
 	private String sonarHost = null;
@@ -145,7 +146,7 @@ public class GitlabApiClient {
 					}else {
 						break;
 					}
-				}else {
+				}else if(ADD_BADGES){
 
 					// Aggiungo i badges relativi al progetto
 					List<JSONObject> badges = createBadges(object);
@@ -235,12 +236,12 @@ public class GitlabApiClient {
 		return statusCode;
 	}
 
-	private int doDelete (int id) throws KeyManagementException, NoSuchAlgorithmException {
+	private int doDelete (int projectId) throws KeyManagementException, NoSuchAlgorithmException {
 		Client client = factoryClient();
 		WebTarget target = client.target(getBaseURI());
 
 		Response response = target.path("projects")
-				.path("" + id)
+				.path("" + projectId)
 				.path("badges")
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -249,23 +250,22 @@ public class GitlabApiClient {
 
 		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode()) {
-			LOGGER.severe("Impossibile recupearare l'elenco dei badge del progetto " + id + ". Status code: " + statusCode);
+			LOGGER.severe("Impossibile recupearare l'elenco dei badge del progetto " + projectId + ". Status code: " + statusCode);
 		}else {
 
 			// Inserisco i dati in un JSONArray
 			String json = response.readEntity(String.class);
 			JSONArray badges = new JSONArray(json);
-			// Elimino i badges inserendo nella chiamata l'id di un badges
+			// Elimino tutti i badges configurati per il progetto identificato da projectId
 			for (int i = 0; i < badges.length(); i++) {						
 				JSONObject object = badges.getJSONObject(i);
-				int id_badge = object.getInt("id");
-				String id_badgeStr=""+id_badge;					
+				int badgeId = object.getInt("id");			
 				try {
-					WebTarget webTarget = client.target(getBaseURI()+"projects/"+id+"/badges/"+id_badgeStr);
+					WebTarget webTarget = client.target(getBaseURI() + "projects/" + projectId +"/badges/" + badgeId);
 					Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete();
 					statusCode = response2.getStatus();
 					if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
-						LOGGER.severe("Impossibile eliminare il badge " + id_badge + " del progetto " + id + ". Status code: " + statusCode);
+						LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
 						if(FAST_FAIL) {
 							System.exit(1);
 						}else {
@@ -282,7 +282,7 @@ public class GitlabApiClient {
 	}
 
 
-	private int doPost(int id, List<JSONObject> badges) throws KeyManagementException, NoSuchAlgorithmException {
+	private int doPost(int projectId, List<JSONObject> badges) throws KeyManagementException, NoSuchAlgorithmException {
 		int statusCode = 0;
 
 		// Creo il client utilizzando la funzione factoryClient() che ignora la validitï¿½ del certificato SSL
@@ -293,7 +293,7 @@ public class GitlabApiClient {
 
 		for (JSONObject badge : badges) {			
 			// Faccio il post passando l'oggetto JSON sopra creato convertendolo in stringa
-			Response response = target.path("projects").path("" + id).path("badges").request().accept(MediaType.APPLICATION_JSON)
+			Response response = target.path("projects").path("" + projectId).path("badges").request().accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", this.gitlabToken).post(Entity.json(badge.toString()));
 			statusCode = response.getStatus();
 			if(statusCode!=Status.CREATED.getStatusCode()) {
