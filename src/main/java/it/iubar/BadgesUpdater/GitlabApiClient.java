@@ -142,7 +142,7 @@ public class GitlabApiClient {
 			LOGGER.info("#" + projects.length() + " projects read from repository");
 
 			// Effettuo una serie di operazioni su tutti i progetti
-			for (int i = 0; i < jsonArray.length(); i++) {
+			for (int i = 0; i < projects.length(); i++) {
 
 				JSONObject project = projects.getJSONObject(i);
 				int projectId = project.getInt("id");
