@@ -112,9 +112,9 @@ public class GitlabApiClient {
 
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
-		LOGGER.info("Lettura dei progetti: CODE(" + statusCode +")");
+ 
 		if(statusCode!=Status.OK.getStatusCode()) {
-			LOGGER.severe("Status code: " + statusCode);
+			LOGGER.severe("Impossibile recuperare l'elenco dei progetti. Status code: " + statusCode);
 		}else {
 
 			// Dalla chiamata GET prendo il file JSON che ci restituisce e lo scrivo in una stringa
@@ -240,9 +240,8 @@ public class GitlabApiClient {
 		//Creo il link per la richiesta
 		WebTarget target = client.target(getBaseURI());
 		//try {
-		//Continuo la richiesta per ricevere i badges di un progetto
 		Response response = target.path("projects")
-				.path( "" + id)
+				.path("" + id)
 				.path("badges")
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
@@ -251,7 +250,7 @@ public class GitlabApiClient {
 
 		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
-			LOGGER.severe("Status code: " + statusCode);
+			LOGGER.severe("Impossibile recupearare l'elenco dei badge del progetto. Status code: " + statusCode);
 		}else {
 
 			// Inserisco i dati in un JSONArray
@@ -297,7 +296,7 @@ public class GitlabApiClient {
 					.header("PRIVATE-TOKEN", this.gitlabToken).post(Entity.json(badge.toString()));
 			statusCode = response.getStatus();
 			if(statusCode!=Status.CREATED.getStatusCode()) {
-				LOGGER.severe("Status code: " + statusCode);
+				LOGGER.severe("Impossibile aggiungere il badge. Status code: " + statusCode);
 				break;
 			}else {
 				LOGGER.info("Badge aggiunto con successo al progetto: " + id);
