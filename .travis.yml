@@ -6,4 +6,4 @@ script:
   - mvn clean package
   - cd target
   - ls -la
-  - java -jar BadgeUpdater-jar-with-dependencies.jar
+  - java -jar BadgesUpdater-jar-with-dependencies.jar

@@ -1,4 +1,4 @@
-package it.iubar.BadgeUpdater;
+package it.iubar.BadgesUpdater;
 
 import java.util.List;
 import java.util.Properties;
@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response.Status;
 
-public class BadgeUpdater {
+public class BadgesUpdater {
 
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 	private static final String CONFIG_FILE = "config.properties";

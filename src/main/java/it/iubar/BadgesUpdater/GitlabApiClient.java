@@ -1,4 +1,4 @@
-package it.iubar.BadgeUpdater;
+package it.iubar.BadgesUpdater;
 
 import java.net.URI;
 import java.security.KeyManagementException;
@@ -34,16 +34,18 @@ public class GitlabApiClient {
 	private static final String GITLAB_FILE = ".gitlab-ci.yml";
 
 	private static final String SONAR_FILE = "sonar-project.properties";
-	
-	private static final boolean DELETE_BADGES = true;
-	
-	private static final boolean ADD_BADGES = true;
-	
-	private static final boolean PRINT_PIPELINE = true;
-	
-	private static final boolean DELETE_PIPELINE = false;
-		
+
 	private static final boolean FAIL_FAST = true;
+
+	private static final boolean DELETE_BADGES = true;
+
+	private static final boolean ADD_BADGES = true;
+
+	private static final boolean PRINT_PIPELINE = false;
+
+	private static final boolean DELETE_PIPELINE = true;
+
+	private static final int SKIP_PIPELINES_QNT = 4;
 
 	private String sonarHost = null;
 	private String gitlabHost = null;
@@ -51,6 +53,8 @@ public class GitlabApiClient {
 	private Properties config = null;
 
 	private List<Integer> errors = new ArrayList<Integer>();
+
+	private Client client = null;
 
 	public void setProperties(Properties config)
 	{
@@ -65,9 +69,15 @@ public class GitlabApiClient {
 		LOGGER.info("sonarHost = " + this.sonarHost);
 		LOGGER.info("gitlabHost = " + this.gitlabHost);
 		LOGGER.info("gitlabToken = " + this.gitlabToken);
-
 	}
 
+	/**
+	 * Crea il client e ignora la validità del certificato SSL
+	 * 
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 * @throws KeyManagementException
+	 */
 	public static Client factoryClient() throws NoSuchAlgorithmException, KeyManagementException {
 		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
 			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
@@ -104,14 +114,11 @@ public class GitlabApiClient {
 
 		loadConfig();
 
-		// Creo la variabile per la rotta
 		String route = "projects?per_page=" + MAX_PROJECT_PER_PAGE;
 
-		//Creo il client utilizzando la funzione factoryClient() che ignora la validitï¿½ del certificato SSL
-		Client client = factoryClient();
+		this.client  = factoryClient();
 
-		// Creo il target utilizzando getBaseURI, che ha l'indirizzo base, piï¿½ la rotta
-		WebTarget target = client.target(getBaseURI() + route);
+		WebTarget target = this.client.target(getBaseURI() + route);
 
 		// Effettuo la chiamata GET
 		Response response = target.request().accept(MediaType.APPLICATION_JSON)
@@ -119,7 +126,7 @@ public class GitlabApiClient {
 
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
- 
+
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco dei progetti. Status code: " + statusCode);
 		}else {
@@ -132,54 +139,42 @@ public class GitlabApiClient {
 
 			// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 			// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
-			LOGGER.info("Numero di progetti: " + jsonArray.length());
+			LOGGER.info("#" + jsonArray.length() + " projects");
 
 			// Effettuo una serie di operazioni su tutti i progetti
 			for (int i = 0; i < jsonArray.length(); i++) {
 
 				JSONObject object = jsonArray.getJSONObject(i);
-
-				// Estraggo il valore della KEY "id", ovvero l'ID del progetto
 				int projectId = object.getInt("id");
 				String path = object.getString("path_with_namespace");
 				LOGGER.info("Progetto " + path + " (id " + projectId + ")");
 
 				if(DELETE_BADGES){
-				// Elimino i badges precedenti del progetto
-				statusCode = doDelete(projectId);
-				if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
-					if(FAIL_FAST) {
-						System.exit(1);
-					}else {
-						this.errors.add(projectId);
-						break;
+					// Elimino i badges precedenti del progetto
+					List<Integer> results = removeBadges(projectId);
+					if(results.isEmpty()) {
+						LOGGER.severe("removeBadges() returns no results for project id " + projectId);
 					}
-				}
 				}				
 
 				if(ADD_BADGES){
 					// Aggiungo i badges relativi al progetto
 					List<JSONObject> badges = createBadges(object);
 					if(!badges.isEmpty()) {
-					statusCode = doPost(projectId, badges);
-					if(statusCode!=Status.CREATED.getStatusCode()) {
-						if(FAIL_FAST) {
-							System.exit(1);
-						}else {
-							this.errors.add(projectId);
-							break;
+						List<Integer> results = insertBadges(projectId, badges);
+						if(results.isEmpty()) {
+							LOGGER.severe("insertBadges() returns no results for project id " + projectId);
 						}
-					}
 					}
 				}
 
-				
+
 				if(PRINT_PIPELINE || DELETE_PIPELINE) {
 					String json2 = null;
 					// Stampo l'elenco delle pipelines
 					// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines				
 					String route2 = "/projects/" + projectId + "/pipelines";
-					WebTarget target2 = client.target(getBaseURI() + route2);
+					WebTarget target2 = this.client.target(getBaseURI() + route2);
 					Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
 							.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
 					statusCode = response2.getStatus();
@@ -195,71 +190,90 @@ public class GitlabApiClient {
 						json2 = response2.readEntity(String.class);	
 						if(PRINT_PIPELINE) {
 							LOGGER.log(Level.INFO, json2);
-						}
-						 
-					}
-			 				
-				if(DELETE_PIPELINE && json2!=null) {
-
-					//					[
-					//					  {
-					//					    "id": 47,
-					//					    "status": "pending",
-					//					    "ref": "new-pipeline",
-					//					    "sha": "a91957a858320c0e17f3a0eca7cfacbff50ea29a",
-					//					    "web_url": "https://example.com/foo/bar/pipelines/47"
-					//					  },
-					//					  {
-					//					    "id": 48,
-					//					    "status": "pending",
-					//					    "ref": "new-pipeline",
-					//					    "sha": "eb94b618fb5865b26e80fdd8ae531b7a63ad851a",
-					//					    "web_url": "https://example.com/foo/bar/pipelines/48"
-					//					  }
-					//					]
-
-
-					JSONArray jsonArray2 = new JSONArray(json2);
-					LOGGER.info("Numero di pipeline per il progetto " + projectId + ": " + jsonArray.length());
-					
-					for (int j = 0; j < jsonArray2.length(); j++) {
-					JSONObject object2 = jsonArray2.getJSONObject(j);
-					int pipelineId = object2.getInt("id");						
-					// https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline						
-					String route3 = "/projects/" + projectId + "/pipelines/" + pipelineId;
-					WebTarget target3 = client.target(getBaseURI() + route3);					
-					Response response3 = target3.request().accept(MediaType.APPLICATION_JSON)
-							.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
-					statusCode = response3.getStatus();
-					if(statusCode!=Status.OK.getStatusCode()) {
-						LOGGER.severe("Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode);
-						if(FAIL_FAST) {
-							System.exit(1);
 						}else {
-							this.errors .add(projectId);
-							break;
+							JSONArray jsonArray2 = new JSONArray(json2);
+							LOGGER.log(Level.INFO, "#" + jsonArray2.length() + " pipelines read for project id " + projectId);
 						}
-					}					
-					//						Verificare poi su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
-					//						/var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
-					//						Lo sorage path può variare, vedi:
-					//						https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
-					//
-					//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
-					//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
-					//
+
 					}
-				}
+
+					if(DELETE_PIPELINE && json2!=null) {
+
+						//					[
+						//					  {
+						//					    "id": 47,
+						//					    "status": "pending",
+						//					    "ref": "new-pipeline",
+						//					    "sha": "a91957a858320c0e17f3a0eca7cfacbff50ea29a",
+						//					    "web_url": "https://example.com/foo/bar/pipelines/47"
+						//					  },
+						//					  {
+						//					    "id": 48,
+						//					    "status": "pending",
+						//					    "ref": "new-pipeline",
+						//					    "sha": "eb94b618fb5865b26e80fdd8ae531b7a63ad851a",
+						//					    "web_url": "https://example.com/foo/bar/pipelines/48"
+						//					  }
+						//					]
+
+						List<Integer> results = removePipelines(projectId, json2);
+						if(results.isEmpty()) {
+							LOGGER.severe("removePipelines() returns no results for project id " + projectId);
+						}else {
+							JSONArray jsonArray2 = new JSONArray(json2);
+							LOGGER.log(Level.INFO, "#" + jsonArray2.length() + " pipelines removed from project id " + projectId);
+						}					
+					}
 				}
 			}
 		}
 
 	}
 
-	private int doDelete(int projectId) throws KeyManagementException, NoSuchAlgorithmException {
-		Client client = factoryClient();
-		WebTarget target = client.target(getBaseURI());
+	private List<Integer> removePipelines(int projectId, String json2) {
+		List<Integer> pipelineIds = new ArrayList<Integer>();
+		JSONArray jsonArray2 = new JSONArray(json2);
+		LOGGER.info("Numero di pipeline esistenti per il progetto " + projectId + ": " + jsonArray2.length());		
+		for (int j = 0 + SKIP_PIPELINES_QNT ; j < jsonArray2.length(); j++) {
+			JSONObject object2 = jsonArray2.getJSONObject(j);
+			int pipelineId = object2.getInt("id");						
+			// https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline						
+			String route3 = "/projects/" + projectId + "/pipelines/" + pipelineId;
+			WebTarget target3 = this.client.target(getBaseURI() + route3);					
+			Response response3 = target3.request().accept(MediaType.APPLICATION_JSON)
+					.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
+			int statusCode = response3.getStatus();
+			if(statusCode==Status.OK.getStatusCode()) {
+				pipelineIds.add(pipelineId);
+			}else {
+				LOGGER.severe("Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode);
+				if(FAIL_FAST) {
+					System.exit(1);
+				}else {
+					this.errors .add(projectId);
+					break;
+				}				
+			}
+			//						Verificare poi su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
+			//						/var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
+			//						Lo storage path può variare, vedi:
+			//						https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
+			//
+			//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
+			//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
+			//
+		}
+		return pipelineIds;
+	}
 
+	/**
+	 * Elimina tutti i badges configurati per il progetto identificato da projectId
+	 * @param projectId
+	 * @return
+	 */
+	private List<Integer> removeBadges(int projectId){
+		List<Integer> badgeIds = new ArrayList<Integer>();
+		WebTarget target = this.client.target(getBaseURI());
 		Response response = target.path("projects")
 				.path("" + projectId)
 				.path("badges")
@@ -272,56 +286,62 @@ public class GitlabApiClient {
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode);			
 		}else {
-			
-			// Inserisco i dati in un JSONArray
 			String json = response.readEntity(String.class);
 			JSONArray badges = new JSONArray(json);
-			// Elimino tutti i badges configurati per il progetto identificato da projectId
 			for (int i = 0; i < badges.length(); i++) {						
 				JSONObject object = badges.getJSONObject(i);
 				int badgeId = object.getInt("id");			
 				try {
-					WebTarget webTarget = client.target(getBaseURI() + "projects/" + projectId + "/badges/" + badgeId);
+					WebTarget webTarget = this.client.target(getBaseURI() + "projects/" + projectId + "/badges/" + badgeId);
 					Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete(Response.class);
 					statusCode = response2.getStatus();
 					if(statusCode==Status.NO_CONTENT.getStatusCode()) {
+						// OK
 						// LOGGER.info("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
-						// ok nothing to do
-					}else if(statusCode!=Status.OK.getStatusCode()) {
+						badgeIds.add(badgeId);
+					}else {
 						LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);						 
-						break;						 
+						if(FAIL_FAST) {
+							System.exit(1);
+						}else {
+							this.errors.add(projectId);
+							break;
+						}						 
 					}
 				} catch (Exception e) {
 					LOGGER.severe("ERRORE: " + e.getMessage());
 					throw e;
 				}
 			}
-			
+
 		}
-		return statusCode;
+		return badgeIds;
 	}
 
 
-	private int doPost(int projectId, List<JSONObject> badges) throws KeyManagementException, NoSuchAlgorithmException {
-		int statusCode = 0;
-
-		// Creo il client utilizzando la funzione factoryClient() che ignora la validitï¿½ del certificato SSL
-		Client client = factoryClient();
-
-		// Creo il target utilizzando getBaseURI, che ha l'indirizzo base
-		WebTarget target = client.target(getBaseURI());
-
+	private List<Integer> insertBadges(int projectId, List<JSONObject> badges) {
+		List<Integer> badgeIds = new ArrayList<Integer>();
+		WebTarget target = this.client.target(getBaseURI());
 		for (JSONObject badge : badges) {			
-			// Faccio il post passando l'oggetto JSON sopra creato convertendolo in stringa
 			Response response = target.path("projects").path("" + projectId).path("badges").request().accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", this.gitlabToken).post(Entity.json(badge.toString()));
-			statusCode = response.getStatus();
-			if(statusCode!=Status.CREATED.getStatusCode()) {
+			int statusCode = response.getStatus();
+			if(statusCode==Status.CREATED.getStatusCode()) {
+				String json = response.readEntity(String.class);			
+				JSONObject object = new JSONObject(json);
+				int badgeId = object.getInt("id");
+				badgeIds.add(badgeId);
+			}else {
 				LOGGER.severe("Impossibile aggiungere il badge " + badge.toString() + ". Status code: " + statusCode);
-				break;
+				if(FAIL_FAST) {
+					System.exit(1);
+				}else {
+					this.errors.add(projectId);
+					break;
+				}								
 			}
 		}
-		return statusCode;
+		return badgeIds;
 	}
 
 	/**
@@ -400,13 +420,14 @@ public class GitlabApiClient {
 	private boolean isGitlabci(int id) throws KeyManagementException, NoSuchAlgorithmException {
 		return isFile(id, GITLAB_FILE);
 	}
-	private boolean isSonar(int id) throws KeyManagementException, NoSuchAlgorithmException {
+
+	private boolean isSonar(int id){
 		return isFile(id, SONAR_FILE);
 	}	
-	private boolean isFile(int id, String filename) throws KeyManagementException, NoSuchAlgorithmException {
+
+	private boolean isFile(int id, String filename){
 		boolean b = false;
-		Client client = factoryClient();
-		WebTarget target = client.target(getBaseURI());
+		WebTarget target = this.client.target(getBaseURI());
 		Response response = target.path("projects")
 				.path("" + id)
 				.path("repository")
