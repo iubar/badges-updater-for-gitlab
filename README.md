@@ -9,8 +9,8 @@ This java application inserst SonarCube badges inside every projects stored on G
 
 See the config file "config.properties.dist" on the path "src\main\resources".
 ```sh
-  sonar.host = 127.0.0.1
-  gitlab.host = gitlab.example.com
+  sonar.host = http://127.0.0.1
+  gitlab.host = http://gitlab.example.com
   gitlab.token = your_token
 ```
 > With `sonar.host` you set up the address of the SonarQube Server
@@ -32,7 +32,7 @@ Running the application it'll delete all the previous badges in each project, an
 - Classes badge
 - Functions badge
 
-(SONO 6, SOPRA PARLA DI 7)
+(FIXME: SONO 6, SOPRA PARLA DI 7)
 
 # Riferimenti
 
