@@ -139,7 +139,7 @@ public class GitlabApiClient {
 
 			// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 			// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
-			LOGGER.info("#" + jsonArray.length() + " projects");
+			LOGGER.info("#" + jsonArray.length() + " projects read from repository");
 
 			// Effettuo una serie di operazioni su tutti i progetti
 			for (int i = 0; i < jsonArray.length(); i++) {
@@ -153,7 +153,7 @@ public class GitlabApiClient {
 					// Elimino i badges precedenti del progetto
 					List<Integer> results = removeBadges(projectId);
 					if(results.isEmpty()) {
-						LOGGER.severe("removeBadges() returns no results for project id " + projectId);
+						LOGGER.warning("removeBadges() returns no results for project id " + projectId);
 					}
 				}				
 
@@ -218,7 +218,7 @@ public class GitlabApiClient {
 
 						List<Integer> results = removePipelines(projectId, json2);
 						if(results.isEmpty()) {
-							LOGGER.severe("removePipelines() returns no results for project id " + projectId);
+							LOGGER.warning("removePipelines() returns no results for project id " + projectId);
 						}else {
 							JSONArray jsonArray2 = new JSONArray(json2);
 							LOGGER.log(Level.INFO, "#" + jsonArray2.length() + " pipelines removed from project id " + projectId);
@@ -232,25 +232,25 @@ public class GitlabApiClient {
 
 	private List<Integer> removePipelines(int projectId, String json2) {
 		List<Integer> pipelineIds = new ArrayList<Integer>();
-		JSONArray jsonArray2 = new JSONArray(json2);
-		LOGGER.info("Numero di pipeline esistenti per il progetto " + projectId + ": " + jsonArray2.length());		
-		for (int j = 0 + SKIP_PIPELINES_QNT ; j < jsonArray2.length(); j++) {
-			JSONObject object2 = jsonArray2.getJSONObject(j);
-			int pipelineId = object2.getInt("id");						
+		JSONArray pipelines = new JSONArray(json2);
+		LOGGER.info("#" + pipelines.length() + " pipelines read for project id " + projectId);		
+		for (int j = 0 + SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
+			JSONObject pipeline = pipelines.getJSONObject(j);
+			int pipelineId = pipeline.getInt("id");						
 			// https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline						
 			String route3 = "/projects/" + projectId + "/pipelines/" + pipelineId;
 			WebTarget target3 = this.client.target(getBaseURI() + route3);					
 			Response response3 = target3.request().accept(MediaType.APPLICATION_JSON)
 					.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
 			int statusCode = response3.getStatus();
-			if(statusCode==Status.OK.getStatusCode()) {
+			if(statusCode==Status.NO_CONTENT.getStatusCode()) {
 				pipelineIds.add(pipelineId);
 			}else {
 				LOGGER.severe("Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode);
 				if(FAIL_FAST) {
 					System.exit(1);
 				}else {
-					this.errors .add(projectId);
+					this.errors.add(projectId);
 					break;
 				}				
 			}
@@ -288,6 +288,8 @@ public class GitlabApiClient {
 		}else {
 			String json = response.readEntity(String.class);
 			JSONArray badges = new JSONArray(json);
+			LOGGER.info("#" + badges.length() + " badges read for project id " + projectId);
+					
 			for (int i = 0; i < badges.length(); i++) {						
 				JSONObject object = badges.getJSONObject(i);
 				int badgeId = object.getInt("id");			
