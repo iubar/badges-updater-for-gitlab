@@ -169,7 +169,7 @@ public class GitlabApiClient {
 						.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
 				statusCode = response2.getStatus();
 				if(statusCode!=Status.OK.getStatusCode()) {
-					LOGGER.severe("Status code: " + statusCode);
+					LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + id + ". Status code: " + statusCode);
 					if(FAST_FAIL) {
 						System.exit(1);
 					}else {
@@ -210,7 +210,7 @@ public class GitlabApiClient {
 							.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
 					statusCode = response3.getStatus();
 					if(statusCode!=Status.OK.getStatusCode()) {
-						LOGGER.severe("Status code: " + statusCode);
+						LOGGER.severe("Impossibile eliminare la pipeline " + pipelineId + " del progetto " + id + ". Status code: " + statusCode);
 						if(FAST_FAIL) {
 							System.exit(1);
 						}else {
@@ -237,9 +237,8 @@ public class GitlabApiClient {
 
 	private int doDelete (int id) throws KeyManagementException, NoSuchAlgorithmException {
 		Client client = factoryClient();
-		//Creo il link per la richiesta
 		WebTarget target = client.target(getBaseURI());
-		//try {
+
 		Response response = target.path("projects")
 				.path("" + id)
 				.path("badges")
@@ -250,7 +249,7 @@ public class GitlabApiClient {
 
 		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode() && statusCode!=Status.NO_CONTENT.getStatusCode()) {
-			LOGGER.severe("Impossibile recupearare l'elenco dei badge del progetto. Status code: " + statusCode);
+			LOGGER.severe("Impossibile recupearare l'elenco dei badge del progetto " + id + ". Status code: " + statusCode);
 		}else {
 
 			// Inserisco i dati in un JSONArray
@@ -266,10 +265,12 @@ public class GitlabApiClient {
 					Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete();
 					statusCode = response2.getStatus();
 					if(statusCode!=Status.OK.getStatusCode()) {
-						LOGGER.severe("Status code: " + statusCode);
-						break;
-					}else {
-						LOGGER.info("Eliminati i badges del progetto: " + id);
+						LOGGER.severe("Impossibile eliminare il badge " + id_badge + " del progetto " + id + ".Status code: " + statusCode);
+						if(FAST_FAIL) {
+							System.exit(1);
+						}else {
+							break;
+						}
 					}
 				} catch (Exception e) {
 					LOGGER.severe("ERRORE: " + e.getMessage());
@@ -296,10 +297,8 @@ public class GitlabApiClient {
 					.header("PRIVATE-TOKEN", this.gitlabToken).post(Entity.json(badge.toString()));
 			statusCode = response.getStatus();
 			if(statusCode!=Status.CREATED.getStatusCode()) {
-				LOGGER.severe("Impossibile aggiungere il badge. Status code: " + statusCode);
+				LOGGER.severe("Impossibile aggiungere il badge " + badge.toString() + ". Status code: " + statusCode);
 				break;
-			}else {
-				LOGGER.info("Badge aggiunto con successo al progetto: " + id);
 			}
 		}
 		return statusCode;
@@ -398,7 +397,7 @@ public class GitlabApiClient {
 				.get(Response.class);
 		int statusCode = response.getStatus();
 		if (response.getStatus() != Status.OK.getStatusCode()) {
-			LOGGER.severe("Status code: " + statusCode);
+			LOGGER.severe("Impossibile determinare se il file " + filename + " è parte del progetto. Status code: " + statusCode);
 		}else {
 			String json = response.readEntity(String.class);			
 			JSONArray files = new JSONArray(json);
