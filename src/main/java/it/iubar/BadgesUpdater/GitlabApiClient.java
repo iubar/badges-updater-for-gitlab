@@ -79,10 +79,9 @@ public class GitlabApiClient {
 	 * Crea il client e ignora la validità del certificato SSL
 	 * 
 	 * @return
-	 * @throws NoSuchAlgorithmException
-	 * @throws KeyManagementException
+
 	 */
-	public static Client factoryClient() throws NoSuchAlgorithmException, KeyManagementException {
+	public static Client factoryClient()  {
 		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
 			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
 				return null;
@@ -103,10 +102,8 @@ public class GitlabApiClient {
 			// HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
 		} catch (NoSuchAlgorithmException e) {
 			LOGGER.severe("ERRORE: " + e.getMessage());
-			throw e;
 		} catch (KeyManagementException e) {
 			LOGGER.severe("ERRORE: " + e.getMessage());
-			throw e;
 		}
 
 		ClientBuilder builder = ClientBuilder.newBuilder();
@@ -114,10 +111,10 @@ public class GitlabApiClient {
 		return client;
 	}
 
-	public void run() throws KeyManagementException, NoSuchAlgorithmException {
-
-		loadConfig();
-
+	private JSONArray getProjectsList() {
+		
+		JSONArray projects = null;
+				
 		String route = "projects/per_page/" + MAX_PROJECT_PER_PAGE;
 
 		this.client  = factoryClient();
@@ -130,17 +127,26 @@ public class GitlabApiClient {
 
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
-
+		
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco dei progetti. Status code: " + statusCode);
+			System.exit(1);
 		}else {
+		
+		// Dalla chiamata GET prendo il file JSON che ci restituisce e lo scrivo in una stringa
+		String json = response.readEntity(String.class);
 
-			// Dalla chiamata GET prendo il file JSON che ci restituisce e lo scrivo in una stringa
-			String json = response.readEntity(String.class);
+		// Il file JSON è un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
+		projects = new JSONArray(json);
+		}
+		return projects;
+	}
+	
+	public void run(){
 
-			// Il file JSON è un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
-			JSONArray projects = new JSONArray(json);
+		loadConfig();
 
+		JSONArray projects = getProjectsList();
 			// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 			// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
 			LOGGER.info("#" + projects.length() + " projects read from repository");
@@ -186,37 +192,15 @@ public class GitlabApiClient {
 
 
 				if(PRINT_PIPELINE || DELETE_PIPELINE) {
-					String json2 = null;
-					// Stampo l'elenco delle pipelines
-					// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines	
-					// ATTENZIONE: c'è un problema nella documentazione dell'api
-					// Il numero massimo di record restituiti è 20 per chiamata.
-					// Verificare se è possibile utilizzare il parametro per_page/200 nella chiamata
-					String route2 = "/projects/" + projectId + "/pipelines";
-					WebTarget target2 = this.client.target(getBaseURI() + route2);
-					Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
-							.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
-					statusCode = response2.getStatus();
-					if(statusCode!=Status.OK.getStatusCode()) {
-						LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode);
-						if(FAIL_FAST) {
-							System.exit(1);
-						}else {
-							this.errors.add(projectId);
-							break;
-						}
-					}else {					
-						json2 = response2.readEntity(String.class);	
+					
+					  JSONArray pipelines = getPipelines(projectId);
 						if(PRINT_PIPELINE) {
-							LOGGER.log(Level.INFO, json2);
-						}else if(!DELETE_PIPELINE){
-							JSONArray jsonArray2 = new JSONArray(json2);
-							LOGGER.log(Level.INFO, "#" + jsonArray2.length() + " pipelines read for project id " + projectId);
+							LOGGER.log(Level.INFO, "Pipelines dump: " + pipelines.toString());
+						}else if(!DELETE_PIPELINE){			
+							LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines read for project id " + projectId);
 						}
 
-					}
-
-					if(DELETE_PIPELINE && json2!=null) {
+					if(DELETE_PIPELINE && pipelines!=null && !pipelines.isEmpty()) {
 
 						//					[
 						//					  {
@@ -235,7 +219,7 @@ public class GitlabApiClient {
 						//					  }
 						//					]
 
-						List<Integer> results = removePipelines(projectId, json2);
+						List<Integer> results = removePipelines(projectId, pipelines);
 						if(results.isEmpty()) {
 							LOGGER.warning("removePipelines() returns no results for project id " + projectId);
 						}else {
@@ -245,7 +229,30 @@ public class GitlabApiClient {
 				}
 			}
 		}
+	}
+
+	private JSONArray getPipelines(int projectId) {
+ 
+		// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines	
+		// ATTENZIONE: c'è un problema nella documentazione dell'api
+		// Il numero massimo di record restituiti è 20 per chiamata.
+		// Verificare se è possibile utilizzare il parametro per_page/200 nella chiamata
+		String route2 = "/projects/" + projectId + "/pipelines";
+		WebTarget target2 = this.client.target(getBaseURI() + route2);
+		Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
+				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
+		int statusCode = response2.getStatus();
+		if(statusCode!=Status.OK.getStatusCode()) {
+			LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode);
+			if(FAIL_FAST) {
+				System.exit(1);
+			}
 		}
+		
+		String json2 = response2.readEntity(String.class);		
+		JSONArray pipelines = new JSONArray(json2);	
+		
+		return pipelines;
 	}
 
 	/**
@@ -255,9 +262,8 @@ public class GitlabApiClient {
 	 * @param json2
 	 * @return
 	 */
-	private List<Integer> removePipelines(int projectId, String json2) {
-		List<Integer> pipelineIds = new ArrayList<Integer>();
-		JSONArray pipelines = new JSONArray(json2);			
+	private List<Integer> removePipelines(int projectId, JSONArray pipelines) {
+		List<Integer> pipelineIds = new ArrayList<Integer>();		
 		if(pipelines.length()<=SKIP_PIPELINES_QNT) {
 			LOGGER.info("#" + pipelines.length() + " pipelines <= " + SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
 		}else {
@@ -391,7 +397,7 @@ public class GitlabApiClient {
 	 * @throws KeyManagementException
 	 * @throws NoSuchAlgorithmException
 	 */
-	private List<JSONObject> createBadges(JSONObject object) throws KeyManagementException, NoSuchAlgorithmException {
+	private List<JSONObject> createBadges(JSONObject object) {
 		List<JSONObject> badges = new ArrayList<JSONObject>();
 
 		// Determino l'id del progetto 
@@ -456,7 +462,7 @@ public class GitlabApiClient {
 		return UriBuilder.fromUri(this.gitlabHost + "/api/v4/").build();
 	}
 
-	private boolean isGitlabci(int projectId) throws KeyManagementException, NoSuchAlgorithmException {
+	private boolean isGitlabci(int projectId){
 		return isFile(projectId, GITLAB_FILE);
 	}
 
@@ -476,15 +482,15 @@ public class GitlabApiClient {
 		boolean b = false;
 		WebTarget target = this.client.target(getBaseURI());
 		Response response = target.path("projects")
+				
 				.path("" + projectId)
 				.path("repository")
-				.path("tree")
+				.path("tree")				
 // Alcune opzioni da provare:	
 //				.path("path")
 //				.path("/")				
 //				.path("ref")
 //				.path("master")
- 
 				.path("per_page")
 				.path("" + MAX_PROJECT_PER_PAGE)
 				
@@ -492,6 +498,8 @@ public class GitlabApiClient {
 				.accept(MediaType.APPLICATION_JSON)
 				.header("PRIVATE-TOKEN", this.gitlabToken)
 				.get(Response.class);
+		
+		
 		int statusCode = response.getStatus();
 		if (response.getStatus() != Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile determinare se il file " + fileName + " è parte del progetto. Status code: " + statusCode);
