@@ -44,6 +44,10 @@ public class GitlabApiClient {
 	private static final boolean PRINT_PIPELINE = false;
 
 	private static final boolean DELETE_PIPELINE = true;
+	
+	private static final int TEST_PROJECT = 157;
+	
+	private static final boolean TEST = true;
 
 	private static final int SKIP_PIPELINES_QNT = 4;
 
@@ -140,12 +144,20 @@ public class GitlabApiClient {
 			// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 			// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
 			LOGGER.info("#" + projects.length() + " projects read from repository");
-
+			boolean bContinue = true;
 			// Effettuo una serie di operazioni su tutti i progetti
 			for (int i = 0; i < projects.length(); i++) {
 
 				JSONObject project = projects.getJSONObject(i);
 				int projectId = project.getInt("id");
+				if(TEST) {
+					if(projectId!=TEST_PROJECT) {
+						bContinue = false;
+					}else {
+						bContinue = true;
+					}
+				}
+				if(bContinue) {
 				String path = project.getString("path_with_namespace");
 				LOGGER.info("Project " + path + " (id " + projectId + ")");
 
@@ -194,7 +206,7 @@ public class GitlabApiClient {
 						json2 = response2.readEntity(String.class);	
 						if(PRINT_PIPELINE) {
 							LOGGER.log(Level.INFO, json2);
-						}else {
+						}else if(!DELETE_PIPELINE){
 							JSONArray jsonArray2 = new JSONArray(json2);
 							LOGGER.log(Level.INFO, "#" + jsonArray2.length() + " pipelines read for project id " + projectId);
 						}
@@ -230,9 +242,16 @@ public class GitlabApiClient {
 				}
 			}
 		}
-
+		}
 	}
 
+	/**
+	 * @see https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline
+	 * 
+	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
+	 * @param json2
+	 * @return
+	 */
 	private List<Integer> removePipelines(int projectId, String json2) {
 		List<Integer> pipelineIds = new ArrayList<Integer>();
 		JSONArray pipelines = new JSONArray(json2);			
@@ -242,8 +261,7 @@ public class GitlabApiClient {
 			LOGGER.info("#" + pipelines.length() + " pipelines read for project id " + projectId);
 		for (int j = 0 + SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
 			JSONObject pipeline = pipelines.getJSONObject(j);
-			int pipelineId = pipeline.getInt("id");						
-			// https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline						
+			int pipelineId = pipeline.getInt("id");	// The ID of a pipeline									
 			String route3 = "/projects/" + projectId + "/pipelines/" + pipelineId;
 			WebTarget target3 = this.client.target(getBaseURI() + route3);					
 			Response response3 = target3.request().accept(MediaType.APPLICATION_JSON)
@@ -274,6 +292,9 @@ public class GitlabApiClient {
 	}
 
 	/**
+	 * 
+	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
+	 * 
 	 * Elimina tutti i badges configurati per il progetto identificato da projectId
 	 * @param projectId
 	 * @return
@@ -327,7 +348,13 @@ public class GitlabApiClient {
 		return badgeIds;
 	}
 
-
+/**
+ * @see https://docs.gitlab.com/ee/api/project_badges.html#add-a-badge-to-a-project
+ * 
+ * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
+ * @param badges
+ * @return
+ */
 	private List<Integer> insertBadges(int projectId, List<JSONObject> badges) {
 		List<Integer> badgeIds = new ArrayList<Integer>();
 		WebTarget target = this.client.target(getBaseURI());
@@ -365,7 +392,7 @@ public class GitlabApiClient {
 		List<JSONObject> badges = new ArrayList<JSONObject>();
 
 		// Determino l'id del progetto 
-		int id = object.getInt("id");
+		int projectId = object.getInt("id");
 		// Determino altri valori come il nome ed il gruppo del progetto
 		// In alternativa alla lettura dei dati dal parametro "object", potrei utilizzare le variabili gitlab %{project_path} e %{default_branch} nella costruzione del link al pipeline badge.
 		// Ad esempio un link valido sarebbe:
@@ -381,8 +408,8 @@ public class GitlabApiClient {
 		// Nota che ":" equivale a "%3A"
 		String key = group + ":" + name; 
 
-		if(!isGitlabci(id)) {
-			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + key + " (" + id + ")");
+		if(!isGitlabci(projectId)) {
+			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + key + " (" + projectId + ")");
 		}else {
 			String link = this.gitlabHost +"/" + group + "/" + name + "/commits/%{default_branch}";
 			String  image = this.gitlabHost + "/" + group + "/" + name + "/badges/%{default_branch}/build.svg";			
@@ -390,8 +417,8 @@ public class GitlabApiClient {
 			badges.add(badge);
 		}
 
-		if(!isSonar(id)) {
-			LOGGER.warning("File " + SONAR_FILE + " assente per il progetto " + key + " (" + id + ")");
+		if(!isSonar(projectId)) {
+			LOGGER.warning("File " + SONAR_FILE + " assente per il progetto " + key + " (" + projectId + ")");
 		}else {	 		
 			String link = this.sonarHost + "/dashboard?id=" + key;
 			String image = this.sonarHost + "/api/badges/gate?key=" + key;
@@ -426,42 +453,54 @@ public class GitlabApiClient {
 		return UriBuilder.fromUri(this.gitlabHost + "/api/v4/").build();
 	}
 
-	private boolean isGitlabci(int id) throws KeyManagementException, NoSuchAlgorithmException {
-		return isFile(id, GITLAB_FILE);
+	private boolean isGitlabci(int projectId) throws KeyManagementException, NoSuchAlgorithmException {
+		return isFile(projectId, GITLAB_FILE);
 	}
 
-	private boolean isSonar(int id){
-		return isFile(id, SONAR_FILE);
+	private boolean isSonar(int projectId){
+		return isFile(projectId, SONAR_FILE);
 	}	
 
-	private boolean isFile(int id, String filename){
+	/**
+	 * 
+	 * @see see https://docs.gitlab.com/ee/api/repositories.html#list-repository-tree
+	 * 
+	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
+	 * @param fileName
+	 * @return
+	 */
+	private boolean isFile(int projectId, String fileName){
 		boolean b = false;
 		WebTarget target = this.client.target(getBaseURI());
 		Response response = target.path("projects")
-				.path("" + id)
+				.path("" + projectId)
 				.path("repository")
 				.path("tree")
+// Alcune opzioni da provare:	
+//				.path("path")
+//				.path("/")				
+//				.path("ref")
+//				.path("master")
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.header("PRIVATE-TOKEN", this.gitlabToken)
 				.get(Response.class);
 		int statusCode = response.getStatus();
 		if (response.getStatus() != Status.OK.getStatusCode()) {
-			LOGGER.severe("Impossibile determinare se il file " + filename + " è parte del progetto. Status code: " + statusCode);
+			LOGGER.severe("Impossibile determinare se il file " + fileName + " è parte del progetto. Status code: " + statusCode);
 		}else {
 			String json = response.readEntity(String.class);			
 			JSONArray files = new JSONArray(json);
 			for (int i=0; i<files.length(); i++) {
 				JSONObject object = files.getJSONObject(i);
-				String fileName = object.getString("name");
-				if (fileName.equals(filename)) {
+				String _fileName = object.getString("name");
+				if (_fileName.equals(fileName)) {
 					b=true;
+					break;
 				}
 			}
 		}
-
 		return b;		
-
 	}
 
 	public List<Integer> getErrors() {
