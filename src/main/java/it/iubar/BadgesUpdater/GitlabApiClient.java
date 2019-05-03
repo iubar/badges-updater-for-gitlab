@@ -421,46 +421,46 @@ public class GitlabApiClient {
 			// Nota 2: il carattere ":" equivale a "%3A"
 			//
 
-			String sonarProjectKey = group + ":" + name; 
-
+			String sonarProjectKeyExpected = group + ":" + name; 
+			
 			String sonarProjectContent = getFileContent(projectId, SONAR_FILE, branch);
 			Properties properties = parsePropertiesString(sonarProjectContent); // sonar.projectKey è un file di configurazione nel formato Java Properties
 			Object obj = properties.get("sonar.projectKey");
-			String sonarProjectKey2 = null;
+			String sonarProjectKeyActual = null;
 			if(obj!=null) {
-				sonarProjectKey2 = (String) obj;
+				sonarProjectKeyActual = (String) obj;
 			}
-			if(sonarProjectKey2==null || !sonarProjectKey.equals(sonarProjectKey2)) {
-				LOGGER.severe("sonar.projectKey del progetto " + projectId + " non rispetta le linee guida: valore atteso " + sonarProjectKey + " valore attuale " + sonarProjectKey2);
-				if(FAIL_FAST) {					
-					System.exit(1);
-				}else {
-					this.errors.add(projectId);
-				}
+			if(sonarProjectKeyActual==null) {
+				LOGGER.severe("Impossibile recuperare il valore di sonar.projectKey");
+				System.exit(1);
+			}			
+			if(!sonarProjectKeyExpected.equals(sonarProjectKeyActual)) {
+				LOGGER.warning("il valore di sonar.projectKey del progetto " + projectId + " non rispetta le linee guida: valore atteso " + sonarProjectKeyExpected + " valore attuale " + sonarProjectKeyActual);
 			}
+			
 
-			String link = this.sonarHost + "/dashboard?id=" + sonarProjectKey;
-			String image = this.sonarHost + "/api/badges/gate?key=" + sonarProjectKey;
+			String link = this.sonarHost + "/dashboard?id=" + sonarProjectKeyActual;
+			String image = this.sonarHost + "/api/badges/gate?key=" + sonarProjectKeyActual;
 			JSONObject badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=Reliability&id=" + sonarProjectKey;	
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=bugs";
+			link = this.sonarHost + "/component_measures?metric=Reliability&id=" + sonarProjectKeyActual;	
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=bugs";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=code_smells&id=" + sonarProjectKey;			
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=code_smells";
+			link = this.sonarHost + "/component_measures?metric=code_smells&id=" + sonarProjectKeyActual;			
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=code_smells";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=ncloc_language_distribution&id=" + sonarProjectKey;
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=ncloc_language_distribution";
+			link = this.sonarHost + "/component_measures?metric=ncloc_language_distribution&id=" + sonarProjectKeyActual;
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=ncloc_language_distribution";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=classes&id=" + sonarProjectKey;
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=classes";
+			link = this.sonarHost + "/component_measures?metric=classes&id=" + sonarProjectKeyActual;
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=classes";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=functions&id=" + sonarProjectKey;
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=functions";
+			link = this.sonarHost + "/component_measures?metric=functions&id=" + sonarProjectKeyActual;
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=functions";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
 		}
