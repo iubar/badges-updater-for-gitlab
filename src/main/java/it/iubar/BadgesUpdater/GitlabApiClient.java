@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -497,29 +498,11 @@ public class GitlabApiClient extends RestClient {
 		}
 		return p;
 	}
-	
+
 	@Override
-	protected Response doGet(String route) {
-		WebTarget target = this.client.target(getBaseURI() + route);
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
-		return response;
+	protected Builder getBuilder(WebTarget target) {				
+		Builder builder = target.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", this.gitlabToken);
+		return builder;
 	}
-	
-	@Override
-	protected Response doDelete(String route) {
-		WebTarget target = this.client.target(getBaseURI() + route);					
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
-		return response;
-	}
-	
-	@Override
-	protected <T> Response doPost(String route, Entity<T> entity) {
-		WebTarget target = this.client.target(getBaseURI() + route);
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken).post(entity);
-		return response;
-	}	
 
 }

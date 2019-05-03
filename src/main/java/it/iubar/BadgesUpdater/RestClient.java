@@ -12,6 +12,7 @@ import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -23,7 +24,9 @@ public abstract class RestClient {
 	protected Client client = null;
 
 	protected abstract URI getBaseURI();
-
+	
+	protected abstract Builder getBuilder(WebTarget target);
+	
 	public RestClient() {
 		this.client = factoryClient();		
 	}
@@ -66,22 +69,19 @@ public abstract class RestClient {
 	
 	protected Response doGet(String route) {
 		WebTarget target = this.client.target(getBaseURI() + route);
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.get(Response.class);
+		Response response = getBuilder(target).get(Response.class);
 		return response;
 	}
 
 	protected Response doDelete(String route) {
 		WebTarget target = this.client.target(getBaseURI() + route);					
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.delete(Response.class);
+		Response response = getBuilder(target).delete(Response.class);
 		return response;
 	}
-
+	
 	protected <T> Response doPost(String route, Entity<T> entity) {
 		WebTarget target = this.client.target(getBaseURI() + route);
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.post(entity);
+		Response response = getBuilder(target).post(entity);
 		return response;
 	}
 	
