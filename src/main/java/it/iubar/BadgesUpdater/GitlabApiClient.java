@@ -415,14 +415,6 @@ public class GitlabApiClient {
 			LOGGER.warning("File " + SONAR_FILE + " assente per il progetto " + projectId);
 		}else {
 
-			// Nota 1: sto generando la chiave di ogni singolo progetto Sonar a partire da una convenzione. 
-			// Non ho quindi la certezza matematica che la chiave corrisponda con quella indicata nel file sonar-project.properties
-			// Quindi sarebbe buona abitudine definire opportunamente il valore di sonar.projectKey nel file sonar-project.properties		
-			// Nota 2: il carattere ":" equivale a "%3A"
-			//
-
-			String sonarProjectKeyExpected = group + ":" + name; 
-			
 			String sonarProjectContent = getFileContent(projectId, SONAR_FILE, branch);
 			Properties properties = parsePropertiesString(sonarProjectContent); // sonar.projectKey è un file di configurazione nel formato Java Properties
 			Object obj = properties.get("sonar.projectKey");
@@ -433,9 +425,10 @@ public class GitlabApiClient {
 			if(sonarProjectKeyActual==null) {
 				LOGGER.severe("Impossibile recuperare il valore di sonar.projectKey");
 				System.exit(1);
-			}			
+			}
+			String sonarProjectKeyExpected = group + ":" + name; // il carattere ":" equivale a "%3A"
 			if(!sonarProjectKeyExpected.equals(sonarProjectKeyActual)) {
-				LOGGER.warning("il valore di sonar.projectKey del progetto " + projectId + " non rispetta le linee guida: valore atteso " + sonarProjectKeyExpected + " valore attuale " + sonarProjectKeyActual);
+				LOGGER.warning("Il valore di sonar.projectKey del progetto " + projectId + " non rispetta le nostre linee guida. Valore atteso: " + sonarProjectKeyExpected + " , valore attuale: " + sonarProjectKeyActual);
 			}
 			
 
