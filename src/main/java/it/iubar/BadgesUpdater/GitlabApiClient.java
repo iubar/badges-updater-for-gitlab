@@ -43,7 +43,7 @@ public class GitlabApiClient {
 
 	private static final boolean PRINT_PIPELINE = false;
 
-	private static final boolean DELETE_PIPELINE = true;
+	private static final boolean DELETE_PIPELINE = false;
 	
 	private static final int TEST_PROJECT = 157;
 	
@@ -118,7 +118,7 @@ public class GitlabApiClient {
 
 		loadConfig();
 
-		String route = "projects?per_page=" + MAX_PROJECT_PER_PAGE;
+		String route = "projects/per_page/" + MAX_PROJECT_PER_PAGE;
 
 		this.client  = factoryClient();
 
@@ -484,6 +484,10 @@ public class GitlabApiClient {
 //				.path("/")				
 //				.path("ref")
 //				.path("master")
+ 
+				.path("per_page")
+				.path("" + MAX_PROJECT_PER_PAGE)
+				
 				.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.header("PRIVATE-TOKEN", this.gitlabToken)
@@ -499,10 +503,7 @@ public class GitlabApiClient {
 			}			
 			for (int i=0; i<files.length(); i++) {
 				JSONObject object = files.getJSONObject(i);
-				String _fileName = object.getString("name");
-				if(TEST) {
-					LOGGER.info("Confronto con il file " + _fileName);
-				}				
+				String _fileName = object.getString("name");			
 				if (_fileName.equals(fileName)) {
 					b=true;
 					break;
