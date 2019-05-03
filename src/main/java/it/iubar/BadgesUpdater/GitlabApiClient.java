@@ -31,8 +31,6 @@ public class GitlabApiClient {
 
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 
-	private static final int MAX_RECORDS_PER_RESPONSE = 200;
-
 	private static final String GITLAB_FILE = ".gitlab-ci.yml";
 
 	private static final String SONAR_FILE = "sonar-project.properties";
@@ -43,12 +41,15 @@ public class GitlabApiClient {
 
 	private static final boolean ADD_BADGES = true;
 
-	private static final boolean PRINT_PIPELINE = false;
+	private static final boolean PRINT_PIPELINE = false; // attivare solo a scopo di debug
 
 	private static final boolean DELETE_PIPELINE = true;
 
+	// Verranno cancellate tutte le pipelines ad esclusione delle ultime 4
 	private static final int SKIP_PIPELINES_QNT = 4;
 
+	// Di default il numero massimo di record restituiti da ogni chiamata all'Api è 20
+	private static final int MAX_RECORDS_PER_RESPONSE = 200;	
 	private static final String PER_PAGE = "?per_page=" + MAX_RECORDS_PER_RESPONSE;
 
 	private String sonarHost = null;
@@ -204,22 +205,19 @@ public class GitlabApiClient {
 					//					  }
 					//					]
 
-					List<Integer> results = removePipelines(projectId, pipelines);
-					if(results.isEmpty()) {
-						LOGGER.warning("removePipelines() returns no results for project id " + projectId);
-					}else {
-						LOGGER.log(Level.INFO, "#" + results.size() + " pipelines removed from project id " + projectId);
-					}					
+					List<Integer> results = removePipelines(projectId, pipelines);					
 				}
 			}
 		}
 	}
 
+	/**
+	 * @see https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines	
+	 * 
+	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
+	 * @return
+	 */
 	private JSONArray getPipelines(int projectId) {
-
-		// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines	
-		// ATTENZIONE: c'è un problema nella documentazione dell'api
-		// Di default il numero massimo di record restituiti è 20 per chiamata
 
 		String route2 = getBaseURI() + "/projects/" + projectId + "/pipelines" + PER_PAGE;
 		WebTarget target2 = this.client.target(route2);
@@ -245,15 +243,15 @@ public class GitlabApiClient {
 	 * @see https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline
 	 * 
 	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
-	 * @param json2
+	 * @param pipelines JSONArray
 	 * @return
 	 */
 	private List<Integer> removePipelines(int projectId, JSONArray pipelines) {
 		List<Integer> pipelineIds = new ArrayList<Integer>();		
 		if(pipelines.length()<=SKIP_PIPELINES_QNT) {
-			LOGGER.info("#" + pipelines.length() + " pipelines <= " + SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
+			LOGGER.info("#" + pipelines.length() + " pipelines found <= " + SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
 		}else {
-			LOGGER.info("#" + pipelines.length() + " pipelines read for project id " + projectId);
+			LOGGER.info("#" + pipelines.length() + " pipelines found for project id " + projectId);
 			for (int j = 0 + SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
 				JSONObject pipeline = pipelines.getJSONObject(j);
 				int pipelineId = pipeline.getInt("id");	// The ID of a pipeline									
@@ -280,6 +278,9 @@ public class GitlabApiClient {
 				//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 				//
 			}
+ 
+			LOGGER.log(Level.INFO, "#" + pipelineIds.size() + " pipelines removed from project id " + projectId);
+
 		}
 		return pipelineIds;
 	}
