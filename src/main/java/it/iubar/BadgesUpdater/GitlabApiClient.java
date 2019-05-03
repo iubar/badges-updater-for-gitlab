@@ -42,6 +42,8 @@ public class GitlabApiClient {
 
 	private static final boolean DELETE_PIPELINE = true;
 
+	private static final String DEFAULT_BRANCH = "master";
+	
 	// Verranno cancellate tutte le pipelines ad esclusione delle ultime 4
 	private static final int SKIP_PIPELINES_QNT = 4;
 
@@ -192,7 +194,7 @@ public class GitlabApiClient {
 				}
 			}
 
-			JSONArray pipelines = getPipelines(projectId);
+			JSONArray pipelines = getPipelines(projectId, DEFAULT_BRANCH);
 			if(DELETE_PIPELINE) {			  
 				if(pipelines!=null && !pipelines.isEmpty()) {
 					List<Integer> results3 = removePipelines(projectId, pipelines);
@@ -210,9 +212,9 @@ public class GitlabApiClient {
 	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
 	 * @return
 	 */
-	private JSONArray getPipelines(int projectId) {
+	private JSONArray getPipelines(int projectId, String branch) {
 		JSONArray pipelines = new JSONArray();	
-		String route = "projects/" + projectId + "/pipelines" + PER_PAGE;
+		String route = "projects/" + projectId + "/pipelines" + PER_PAGE + "&ref=" + branch;
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode()) {
@@ -311,6 +313,13 @@ public class GitlabApiClient {
 		return badgeIds;
 	}
 
+	/**
+	 * 
+	 * @see https://docs.gitlab.com/ee/api/project_badges.html#list-all-badges-of-a-project
+	 * 
+	 * @param projectId
+	 * @return
+	 */
 	private JSONArray getBadgesList(int projectId) {
 		JSONArray badges = new JSONArray();
 		String route = "projects/" + projectId + "/badges";
@@ -372,6 +381,7 @@ public class GitlabApiClient {
 	 * @throws NoSuchAlgorithmException
 	 */
 	private List<JSONObject> createBadges(JSONObject object) {
+		final String branch = DEFAULT_BRANCH;
 		List<JSONObject> badges = new ArrayList<JSONObject>();
 
 		// Determino l'id del progetto 
@@ -386,7 +396,7 @@ public class GitlabApiClient {
 		JSONObject namespace = object.getJSONObject("namespace");
 		String group = namespace.getString("path");
 
-		if(!isGitlabci(projectId)) {
+		if(!isGitlabci(projectId, branch)) {
 			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + projectId);
 		}else {
 			String link = this.gitlabHost +"/" + group + "/" + name + "/commits/%{default_branch}";
@@ -395,7 +405,7 @@ public class GitlabApiClient {
 			badges.add(badge);
 		}
 
-		if(!isSonar(projectId)) {
+		if(!isSonar(projectId, branch)) {
 			LOGGER.warning("File " + SONAR_FILE + " assente per il progetto " + projectId);
 		}else {
 
@@ -407,7 +417,7 @@ public class GitlabApiClient {
 
 			String sonarProjectKey = group + ":" + name; 
 
-			String sonarProjectContent = getFileContent(projectId, SONAR_FILE);
+			String sonarProjectContent = getFileContent(projectId, SONAR_FILE, branch);
 			Properties properties = parsePropertiesString(sonarProjectContent); // sonar.projectKey è un file di configurazione nel formato Java Properties
 			Object obj = properties.get("sonar.projectKey");
 			String sonarProjectKey2 = null;
@@ -456,12 +466,12 @@ public class GitlabApiClient {
 		return UriBuilder.fromUri(this.gitlabHost + "/api/v4/").build();
 	}
 
-	private boolean isGitlabci(int projectId){
-		return isFile(projectId, GITLAB_FILE);
+	private boolean isGitlabci(int projectId, String branch){
+		return isFile(projectId, GITLAB_FILE, branch);
 	}
 
-	private boolean isSonar(int projectId){
-		return isFile(projectId, SONAR_FILE);
+	private boolean isSonar(int projectId, String branch){
+		return isFile(projectId, SONAR_FILE, branch);
 	}	
 
 	/**
@@ -472,9 +482,9 @@ public class GitlabApiClient {
 	 * @param fileName
 	 * @return
 	 */
-	private boolean isFile(int projectId, String fileName){
+	private boolean isFile(int projectId, String fileName, String branch){
 		boolean b = false;		
-		String route = "projects/" + projectId + "/repository/tree" + PER_PAGE;
+		String route = "projects/" + projectId + "/repository/tree" + PER_PAGE + "&ref=" + branch;
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if (response.getStatus() != Status.OK.getStatusCode()) {
@@ -498,13 +508,21 @@ public class GitlabApiClient {
 		return this.errors;
 	}
 
-	private String getFileContent(int projectId, String filePath) {	
+	/**
+	 * 
+	 * @see https://docs.gitlab.com/ee/api/repository_files.html#get-raw-file-from-repository
+	 * 
+	 * @param projectId
+	 * @param filePath Url encoded full path to new file
+	 * @return
+	 */
+	private String getFileContent(int projectId, String filePath, String branch) {	
 		String content = "";
 		int statusCode = 0;
 		Response response2 = null;
 		try {
 			String filePathEncoded = URLEncoder.encode(filePath, "UTF-8");
-			String route = "projects/" + projectId + "/repository/files/" + filePathEncoded;
+			String route = "projects/" + projectId + "/repository/files/" + filePathEncoded + "/raw" + "?ref=" + branch;
 			response2 = doGet(route);
 			statusCode = response2.getStatus();			
 		} catch (UnsupportedEncodingException e1) {
