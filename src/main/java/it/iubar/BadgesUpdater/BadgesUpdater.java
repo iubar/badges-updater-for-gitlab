@@ -14,7 +14,7 @@ public class BadgesUpdater {
 	private static final String CONFIG_FILE = "config.properties";
 
 	public static void main(String[] args) throws Exception {
-		try {
+	 
 			Properties config = null;			
 			if(areEnvVarsSet()) {				
 				// Reading config from enviroment variables....
@@ -29,7 +29,8 @@ public class BadgesUpdater {
 			}
 
 			if (config.isEmpty()) {
-				LOGGER.warning("ERRORE: Impossibile inizializzare la configurazione del programma");
+				LOGGER.severe("ERRORE: Impossibile inizializzare la configurazione del programma");
+				System.exit(1);
 			} else {
 				GitlabApiClient client = new GitlabApiClient();
 				client.setProperties(config);
@@ -42,10 +43,7 @@ public class BadgesUpdater {
 					LOGGER.info("All done without errors");
 				}
 			}	
-		} catch (Exception e) {
-			LOGGER.severe("ERRORE: " + e.getMessage());
-			throw e;
-		}
+	 
 	}
 
 	private static boolean areEnvVarsSet() {
