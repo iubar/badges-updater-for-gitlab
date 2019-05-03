@@ -50,6 +50,8 @@ public class GitlabApiClient {
 	// Di default il numero massimo di record restituiti da ogni chiamata all'Api è 20
 	private static final int MAX_RECORDS_PER_RESPONSE = 200;
 	private static final String PER_PAGE = "?per_page=" + MAX_RECORDS_PER_RESPONSE;
+	
+	private static final String GITLAB_API_VER = "v4";
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -375,6 +377,10 @@ public class GitlabApiClient {
 	/**
 	 * @see https://docs.gitlab.com/ee/api/project_badges.html
 	 * 
+	 * I badge sono associati al progetto e sono indipendenti dal branch.
+	 * Tuttavia devo esaminare dei file di un particolare branch per poter determinare quali badge 
+	 * bisogna aggiungere al progetto
+	 * 
 	 * @param object
 	 * @return
 	 * @throws KeyManagementException
@@ -463,7 +469,7 @@ public class GitlabApiClient {
 	}
 
 	private URI getBaseURI() {
-		return UriBuilder.fromUri(this.gitlabHost + "/api/v4/").build();
+		return UriBuilder.fromUri(this.gitlabHost + "/api/" + GITLAB_API_VER + "/").build();
 	}
 
 	private boolean isGitlabci(int projectId, String branch){
@@ -510,7 +516,7 @@ public class GitlabApiClient {
 
 	/**
 	 * 
-	 * @see https://docs.gitlab.com/ee/api/repository_files.html#get-raw-file-from-repository
+	 * @see https://docs.gitlab.com/ee/api/repository_files.html#get-file-from-repository
 	 * 
 	 * @param projectId
 	 * @param filePath Url encoded full path to new file
@@ -522,7 +528,7 @@ public class GitlabApiClient {
 		Response response2 = null;
 		try {
 			String filePathEncoded = URLEncoder.encode(filePath, "UTF-8");
-			String route = "projects/" + projectId + "/repository/files/" + filePathEncoded + "/raw" + "?ref=" + branch;
+			String route = "projects/" + projectId + "/repository/files/" + filePathEncoded + "?ref=" + branch;
 			response2 = doGet(route);
 			statusCode = response2.getStatus();			
 		} catch (UnsupportedEncodingException e1) {
