@@ -5,8 +5,10 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,13 +43,9 @@ public class GitlabApiClient {
 
 	private static final boolean ADD_BADGES = true;
 
-	private static final boolean PRINT_PIPELINE = true;
+	private static final boolean PRINT_PIPELINE = false;
 
-	private static final boolean DELETE_PIPELINE = false;
-	
-	private static final int TEST_PROJECT = 157;
-	
-	private static final boolean TEST = true;
+	private static final boolean DELETE_PIPELINE = true;
 
 	private static final int SKIP_PIPELINES_QNT = 4;
 
@@ -57,13 +55,10 @@ public class GitlabApiClient {
 	private String gitlabHost = null;
 	private String gitlabToken = null;
 	private Properties config = null;
-
-	private List<Integer> errors = new ArrayList<Integer>();
-
+	private Set<Integer> errors = new HashSet<Integer>();
 	private Client client = null;
 
-	public void setProperties(Properties config)
-	{
+	public void setProperties(Properties config){
 		this.config = config;
 	}
 
@@ -114,13 +109,10 @@ public class GitlabApiClient {
 	}
 
 	private JSONArray getProjects() {
-		
-		JSONArray projects = null;
-				
+
+		JSONArray projects = null;				
 		String route = getBaseURI() + "projects" + PER_PAGE;
-
 		this.client = factoryClient();
-
 		WebTarget target = this.client.target(route);
 
 		// Effettuo la chiamata GET
@@ -129,110 +121,102 @@ public class GitlabApiClient {
 
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
-		
+
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco dei progetti. Status code: " + statusCode);
 			System.exit(1);
 		}else {
-		
-		// Dalla chiamata GET prendo il file JSON che ci restituisce e lo scrivo in una stringa
-		String json = response.readEntity(String.class);
 
-		// Il file JSON è un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
-		projects = new JSONArray(json);
+			// Dalla chiamata GET prendo il file JSON che ci restituisce e lo scrivo in una stringa
+			String json = response.readEntity(String.class);
+
+			// Il file JSON è un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
+			projects = new JSONArray(json);
 		}
 		return projects;
 	}
-	
+
 	public void run(){
 		loadConfig();
 		JSONArray projects = getProjects();
-			// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
-			// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
-			LOGGER.info("#" + projects.length() + " projects read from repository");
-			boolean bContinue = true;
-			// Effettuo una serie di operazioni su tutti i progetti
-			for (int i = 0; i < projects.length(); i++) {
+		// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
+		// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
+		LOGGER.info("#" + projects.length() + " projects read from repository");
 
-				JSONObject project = projects.getJSONObject(i);
-				int projectId = project.getInt("id");
-				if(TEST) {
-					if(projectId!=TEST_PROJECT) {
-						bContinue = false;
-					}else {
-						bContinue = true;
-					}
+		// Effettuo una serie di operazioni su tutti i progetti
+		for (int i = 0; i < projects.length(); i++) {
+
+			JSONObject project = projects.getJSONObject(i);
+			int projectId = project.getInt("id");
+
+			String path = project.getString("path_with_namespace");
+			LOGGER.info("Project " + path + " (id " + projectId + ")");
+
+			if(DELETE_BADGES){
+				// Elimino i badges precedenti del progetto
+				List<Integer> results = removeBadges(projectId);
+				if(results.isEmpty()) {
+					LOGGER.warning("removeBadges() returns no results for project id " + projectId);
+				}else {
+					LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted from project id " + projectId);
 				}
-				if(bContinue) {
-				String path = project.getString("path_with_namespace");
-				LOGGER.info("Project " + path + " (id " + projectId + ")");
+			}				
 
-				if(DELETE_BADGES){
-					// Elimino i badges precedenti del progetto
-					List<Integer> results = removeBadges(projectId);
+			if(ADD_BADGES){
+				// Aggiungo i badges relativi al progetto
+				List<JSONObject> badges = createBadges(project);
+				if(!badges.isEmpty()) {
+					List<Integer> results = insertBadges(projectId, badges);
 					if(results.isEmpty()) {
-						LOGGER.warning("removeBadges() returns no results for project id " + projectId);
+						LOGGER.severe("insertBadges() returns no results for project id " + projectId);
 					}else {
-						LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted from project id " + projectId);
-					}
-				}				
-
-				if(ADD_BADGES){
-					// Aggiungo i badges relativi al progetto
-					List<JSONObject> badges = createBadges(project);
-					if(!badges.isEmpty()) {
-						List<Integer> results = insertBadges(projectId, badges);
-						if(results.isEmpty()) {
-							LOGGER.severe("insertBadges() returns no results for project id " + projectId);
-						}else {
-							LOGGER.log(Level.INFO, "#" + results.size() + " badges added to project id " + projectId);
-						}
+						LOGGER.log(Level.INFO, "#" + results.size() + " badges added to project id " + projectId);
 					}
 				}
+			}
 
 
-				if(PRINT_PIPELINE || DELETE_PIPELINE) {
-					
-					  JSONArray pipelines = getPipelines(projectId);
-						if(PRINT_PIPELINE) {
-							LOGGER.log(Level.INFO, "Pipelines dump: " + pipelines.toString());
-						}else if(!DELETE_PIPELINE){			
-							LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines read for project id " + projectId);
-						}
+			if(PRINT_PIPELINE || DELETE_PIPELINE) {
 
-					if(DELETE_PIPELINE && pipelines!=null && !pipelines.isEmpty()) {
+				JSONArray pipelines = getPipelines(projectId);
+				if(PRINT_PIPELINE) {
+					LOGGER.log(Level.INFO, "Pipelines dump: " + pipelines.toString());
+				}if(!DELETE_PIPELINE){			
+					LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines read for project id " + projectId);
+				}
 
-						//					[
-						//					  {
-						//					    "id": 47,
-						//					    "status": "pending",
-						//					    "ref": "new-pipeline",
-						//					    "sha": "a91957a858320c0e17f3a0eca7cfacbff50ea29a",
-						//					    "web_url": "https://example.com/foo/bar/pipelines/47"
-						//					  },
-						//					  {
-						//					    "id": 48,
-						//					    "status": "pending",
-						//					    "ref": "new-pipeline",
-						//					    "sha": "eb94b618fb5865b26e80fdd8ae531b7a63ad851a",
-						//					    "web_url": "https://example.com/foo/bar/pipelines/48"
-						//					  }
-						//					]
+				if(DELETE_PIPELINE && pipelines!=null && !pipelines.isEmpty()) {
 
-						List<Integer> results = removePipelines(projectId, pipelines);
-						if(results.isEmpty()) {
-							LOGGER.warning("removePipelines() returns no results for project id " + projectId);
-						}else {
-							LOGGER.log(Level.INFO, "#" + results.size() + " pipelines removed from project id " + projectId);
-						}					
-					}
+					//					[
+					//					  {
+					//					    "id": 47,
+					//					    "status": "pending",
+					//					    "ref": "new-pipeline",
+					//					    "sha": "a91957a858320c0e17f3a0eca7cfacbff50ea29a",
+					//					    "web_url": "https://example.com/foo/bar/pipelines/47"
+					//					  },
+					//					  {
+					//					    "id": 48,
+					//					    "status": "pending",
+					//					    "ref": "new-pipeline",
+					//					    "sha": "eb94b618fb5865b26e80fdd8ae531b7a63ad851a",
+					//					    "web_url": "https://example.com/foo/bar/pipelines/48"
+					//					  }
+					//					]
+
+					List<Integer> results = removePipelines(projectId, pipelines);
+					if(results.isEmpty()) {
+						LOGGER.warning("removePipelines() returns no results for project id " + projectId);
+					}else {
+						LOGGER.log(Level.INFO, "#" + results.size() + " pipelines removed from project id " + projectId);
+					}					
 				}
 			}
 		}
 	}
 
 	private JSONArray getPipelines(int projectId) {
- 
+
 		// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines	
 		// ATTENZIONE: c'è un problema nella documentazione dell'api
 		// Di default il numero massimo di record restituiti è 20 per chiamata
@@ -246,12 +230,14 @@ public class GitlabApiClient {
 			LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode);
 			if(FAIL_FAST) {
 				System.exit(1);
+			}else {
+				this.errors.add(projectId);
 			}
 		}
-		
+
 		String json2 = response2.readEntity(String.class);		
 		JSONArray pipelines = new JSONArray(json2);	
-		
+
 		return pipelines;
 	}
 
@@ -268,32 +254,32 @@ public class GitlabApiClient {
 			LOGGER.info("#" + pipelines.length() + " pipelines <= " + SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
 		}else {
 			LOGGER.info("#" + pipelines.length() + " pipelines read for project id " + projectId);
-		for (int j = 0 + SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
-			JSONObject pipeline = pipelines.getJSONObject(j);
-			int pipelineId = pipeline.getInt("id");	// The ID of a pipeline									
-			String route3 = "/projects/" + projectId + "/pipelines/" + pipelineId;
-			WebTarget target3 = this.client.target(getBaseURI() + route3);					
-			Response response3 = target3.request().accept(MediaType.APPLICATION_JSON)
-					.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
-			int statusCode = response3.getStatus();
-			if(statusCode==Status.NO_CONTENT.getStatusCode()) {
-				pipelineIds.add(pipelineId);
-			}else {
-				LOGGER.severe("Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode);
-				if(FAIL_FAST) {
-					System.exit(1);
+			for (int j = 0 + SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
+				JSONObject pipeline = pipelines.getJSONObject(j);
+				int pipelineId = pipeline.getInt("id");	// The ID of a pipeline									
+				String route3 = "/projects/" + projectId + "/pipelines/" + pipelineId;
+				WebTarget target3 = this.client.target(getBaseURI() + route3);					
+				Response response3 = target3.request().accept(MediaType.APPLICATION_JSON)
+						.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
+				int statusCode = response3.getStatus();
+				if(statusCode==Status.NO_CONTENT.getStatusCode()) {
+					pipelineIds.add(pipelineId);
 				}else {
-					this.errors.add(projectId);
-					break;
-				}				
+					LOGGER.severe("Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode);
+					if(FAIL_FAST) {
+						System.exit(1);
+					}else {
+						this.errors.add(projectId);
+						break;
+					}				
+				}
+				//						TODO: Verificare poi su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
+				//						/var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
+				//						Lo storage path può variare, vedi:
+				//						https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
+				//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
+				//
 			}
-			//						TODO: Verificare poi su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
-			//						/var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
-			//						Lo storage path può variare, vedi:
-			//						https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
-			//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
-			//
-		}
 		}
 		return pipelineIds;
 	}
@@ -324,7 +310,7 @@ public class GitlabApiClient {
 			String json = response.readEntity(String.class);
 			JSONArray badges = new JSONArray(json);
 			LOGGER.info("#" + badges.length() + " badges read for project id " + projectId);
-					
+
 			for (int i = 0; i < badges.length(); i++) {						
 				JSONObject object = badges.getJSONObject(i);
 				int badgeId = object.getInt("id");			
@@ -355,13 +341,13 @@ public class GitlabApiClient {
 		return badgeIds;
 	}
 
-/**
- * @see https://docs.gitlab.com/ee/api/project_badges.html#add-a-badge-to-a-project
- * 
- * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
- * @param badges
- * @return
- */
+	/**
+	 * @see https://docs.gitlab.com/ee/api/project_badges.html#add-a-badge-to-a-project
+	 * 
+	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
+	 * @param badges
+	 * @return
+	 */
 	private List<Integer> insertBadges(int projectId, List<JSONObject> badges) {
 		List<Integer> badgeIds = new ArrayList<Integer>();
 		WebTarget target = this.client.target(getBaseURI());
@@ -478,27 +464,23 @@ public class GitlabApiClient {
 	 */
 	private boolean isFile(int projectId, String fileName){
 		boolean b = false;		
-		 String route = getBaseURI() + "/projects/" + projectId + "/repository/tree" + PER_PAGE;
-		 // Altre opzioni con relativo valor edi default
-		 // path == /
-		 // ref == master
-		 
+		String route = getBaseURI() + "/projects/" + projectId + "/repository/tree" + PER_PAGE;
+		// Altre opzioni con relativo valor edi default
+		// path == /
+		// ref == master
+
 		WebTarget target = this.client.target(route);
 		Response response = target.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.header("PRIVATE-TOKEN", this.gitlabToken)
 				.get(Response.class);
-		
-		
+
 		int statusCode = response.getStatus();
 		if (response.getStatus() != Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile determinare se il file " + fileName + " è parte del progetto. Status code: " + statusCode);
 		}else {
 			String json = response.readEntity(String.class);			
-			JSONArray files = new JSONArray(json);
-			if(TEST) {
-				LOGGER.info("Files: " + files.length());
-			}			
+			JSONArray files = new JSONArray(json);		
 			for (int i=0; i<files.length(); i++) {
 				JSONObject object = files.getJSONObject(i);
 				String _fileName = object.getString("name");			
@@ -511,7 +493,7 @@ public class GitlabApiClient {
 		return b;		
 	}
 
-	public List<Integer> getErrors() {
+	public Set<Integer> getErrors() {
 		return this.errors;
 	}	
 }

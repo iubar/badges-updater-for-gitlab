@@ -2,6 +2,7 @@ package it.iubar.BadgesUpdater;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response.Status;
@@ -33,7 +34,7 @@ public class BadgesUpdater {
 				GitlabApiClient client = new GitlabApiClient();
 				client.setProperties(config);
 				client.run();
-				List<Integer> errors = client.getErrors();
+				Set<Integer> errors = client.getErrors();
 				if(!errors.isEmpty()) {
 					LOGGER.severe("Done with errors");
 					System.exit(1);
