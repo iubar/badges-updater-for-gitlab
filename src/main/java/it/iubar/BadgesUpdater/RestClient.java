@@ -24,7 +24,7 @@ public abstract class RestClient {
 
 	protected abstract URI getBaseURI();
 
-	public void RestClient() {
+	public RestClient() {
 		this.client = factoryClient();		
 	}
 	
