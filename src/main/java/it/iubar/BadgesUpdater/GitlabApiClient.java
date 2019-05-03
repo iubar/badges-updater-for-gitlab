@@ -1,10 +1,14 @@
 package it.iubar.BadgesUpdater;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -29,12 +33,8 @@ import org.json.JSONObject;
 
 public class GitlabApiClient {
 
-	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
-
-	private static final String GITLAB_FILE = ".gitlab-ci.yml";
-
-	private static final String SONAR_FILE = "sonar-project.properties";
-
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
 	private static final boolean FAIL_FAST = true;
 
 	private static final boolean DELETE_BADGES = true;
@@ -49,8 +49,16 @@ public class GitlabApiClient {
 	private static final int SKIP_PIPELINES_QNT = 4;
 
 	// Di default il numero massimo di record restituiti da ogni chiamata all'Api è 20
-	private static final int MAX_RECORDS_PER_RESPONSE = 200;	
+	private static final int MAX_RECORDS_PER_RESPONSE = 200;
 	private static final String PER_PAGE = "?per_page=" + MAX_RECORDS_PER_RESPONSE;
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	private static final String GITLAB_FILE = ".gitlab-ci.yml";
+
+	private static final String SONAR_FILE = "sonar-project.properties";
+	
+	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 
 	private String sonarHost = null;
 	private String gitlabHost = null;
@@ -183,7 +191,7 @@ public class GitlabApiClient {
 				if(PRINT_PIPELINE) {
 					LOGGER.log(Level.INFO, "Pipelines dump: " + pipelines.toString());
 				}if(!DELETE_PIPELINE){			
-					LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines read for project id " + projectId);
+					LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines found for project id " + projectId);
 				}
 
 				if(DELETE_PIPELINE && pipelines!=null && !pipelines.isEmpty()) {
@@ -310,7 +318,7 @@ public class GitlabApiClient {
 		}else {
 			String json = response.readEntity(String.class);
 			JSONArray badges = new JSONArray(json);
-			LOGGER.info("#" + badges.length() + " badges read for project id " + projectId);
+			LOGGER.info("#" + badges.length() + " badges exist for project id " + projectId);
 
 			for (int i = 0; i < badges.length(); i++) {						
 				JSONObject object = badges.getJSONObject(i);
@@ -396,14 +404,9 @@ public class GitlabApiClient {
 		String name = object.getString("name");
 		JSONObject namespace = object.getJSONObject("namespace");
 		String group = namespace.getString("path");
-
-		// Nota che sto generando la chiave di ogni singolo progetto Sonar a partire da una convenzione. 
-		// Non ho quindi la certezza matematica che sia proprio la stessa salvata nel file sonar-project.properties
-		// Nota che ":" equivale a "%3A"
-		String key = group + ":" + name; 
-
+		
 		if(!isGitlabci(projectId)) {
-			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + key + " (" + projectId + ")");
+			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + projectId);
 		}else {
 			String link = this.gitlabHost +"/" + group + "/" + name + "/commits/%{default_branch}";
 			String  image = this.gitlabHost + "/" + group + "/" + name + "/badges/%{default_branch}/build.svg";			
@@ -412,30 +415,55 @@ public class GitlabApiClient {
 		}
 
 		if(!isSonar(projectId)) {
-			LOGGER.warning("File " + SONAR_FILE + " assente per il progetto " + key + " (" + projectId + ")");
-		}else {	 		
-			String link = this.sonarHost + "/dashboard?id=" + key;
-			String image = this.sonarHost + "/api/badges/gate?key=" + key;
+			LOGGER.warning("File " + SONAR_FILE + " assente per il progetto " + projectId);
+		}else {
+			
+			// Nota 1: sto generando la chiave di ogni singolo progetto Sonar a partire da una convenzione. 
+			// Non ho quindi la certezza matematica che la chiave corrisponda con quella indicata nel file sonar-project.properties
+			// Quindi sarebbe buona abitudine definire opportunamente il valore di sonar.projectKey nel file sonar-project.properties		
+			// Nota 2: il carattere ":" equivale a "%3A"
+			//
+			
+			String sonarProjectKey = group + ":" + name; 
+
+			String sonarProjectContent = getFileContent(projectId, SONAR_FILE);
+			Properties properties = parsePropertiesString(sonarProjectContent);
+			Object obj = properties.get("sonar.projectKey");
+			String sonarProjectKey2 = null;
+			if(obj!=null) {
+				sonarProjectKey2 = (String) obj;
+			}
+			if(sonarProjectKey2==null || !sonarProjectKey.equals(sonarProjectKey2)) {
+				LOGGER.severe("sonar.projectKey del progetto " + projectId + " non rispetta le linee guida: valore atteso " + sonarProjectKey + " valore attuale " + sonarProjectKey2);
+				if(FAIL_FAST) {					
+					System.exit(1);
+				}else {
+					this.errors.add(projectId);
+				}
+			}
+			
+			String link = this.sonarHost + "/dashboard?id=" + sonarProjectKey;
+			String image = this.sonarHost + "/api/badges/gate?key=" + sonarProjectKey;
 			JSONObject badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=Reliability&id=" + key;	
-			image = this.sonarHost + "/api/badges/measure?key=" + key + "&metric=bugs";
+			link = this.sonarHost + "/component_measures?metric=Reliability&id=" + sonarProjectKey;	
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=bugs";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=code_smells&id=" + key;			
-			image = this.sonarHost + "/api/badges/measure?key=" + key + "&metric=code_smells";
+			link = this.sonarHost + "/component_measures?metric=code_smells&id=" + sonarProjectKey;			
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=code_smells";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=ncloc_language_distribution&id=" + key;
-			image = this.sonarHost + "/api/badges/measure?key=" + key + "&metric=ncloc_language_distribution";
+			link = this.sonarHost + "/component_measures?metric=ncloc_language_distribution&id=" + sonarProjectKey;
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=ncloc_language_distribution";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=classes&id=" + key;
-			image = this.sonarHost + "/api/badges/measure?key=" + key + "&metric=classes";
+			link = this.sonarHost + "/component_measures?metric=classes&id=" + sonarProjectKey;
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=classes";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
-			link = this.sonarHost + "/component_measures?metric=functions&id=" + key;
-			image = this.sonarHost + "/api/badges/measure?key=" + key + "&metric=functions";
+			link = this.sonarHost + "/component_measures?metric=functions&id=" + sonarProjectKey;
+			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKey + "&metric=functions";
 			badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
 		}
@@ -496,5 +524,48 @@ public class GitlabApiClient {
 
 	public Set<Integer> getErrors() {
 		return this.errors;
-	}	
+	}
+	
+	private String getFileContent(int projectId, String filePath) {
+				
+			String route2 = getBaseURI() + "/projects/" + projectId + "/repository/files/" + filePath + PER_PAGE;
+			WebTarget target2 = this.client.target(route2);
+			Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
+					.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
+			int statusCode = response2.getStatus();
+			if(statusCode!=Status.OK.getStatusCode()) {
+				LOGGER.severe("Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectId + ". Status code: " + statusCode);
+				if(FAIL_FAST) {
+					System.exit(1);
+				}else {
+					this.errors.add(projectId);
+				}
+			}
+
+			String json = response2.readEntity(String.class);		
+			JSONObject object = new JSONObject(json);
+			String size = object.getString("size");
+			String base64 = object.getString("content");
+			byte[] decoded = Base64.getDecoder().decode(base64);
+			String content = "";
+			try {
+				content = new String(decoded, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			return content;
+	}
+	
+	private Properties parsePropertiesString(String s) {
+	    // grr at load() returning void rather than the Properties object
+	    // so this takes 3 lines instead of "return new Properties().load(...);"
+	    final Properties p = new Properties();
+	    try {
+			p.load(new StringReader(s));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	    return p;
+	}
+	
 }
