@@ -21,11 +21,9 @@ public abstract class RestClient {
 
 	private static final Logger LOGGER = Logger.getLogger(RestClient.class.getName());
 	
-	protected Client client = null;
+	private Client client = null;
 
 	protected abstract URI getBaseURI();
-	
-	protected abstract Builder getBuilder(WebTarget target);
 	
 	public RestClient() {
 		this.client = factoryClient();		
@@ -35,7 +33,6 @@ public abstract class RestClient {
 	 * Crea il client e ignora la validità del certificato SSL
 	 * 
 	 * @return
-
 	 */
 	public static Client factoryClient()  {
 		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
@@ -65,6 +62,10 @@ public abstract class RestClient {
 		ClientBuilder builder = ClientBuilder.newBuilder();
 		Client client = builder.sslContext(sslContext).build();
 		return client;
+	}
+	
+	protected Builder getBuilder(WebTarget target) {
+		return target.request().accept(MediaType.APPLICATION_JSON);
 	}
 	
 	protected Response doGet(String route) {

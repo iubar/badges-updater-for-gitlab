@@ -501,7 +501,7 @@ public class GitlabApiClient extends RestClient {
 
 	@Override
 	protected Builder getBuilder(WebTarget target) {				
-		Builder builder = target.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", this.gitlabToken);
+		Builder builder = super.getBuilder(target).header("PRIVATE-TOKEN", this.gitlabToken);
 		return builder;
 	}
 
