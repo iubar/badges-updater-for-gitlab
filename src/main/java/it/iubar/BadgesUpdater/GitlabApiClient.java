@@ -41,7 +41,7 @@ public class GitlabApiClient {
 
 	private static final boolean ADD_BADGES = true;
 
-	private static final boolean PRINT_PIPELINE = false;
+	private static final boolean PRINT_PIPELINE = true;
 
 	private static final boolean DELETE_PIPELINE = false;
 	
