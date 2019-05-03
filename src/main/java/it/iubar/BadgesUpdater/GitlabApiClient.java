@@ -3,6 +3,7 @@ package it.iubar.BadgesUpdater;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.security.KeyManagementException;
@@ -263,11 +264,10 @@ public class GitlabApiClient {
 						break;
 					}				
 				}
-				//						TODO: Verificare poi su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
+				//						TODO: Verificare su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
 				//						/var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
 				//						Lo storage path può variare, vedi:
 				//						https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
-				//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 				//
 			}
 		}
@@ -545,7 +545,7 @@ public class GitlabApiClient {
 		}else {
 			String json = response2.readEntity(String.class);		
 			JSONObject object = new JSONObject(json);
-			String size = object.getString("size");
+			BigInteger size = object.getBigInteger("size");
 			String base64 = object.getString("content");
 			byte[] decoded = Base64.getDecoder().decode(base64);
 			try {
