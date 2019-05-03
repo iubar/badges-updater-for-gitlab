@@ -118,19 +118,11 @@ public class GitlabApiClient {
 	}
 
 	private JSONArray getProjects() {
-
-		JSONArray projects = null;				
-		String route = getBaseURI() + "projects" + PER_PAGE;
-		this.client = factoryClient();
-		WebTarget target = this.client.target(route);
-
-		// Effettuo la chiamata GET
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
-
+		JSONArray projects = new JSONArray();				
+		String route = "projects" + PER_PAGE;
+		Response response = doGet(route);
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
-
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco dei progetti. Status code: " + statusCode);
 			System.exit(1);
@@ -145,8 +137,31 @@ public class GitlabApiClient {
 		return projects;
 	}
 
+	private Response doGet(String route) {
+		WebTarget target = this.client.target(getBaseURI() + route);
+		Response response = target.request().accept(MediaType.APPLICATION_JSON)
+				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
+		return response;
+	}
+	
+	private Response doDelete(String route) {
+		WebTarget target = this.client.target(getBaseURI() + route);					
+		Response response = target.request().accept(MediaType.APPLICATION_JSON)
+				.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
+		return response;
+	}
+
+	private <T> Response doPost(String route, Entity<T> entity) {
+		WebTarget target = this.client.target(getBaseURI() + route);
+		Response response = target.request().accept(MediaType.APPLICATION_JSON)
+		.header("PRIVATE-TOKEN", this.gitlabToken).post(entity);
+		return response;
+	}
+	
+
 	public void run(){
 		loadConfig();
+		this.client = factoryClient();
 		JSONArray projects = getProjects();
 		// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 		// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
@@ -226,11 +241,8 @@ public class GitlabApiClient {
 	 * @return
 	 */
 	private JSONArray getPipelines(int projectId) {
-
-		String route2 = getBaseURI() + "/projects/" + projectId + "/pipelines" + PER_PAGE;
-		WebTarget target2 = this.client.target(route2);
-		Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
+		String route = "projects/" + projectId + "/pipelines" + PER_PAGE;
+		Response response2 = doGet(route);
 		int statusCode = response2.getStatus();
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode);
@@ -240,10 +252,8 @@ public class GitlabApiClient {
 				this.errors.add(projectId);
 			}
 		}
-
 		String json2 = response2.readEntity(String.class);		
 		JSONArray pipelines = new JSONArray(json2);	
-
 		return pipelines;
 	}
 
@@ -263,10 +273,8 @@ public class GitlabApiClient {
 			for (int j = 0 + SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
 				JSONObject pipeline = pipelines.getJSONObject(j);
 				int pipelineId = pipeline.getInt("id");	// The ID of a pipeline									
-				String route3 = "/projects/" + projectId + "/pipelines/" + pipelineId;
-				WebTarget target3 = this.client.target(getBaseURI() + route3);					
-				Response response3 = target3.request().accept(MediaType.APPLICATION_JSON)
-						.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
+				String route3 = "projects/" + projectId + "/pipelines/" + pipelineId; 		
+				Response response3 = doDelete(route3);
 				int statusCode = response3.getStatus();
 				if(statusCode==Status.NO_CONTENT.getStatusCode()) {
 					pipelineIds.add(pipelineId);
@@ -302,31 +310,15 @@ public class GitlabApiClient {
 	 * @return
 	 */
 	private List<Integer> removeBadges(int projectId){
-		List<Integer> badgeIds = new ArrayList<Integer>();
-		WebTarget target = this.client.target(getBaseURI());
-		Response response = target.path("projects")
-				.path("" + projectId)
-				.path("badges")
-				.request()
-				.accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken)
-				.get(Response.class);
-
-		int statusCode = response.getStatus();
-		if(statusCode!=Status.OK.getStatusCode()) {
-			LOGGER.severe("Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode);			
-		}else {
-			String json = response.readEntity(String.class);
-			JSONArray badges = new JSONArray(json);
-			LOGGER.info("#" + badges.length() + " badges exist for project id " + projectId);
-
+		List<Integer> badgeIds = new ArrayList<Integer>();	
+		JSONArray badges = getBadgesList(projectId);
 			for (int i = 0; i < badges.length(); i++) {						
 				JSONObject object = badges.getJSONObject(i);
 				int badgeId = object.getInt("id");			
 				try {
-					WebTarget webTarget = this.client.target(getBaseURI() + "projects/" + projectId + "/badges/" + badgeId);
-					Response response2 = webTarget.request().accept(MediaType.APPLICATION_JSON).header("PRIVATE-TOKEN", gitlabToken).delete(Response.class);
-					statusCode = response2.getStatus();
+					String route = "projects/" + projectId + "/badges/" + badgeId;
+					Response response2 = doDelete(route);
+					int statusCode = response2.getStatus();
 					if(statusCode==Status.NO_CONTENT.getStatusCode()) {
 						// OK
 						// LOGGER.info("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
@@ -346,8 +338,28 @@ public class GitlabApiClient {
 				}
 			}
 
-		}
+	 
 		return badgeIds;
+	}
+
+	private JSONArray getBadgesList(int projectId) {
+		JSONArray badges = new JSONArray();
+		String route = "projects/" + projectId + "/badges";
+		Response response = doGet(route);
+		int statusCode = response.getStatus();
+		if(statusCode!=Status.OK.getStatusCode()) {
+			LOGGER.severe("Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode);
+			if(FAIL_FAST) {
+				System.exit(1);
+			}else {
+				this.errors.add(projectId);
+			}
+		}else {
+			String json = response.readEntity(String.class);
+			badges = new JSONArray(json);
+			LOGGER.info("#" + badges.length() + " badges exist for project id " + projectId);
+		}
+		return badges;
 	}
 
 	/**
@@ -359,10 +371,10 @@ public class GitlabApiClient {
 	 */
 	private List<Integer> insertBadges(int projectId, List<JSONObject> badges) {
 		List<Integer> badgeIds = new ArrayList<Integer>();
-		WebTarget target = this.client.target(getBaseURI());
-		for (JSONObject badge : badges) {			
-			Response response = target.path("projects").path("" + projectId).path("badges").request().accept(MediaType.APPLICATION_JSON)
-					.header("PRIVATE-TOKEN", this.gitlabToken).post(Entity.json(badge.toString()));
+
+		for (JSONObject badge : badges) {	
+			String route = "projects/" + projectId + "/badges";
+			Response response = doPost(route, Entity.json(badge.toString()));
 			int statusCode = response.getStatus();
 			if(statusCode==Status.CREATED.getStatusCode()) {
 				String json = response.readEntity(String.class);			
@@ -493,17 +505,8 @@ public class GitlabApiClient {
 	 */
 	private boolean isFile(int projectId, String fileName){
 		boolean b = false;		
-		String route = getBaseURI() + "/projects/" + projectId + "/repository/tree" + PER_PAGE;
-		// Altre opzioni con relativo valor edi default
-		// path == /
-		// ref == master
-
-		WebTarget target = this.client.target(route);
-		Response response = target.request()
-				.accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken)
-				.get(Response.class);
-
+		String route = "projects/" + projectId + "/repository/tree" + PER_PAGE;
+		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if (response.getStatus() != Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile determinare se il file " + fileName + " è parte del progetto. Status code: " + statusCode);
@@ -526,12 +529,9 @@ public class GitlabApiClient {
 		return this.errors;
 	}
 	
-	private String getFileContent(int projectId, String filePath) {
-				
-			String route2 = getBaseURI() + "/projects/" + projectId + "/repository/files/" + filePath + PER_PAGE;
-			WebTarget target2 = this.client.target(route2);
-			Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
-					.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
+	private String getFileContent(int projectId, String filePath) {				
+			String route = "projects/" + projectId + "/repository/files/" + filePath;
+			Response response2 = doGet(route);
 			int statusCode = response2.getStatus();
 			if(statusCode!=Status.OK.getStatusCode()) {
 				LOGGER.severe("Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectId + ". Status code: " + statusCode);
