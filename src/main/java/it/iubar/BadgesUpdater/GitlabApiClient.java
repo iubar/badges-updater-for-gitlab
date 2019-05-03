@@ -29,7 +29,7 @@ public class GitlabApiClient {
 
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 
-	private static final int MAX_PROJECT_PER_PAGE = 200;
+	private static final int MAX_RECORDS_PER_RESPONSE = 200;
 
 	private static final String GITLAB_FILE = ".gitlab-ci.yml";
 
@@ -51,7 +51,7 @@ public class GitlabApiClient {
 
 	private static final int SKIP_PIPELINES_QNT = 4;
 
-	private static final String PER_PAGE = "?per_page=" + MAX_PROJECT_PER_PAGE;
+	private static final String PER_PAGE = "?per_page=" + MAX_RECORDS_PER_RESPONSE;
 
 	private String sonarHost = null;
 	private String gitlabHost = null;
