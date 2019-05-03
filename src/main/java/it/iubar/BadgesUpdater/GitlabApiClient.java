@@ -188,7 +188,10 @@ public class GitlabApiClient {
 				if(PRINT_PIPELINE || DELETE_PIPELINE) {
 					String json2 = null;
 					// Stampo l'elenco delle pipelines
-					// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines				
+					// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines	
+					// ATTENZIONE: c'è un problema nella documentazione dell'api
+					// Il numero massimo di record restituiti è 20 per chiamata.
+					// Verificare se è possibile utilizzare il parametro per_page/200 nella chiamata
 					String route2 = "/projects/" + projectId + "/pipelines";
 					WebTarget target2 = this.client.target(getBaseURI() + route2);
 					Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
@@ -491,9 +494,15 @@ public class GitlabApiClient {
 		}else {
 			String json = response.readEntity(String.class);			
 			JSONArray files = new JSONArray(json);
+			if(TEST) {
+				LOGGER.info("Files: " + files.length());
+			}			
 			for (int i=0; i<files.length(); i++) {
 				JSONObject object = files.getJSONObject(i);
 				String _fileName = object.getString("name");
+				if(TEST) {
+					LOGGER.info("Confronto con il file " + _fileName);
+				}				
 				if (_fileName.equals(fileName)) {
 					b=true;
 					break;
