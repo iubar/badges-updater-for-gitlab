@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -34,14 +35,10 @@ import org.json.JSONObject;
 public class GitlabApiClient {
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	private static final boolean FAIL_FAST = true;
 
-	private static final boolean DELETE_BADGES = true;
-
-	private static final boolean ADD_BADGES = true;
-
-	private static final boolean PRINT_PIPELINE = false; // attivare solo a scopo di debug
+	private static final boolean UPDATE_BADGES = true;
 
 	private static final boolean DELETE_PIPELINE = true;
 
@@ -53,11 +50,11 @@ public class GitlabApiClient {
 	private static final String PER_PAGE = "?per_page=" + MAX_RECORDS_PER_RESPONSE;
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	private static final String GITLAB_FILE = ".gitlab-ci.yml";
 
 	private static final String SONAR_FILE = "sonar-project.properties";
-	
+
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 
 	private String sonarHost = null;
@@ -143,7 +140,7 @@ public class GitlabApiClient {
 				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
 		return response;
 	}
-	
+
 	private Response doDelete(String route) {
 		WebTarget target = this.client.target(getBaseURI() + route);					
 		Response response = target.request().accept(MediaType.APPLICATION_JSON)
@@ -154,17 +151,15 @@ public class GitlabApiClient {
 	private <T> Response doPost(String route, Entity<T> entity) {
 		WebTarget target = this.client.target(getBaseURI() + route);
 		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-		.header("PRIVATE-TOKEN", this.gitlabToken).post(entity);
+				.header("PRIVATE-TOKEN", this.gitlabToken).post(entity);
 		return response;
 	}
-	
+
 
 	public void run(){
 		loadConfig();
 		this.client = factoryClient();
 		JSONArray projects = getProjects();
-		// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
-		// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
 		LOGGER.info("#" + projects.length() + " projects read from repository");
 
 		// Effettuo una serie di operazioni su tutti i progetti
@@ -176,60 +171,35 @@ public class GitlabApiClient {
 			String path = project.getString("path_with_namespace");
 			LOGGER.info("Project " + path + " (id " + projectId + ")");
 
-			if(DELETE_BADGES){
-				// Elimino i badges precedenti del progetto
+			if(UPDATE_BADGES){
+				// Rimuovo i badges esistenti dal progetto
 				List<Integer> results = removeBadges(projectId);
 				if(results.isEmpty()) {
 					LOGGER.warning("removeBadges() returns no results for project id " + projectId);
 				}else {
 					LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted from project id " + projectId);
 				}
-			}				
 
-			if(ADD_BADGES){
-				// Aggiungo i badges relativi al progetto
+				// Aggiungo i nuovi badges al progetto
 				List<JSONObject> badges = createBadges(project);
 				if(!badges.isEmpty()) {
-					List<Integer> results = insertBadges(projectId, badges);
-					if(results.isEmpty()) {
+					List<Integer> results2 = insertBadges(projectId, badges);
+					if(results2.isEmpty()) {
 						LOGGER.severe("insertBadges() returns no results for project id " + projectId);
 					}else {
-						LOGGER.log(Level.INFO, "#" + results.size() + " badges added to project id " + projectId);
+						LOGGER.log(Level.INFO, "#" + results2.size() + " badges added to project id " + projectId);
 					}
 				}
 			}
 
-
-			if(PRINT_PIPELINE || DELETE_PIPELINE) {
-
-				JSONArray pipelines = getPipelines(projectId);
-				if(PRINT_PIPELINE) {
-					LOGGER.log(Level.INFO, "Pipelines dump: " + pipelines.toString());
-				}if(!DELETE_PIPELINE){			
-					LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines found for project id " + projectId);
+			JSONArray pipelines = getPipelines(projectId);
+			if(DELETE_PIPELINE) {			  
+				if(pipelines!=null && !pipelines.isEmpty()) {
+					List<Integer> results3 = removePipelines(projectId, pipelines);
+					LOGGER.log(Level.INFO, "#" + results3.size() + " pipelines removed from project id " + projectId);
 				}
-
-				if(DELETE_PIPELINE && pipelines!=null && !pipelines.isEmpty()) {
-
-					//					[
-					//					  {
-					//					    "id": 47,
-					//					    "status": "pending",
-					//					    "ref": "new-pipeline",
-					//					    "sha": "a91957a858320c0e17f3a0eca7cfacbff50ea29a",
-					//					    "web_url": "https://example.com/foo/bar/pipelines/47"
-					//					  },
-					//					  {
-					//					    "id": 48,
-					//					    "status": "pending",
-					//					    "ref": "new-pipeline",
-					//					    "sha": "eb94b618fb5865b26e80fdd8ae531b7a63ad851a",
-					//					    "web_url": "https://example.com/foo/bar/pipelines/48"
-					//					  }
-					//					]
-
-					List<Integer> results = removePipelines(projectId, pipelines);					
-				}
+			}else {
+				LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines found for project id " + projectId);
 			}
 		}
 	}
@@ -241,9 +211,10 @@ public class GitlabApiClient {
 	 * @return
 	 */
 	private JSONArray getPipelines(int projectId) {
+		JSONArray pipelines = new JSONArray();	
 		String route = "projects/" + projectId + "/pipelines" + PER_PAGE;
-		Response response2 = doGet(route);
-		int statusCode = response2.getStatus();
+		Response response = doGet(route);
+		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode);
 			if(FAIL_FAST) {
@@ -251,9 +222,10 @@ public class GitlabApiClient {
 			}else {
 				this.errors.add(projectId);
 			}
+		}else {
+		String json2 = response.readEntity(String.class);		
+		pipelines = new JSONArray(json2);
 		}
-		String json2 = response2.readEntity(String.class);		
-		JSONArray pipelines = new JSONArray(json2);	
 		return pipelines;
 	}
 
@@ -294,9 +266,6 @@ public class GitlabApiClient {
 				//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 				//
 			}
- 
-			LOGGER.log(Level.INFO, "#" + pipelineIds.size() + " pipelines removed from project id " + projectId);
-
 		}
 		return pipelineIds;
 	}
@@ -312,33 +281,33 @@ public class GitlabApiClient {
 	private List<Integer> removeBadges(int projectId){
 		List<Integer> badgeIds = new ArrayList<Integer>();	
 		JSONArray badges = getBadgesList(projectId);
-			for (int i = 0; i < badges.length(); i++) {						
-				JSONObject object = badges.getJSONObject(i);
-				int badgeId = object.getInt("id");			
-				try {
-					String route = "projects/" + projectId + "/badges/" + badgeId;
-					Response response2 = doDelete(route);
-					int statusCode = response2.getStatus();
-					if(statusCode==Status.NO_CONTENT.getStatusCode()) {
-						// OK
-						// LOGGER.info("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
-						badgeIds.add(badgeId);
+		for (int i = 0; i < badges.length(); i++) {						
+			JSONObject object = badges.getJSONObject(i);
+			int badgeId = object.getInt("id");			
+			try {
+				String route = "projects/" + projectId + "/badges/" + badgeId;
+				Response response2 = doDelete(route);
+				int statusCode = response2.getStatus();
+				if(statusCode==Status.NO_CONTENT.getStatusCode()) {
+					// OK
+					// LOGGER.info("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
+					badgeIds.add(badgeId);
+				}else {
+					LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);						 
+					if(FAIL_FAST) {
+						System.exit(1);
 					}else {
-						LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);						 
-						if(FAIL_FAST) {
-							System.exit(1);
-						}else {
-							this.errors.add(projectId);
-							break;
-						}						 
-					}
-				} catch (Exception e) {
-					LOGGER.severe("ERRORE: " + e.getMessage());
-					throw e;
+						this.errors.add(projectId);
+						break;
+					}						 
 				}
+			} catch (Exception e) {
+				LOGGER.severe("ERRORE: " + e.getMessage());
+				throw e;
 			}
+		}
 
-	 
+
 		return badgeIds;
 	}
 
@@ -416,7 +385,7 @@ public class GitlabApiClient {
 		String name = object.getString("name");
 		JSONObject namespace = object.getJSONObject("namespace");
 		String group = namespace.getString("path");
-		
+
 		if(!isGitlabci(projectId)) {
 			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + projectId);
 		}else {
@@ -429,13 +398,13 @@ public class GitlabApiClient {
 		if(!isSonar(projectId)) {
 			LOGGER.warning("File " + SONAR_FILE + " assente per il progetto " + projectId);
 		}else {
-			
+
 			// Nota 1: sto generando la chiave di ogni singolo progetto Sonar a partire da una convenzione. 
 			// Non ho quindi la certezza matematica che la chiave corrisponda con quella indicata nel file sonar-project.properties
 			// Quindi sarebbe buona abitudine definire opportunamente il valore di sonar.projectKey nel file sonar-project.properties		
 			// Nota 2: il carattere ":" equivale a "%3A"
 			//
-			
+
 			String sonarProjectKey = group + ":" + name; 
 
 			String sonarProjectContent = getFileContent(projectId, SONAR_FILE);
@@ -453,7 +422,7 @@ public class GitlabApiClient {
 					this.errors.add(projectId);
 				}
 			}
-			
+
 			String link = this.sonarHost + "/dashboard?id=" + sonarProjectKey;
 			String image = this.sonarHost + "/api/badges/gate?key=" + sonarProjectKey;
 			JSONObject badge = new JSONObject().put("link_url", link).put("image_url", image);
@@ -528,44 +497,50 @@ public class GitlabApiClient {
 	public Set<Integer> getErrors() {
 		return this.errors;
 	}
-	
-	private String getFileContent(int projectId, String filePath) {				
-			String route = "projects/" + projectId + "/repository/files/" + filePath;
-			Response response2 = doGet(route);
-			int statusCode = response2.getStatus();
-			if(statusCode!=Status.OK.getStatusCode()) {
-				LOGGER.severe("Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectId + ". Status code: " + statusCode);
-				if(FAIL_FAST) {
-					System.exit(1);
-				}else {
-					this.errors.add(projectId);
-				}
-			}
 
+	private String getFileContent(int projectId, String filePath) {	
+		String content = "";
+		int statusCode = 0;
+		Response response2 = null;
+		try {
+			String filePathEncoded = URLEncoder.encode(filePath, "UTF-8");
+			String route = "projects/" + projectId + "/repository/files/" + filePathEncoded;
+			response2 = doGet(route);
+			statusCode = response2.getStatus();			
+		} catch (UnsupportedEncodingException e1) {
+			e1.printStackTrace();
+		}
+
+		if(statusCode!=Status.OK.getStatusCode()) {
+			LOGGER.severe("Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectId + ". Status code: " + statusCode);
+			if(FAIL_FAST) {
+				System.exit(1);
+			}else {
+				this.errors.add(projectId);
+			}
+		}else {
 			String json = response2.readEntity(String.class);		
 			JSONObject object = new JSONObject(json);
 			String size = object.getString("size");
 			String base64 = object.getString("content");
 			byte[] decoded = Base64.getDecoder().decode(base64);
-			String content = "";
 			try {
 				content = new String(decoded, "UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
-			return content;
+		}
+		return content;
 	}
-	
+
 	private Properties parsePropertiesString(String s) {
-	    // grr at load() returning void rather than the Properties object
-	    // so this takes 3 lines instead of "return new Properties().load(...);"
-	    final Properties p = new Properties();
-	    try {
+		Properties p = new Properties();
+		try {
 			p.load(new StringReader(s));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	    return p;
+		return p;
 	}
-	
+
 }
