@@ -8,7 +8,6 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashSet;
@@ -18,11 +17,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -33,7 +27,7 @@ import javax.ws.rs.core.UriBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class GitlabApiClient {
+public class GitlabApiClient extends RestClient {
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -67,8 +61,11 @@ public class GitlabApiClient {
 	private String gitlabToken = null;
 	private Properties config = null;
 	private Set<Integer> errors = new HashSet<Integer>();
-	private Client client = null;
 
+	public GitlabApiClient() {
+		super();
+	}
+	
 	public void setProperties(Properties config){
 		this.config = config;
 	}
@@ -81,42 +78,6 @@ public class GitlabApiClient {
 		LOGGER.info("sonarHost = " + this.sonarHost);
 		LOGGER.info("gitlabHost = " + this.gitlabHost);
 		LOGGER.info("gitlabToken = " + this.gitlabToken);
-	}
-
-	/**
-	 * Crea il client e ignora la validità del certificato SSL
-	 * 
-	 * @return
-
-	 */
-	public static Client factoryClient()  {
-		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-				return null;
-			}
-
-			public void checkClientTrusted(X509Certificate[] certs, String authType) {
-			}
-
-			public void checkServerTrusted(X509Certificate[] certs, String authType) {
-			}
-		} 
-		};
-
-		SSLContext sslContext = null;
-		try {
-			sslContext = SSLContext.getInstance("SSL");
-			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-			// HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-		} catch (NoSuchAlgorithmException e) {
-			LOGGER.severe("ERRORE: " + e.getMessage());
-		} catch (KeyManagementException e) {
-			LOGGER.severe("ERRORE: " + e.getMessage());
-		}
-
-		ClientBuilder builder = ClientBuilder.newBuilder();
-		Client client = builder.sslContext(sslContext).build();
-		return client;
 	}
 
 	private JSONArray getProjects() {
@@ -139,31 +100,8 @@ public class GitlabApiClient {
 		return projects;
 	}
 
-	private Response doGet(String route) {
-		WebTarget target = this.client.target(getBaseURI() + route);
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
-		return response;
-	}
-
-	private Response doDelete(String route) {
-		WebTarget target = this.client.target(getBaseURI() + route);					
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
-		return response;
-	}
-
-	private <T> Response doPost(String route, Entity<T> entity) {
-		WebTarget target = this.client.target(getBaseURI() + route);
-		Response response = target.request().accept(MediaType.APPLICATION_JSON)
-				.header("PRIVATE-TOKEN", this.gitlabToken).post(entity);
-		return response;
-	}
-
-
 	public void run(){
 		loadConfig();
-		this.client = factoryClient();
 		JSONArray projects = getProjects();
 		LOGGER.info("#" + projects.length() + " projects read from repository");
 
@@ -428,10 +366,9 @@ public class GitlabApiClient {
 			}
 			String sonarProjectKeyExpected = group + ":" + name; // il carattere ":" equivale a "%3A"
 			if(!sonarProjectKeyExpected.equals(sonarProjectKeyActual)) {
-				LOGGER.warning("Il valore di sonar.projectKey del progetto " + projectId + " non rispetta le nostre linee guida. Valore atteso: " + sonarProjectKeyExpected + " , valore attuale: " + sonarProjectKeyActual);
+				LOGGER.warning("Il valore di sonar.projectKey del progetto " + projectId + " non rispetta le nostre linee guida. Valore atteso: " + sonarProjectKeyExpected + " valore attuale: " + sonarProjectKeyActual);
 			}
 			
-
 			String link = this.sonarHost + "/dashboard?id=" + sonarProjectKeyActual;
 			String image = this.sonarHost + "/api/badges/gate?key=" + sonarProjectKeyActual;
 			JSONObject badge = new JSONObject().put("link_url", link).put("image_url", image);
@@ -461,7 +398,8 @@ public class GitlabApiClient {
 		return badges;
 	}
 
-	private URI getBaseURI() {
+	@Override
+	protected URI getBaseURI() {
 		return UriBuilder.fromUri(this.gitlabHost + "/api/" + GITLAB_API_VER + "/").build();
 	}
 
@@ -559,5 +497,29 @@ public class GitlabApiClient {
 		}
 		return p;
 	}
+	
+	@Override
+	protected Response doGet(String route) {
+		WebTarget target = this.client.target(getBaseURI() + route);
+		Response response = target.request().accept(MediaType.APPLICATION_JSON)
+				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
+		return response;
+	}
+	
+	@Override
+	protected Response doDelete(String route) {
+		WebTarget target = this.client.target(getBaseURI() + route);					
+		Response response = target.request().accept(MediaType.APPLICATION_JSON)
+				.header("PRIVATE-TOKEN", this.gitlabToken).delete(Response.class);
+		return response;
+	}
+	
+	@Override
+	protected <T> Response doPost(String route, Entity<T> entity) {
+		WebTarget target = this.client.target(getBaseURI() + route);
+		Response response = target.request().accept(MediaType.APPLICATION_JSON)
+				.header("PRIVATE-TOKEN", this.gitlabToken).post(entity);
+		return response;
+	}	
 
 }
