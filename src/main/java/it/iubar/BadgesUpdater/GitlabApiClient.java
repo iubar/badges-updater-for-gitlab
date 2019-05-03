@@ -51,6 +51,8 @@ public class GitlabApiClient {
 
 	private static final int SKIP_PIPELINES_QNT = 4;
 
+	private static final String PER_PAGE = "?per_page=" + MAX_PROJECT_PER_PAGE;
+
 	private String sonarHost = null;
 	private String gitlabHost = null;
 	private String gitlabToken = null;
@@ -111,15 +113,15 @@ public class GitlabApiClient {
 		return client;
 	}
 
-	private JSONArray getProjectsList() {
+	private JSONArray getProjects() {
 		
 		JSONArray projects = null;
 				
-		String route = "projects/per_page/" + MAX_PROJECT_PER_PAGE;
+		String route = getBaseURI() + "projects" + PER_PAGE;
 
-		this.client  = factoryClient();
+		this.client = factoryClient();
 
-		WebTarget target = this.client.target(getBaseURI() + route);
+		WebTarget target = this.client.target(route);
 
 		// Effettuo la chiamata GET
 		Response response = target.request().accept(MediaType.APPLICATION_JSON)
@@ -143,10 +145,8 @@ public class GitlabApiClient {
 	}
 	
 	public void run(){
-
 		loadConfig();
-
-		JSONArray projects = getProjectsList();
+		JSONArray projects = getProjects();
 			// Stampo il numero di oggetti JSON presenti nell'array, dato che un oggetto corrisponde ad un progetto,
 			// il valore stampato corrisponde appunto al numeri di progetti recuperati dalla chiamata GET
 			LOGGER.info("#" + projects.length() + " projects read from repository");
@@ -235,10 +235,10 @@ public class GitlabApiClient {
  
 		// https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines	
 		// ATTENZIONE: c'è un problema nella documentazione dell'api
-		// Il numero massimo di record restituiti è 20 per chiamata.
-		// Verificare se è possibile utilizzare il parametro per_page/200 nella chiamata
-		String route2 = "/projects/" + projectId + "/pipelines";
-		WebTarget target2 = this.client.target(getBaseURI() + route2);
+		// Di default il numero massimo di record restituiti è 20 per chiamata
+
+		String route2 = getBaseURI() + "/projects/" + projectId + "/pipelines" + PER_PAGE;
+		WebTarget target2 = this.client.target(route2);
 		Response response2 = target2.request().accept(MediaType.APPLICATION_JSON)
 				.header("PRIVATE-TOKEN", this.gitlabToken).get(Response.class);
 		int statusCode = response2.getStatus();
@@ -287,12 +287,10 @@ public class GitlabApiClient {
 					break;
 				}				
 			}
-			//						Verificare poi su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
+			//						TODO: Verificare poi su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
 			//						/var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
 			//						Lo storage path può variare, vedi:
 			//						https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
-			//
-			//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 			//						In alternativa lavorare sui jobs: https://docs.gitlab.com/ee/api/jobs.html#erase-a-job
 			//
 		}
@@ -479,22 +477,14 @@ public class GitlabApiClient {
 	 * @return
 	 */
 	private boolean isFile(int projectId, String fileName){
-		boolean b = false;
-		WebTarget target = this.client.target(getBaseURI());
-		Response response = target.path("projects")
-				
-				.path("" + projectId)
-				.path("repository")
-				.path("tree")				
-// Alcune opzioni da provare:	
-//				.path("path")
-//				.path("/")				
-//				.path("ref")
-//				.path("master")
-				.path("per_page")
-				.path("" + MAX_PROJECT_PER_PAGE)
-				
-				.request()
+		boolean b = false;		
+		 String route = getBaseURI() + "/projects/" + projectId + "/repository/tree" + PER_PAGE;
+		 // Altre opzioni con relativo valor edi default
+		 // path == /
+		 // ref == master
+		 
+		WebTarget target = this.client.target(route);
+		Response response = target.request()
 				.accept(MediaType.APPLICATION_JSON)
 				.header("PRIVATE-TOKEN", this.gitlabToken)
 				.get(Response.class);
