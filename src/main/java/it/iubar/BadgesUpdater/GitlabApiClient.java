@@ -408,7 +408,7 @@ public class GitlabApiClient {
 			String sonarProjectKey = group + ":" + name; 
 
 			String sonarProjectContent = getFileContent(projectId, SONAR_FILE);
-			Properties properties = parsePropertiesString(sonarProjectContent);
+			Properties properties = parsePropertiesString(sonarProjectContent); // sonar.projectKey è un file di configurazione nel formato Java Properties
 			Object obj = properties.get("sonar.projectKey");
 			String sonarProjectKey2 = null;
 			if(obj!=null) {
