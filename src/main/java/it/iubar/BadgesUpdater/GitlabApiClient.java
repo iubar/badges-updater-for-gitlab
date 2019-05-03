@@ -355,7 +355,7 @@ public class GitlabApiClient extends RestClient {
 		}else {
 
 			String sonarProjectContent = getFileContent(projectId, SONAR_FILE, branch);
-			Properties properties = parsePropertiesString(sonarProjectContent); // sonar.projectKey è un file di configurazione nel formato Java Properties
+			Properties properties = PropertiesUtils.parsePropertiesString(sonarProjectContent); // sonar.projectKey è un file di configurazione nel formato Java Properties
 			Object obj = properties.get("sonar.projectKey");
 			String sonarProjectKeyActual = null;
 			if(obj!=null) {
@@ -487,16 +487,6 @@ public class GitlabApiClient extends RestClient {
 			}
 		}
 		return content;
-	}
-
-	private Properties parsePropertiesString(String s) {
-		Properties p = new Properties();
-		try {
-			p.load(new StringReader(s));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return p;
 	}
 
 	@Override

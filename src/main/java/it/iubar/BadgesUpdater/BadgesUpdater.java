@@ -9,7 +9,8 @@ import javax.ws.rs.core.Response.Status;
 
 public class BadgesUpdater {
 
-	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(BadgesUpdater.class.getName());
+	
 	private static final String CONFIG_FILE = "config.properties";
 
 	public static void main(String[] args) throws Exception {
@@ -24,8 +25,7 @@ public class BadgesUpdater {
 				config.setProperty("gitlab.token", System.getenv("GITLAB_TOKEN"));					  
 			}else {
 				// Reading config from file...
-				PropertiesFile properties = new PropertiesFile();
-				config = properties.getPropertiesFile(CONFIG_FILE);
+				config = PropertiesUtils.loadPropertiesFile(CONFIG_FILE);
 			}
 
 			if (config.isEmpty()) {
