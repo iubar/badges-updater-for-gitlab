@@ -14,17 +14,14 @@ See the config file "config.properties.dist" on the path "src\main\resources".
   gitlab.token = your_token
 ```
 
-### Run
+### Run from
 
 - https://travis-ci.org/iubar/badges-updater-for-gitlab
 
-# Riferimenti
+### Riferimenti
 
- - https://docs.gitlab.com/ee/api/project_badges.html
- - https://docs.gitlab.com/ee/user/project/pipelines/settings.html#pipeline-badges
- - https://docs.gitlab.com/ee/api/pipelines.html#cancel-a-pipelines-jobs
- - https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+- https://docs.gitlab.com/ee/api/
 
-# Other related projects
+### Other related projects
 
- - https://github.com/m4tthumphrey/php-gitlab-api
+- https://github.com/m4tthumphrey/php-gitlab-api (a PHP wrapper to be used with Gitlab's Api)

@@ -1,11 +1,8 @@
 package it.iubar.BadgesUpdater;
 
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
-
-import javax.ws.rs.core.Response.Status;
 
 public class BadgesUpdater {
 

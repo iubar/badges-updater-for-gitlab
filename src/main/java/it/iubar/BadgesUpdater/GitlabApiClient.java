@@ -1,7 +1,5 @@
 package it.iubar.BadgesUpdater;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URI;
@@ -20,7 +18,6 @@ import java.util.logging.Logger;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
@@ -40,8 +37,8 @@ public class GitlabApiClient extends RestClient {
 
 	private static final String DEFAULT_BRANCH = "master";
 	
-	// Verranno cancellate tutte le pipelines ad esclusione delle ultime 4
-	private static final int SKIP_PIPELINES_QNT = 4;
+	// Verranno cancellate tutte le pipelines ad esclusione delle ultime 5
+	private static final int SKIP_PIPELINES_QNT = 5;
 
 	// Di default il numero massimo di record restituiti da ogni chiamata all'Api è 20
 	private static final int MAX_RECORDS_PER_RESPONSE = 200;
@@ -176,6 +173,11 @@ public class GitlabApiClient extends RestClient {
 	/**
 	 * @see https://docs.gitlab.com/ee/api/pipelines.html#delete-a-pipeline
 	 * 
+	 * Se si volesse verificare su disco la presenza o meno degli artifacts relativi a una pipeline, 
+	 * bisogna sapere che il percorso dello storage di Gitlab può variare in relazione alla modalità di installazione 
+	 * Ad esempio può essere: /var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
+	 * @see https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
+	 * 
 	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
 	 * @param pipelines JSONArray
 	 * @return
@@ -203,11 +205,6 @@ public class GitlabApiClient extends RestClient {
 						break;
 					}				
 				}
-				//						TODO: Verificare su disco se gli artifacts sono stati effettivamente cancellati, il percorso è
-				//						/var/opt/gitlab/gitlab-rails/shared/artifacts/<year_month>/<project_id?>/<jobid>
-				//						Lo storage path può variare, vedi:
-				//						https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
-				//
 			}
 		}
 		return pipelineIds;
