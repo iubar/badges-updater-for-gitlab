@@ -42,7 +42,7 @@ public class GitlabApiClient extends RestClient {
 
 	// Di default il numero massimo di record restituiti da ogni chiamata all'Api è 20
 	private static final int MAX_RECORDS_PER_RESPONSE = 200;
-	private static final String PER_PAGE = "?per_page=" + MAX_RECORDS_PER_RESPONSE;
+	private static final String PER_PAGE = "?per_page=" + MAX_RECORDS_PER_RESPONSE; // @see https://docs.gitlab.com/ee/api/#pagination
 	
 	private static final String GITLAB_API_VER = "v4";
 
@@ -80,7 +80,7 @@ public class GitlabApiClient extends RestClient {
 
 	private JSONArray getProjects() {
 		JSONArray projects = new JSONArray();				
-		String route = "projects" + PER_PAGE;
+		String route = "projects" + PER_PAGE; // @see https://docs.gitlab.com/ee/api/projects.html#list-all-projects
 		Response response = doGet(route);
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
@@ -109,16 +109,17 @@ public class GitlabApiClient extends RestClient {
 			JSONObject project = projects.getJSONObject(i);
 			int projectId = project.getInt("id");
 
-			String path = project.getString("path_with_namespace");
-			LOGGER.info("Project " + path + " (id " + projectId + ")");
+			String path = project.getString("path_with_namespace"); // TODO: rinominare path in pathWithNamespace
+			String projectDescAndId =  path + " (id " + projectId + ")";
+			LOGGER.info("Project " + projectDescAndId);
 
 			if(UPDATE_BADGES){
 				// Rimuovo i badges esistenti dal progetto
 				List<Integer> results = removeBadges(projectId);
 				if(results.isEmpty()) {
-					LOGGER.warning("removeBadges() returns no results for project id " + projectId);
+					LOGGER.warning("removeBadges() returns no results for project " + projectDescAndId + ". That could be a BUG.");
 				}else {
-					LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted from project id " + projectId);
+					LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted successfully from project " + projectDescAndId);
 				}
 
 				// Aggiungo i nuovi badges al progetto
@@ -126,9 +127,9 @@ public class GitlabApiClient extends RestClient {
 				if(!badges.isEmpty()) {
 					List<Integer> results2 = insertBadges(projectId, badges);
 					if(results2.isEmpty()) {
-						LOGGER.severe("insertBadges() returns no results for project id " + projectId);
+						LOGGER.severe("insertBadges() returns no results for project " + projectDescAndId);
 					}else {
-						LOGGER.log(Level.INFO, "#" + results2.size() + " badges added to project id " + projectId);
+						LOGGER.log(Level.INFO, "#" + results2.size() + " badges added to project " + projectDescAndId);
 					}
 				}
 			}
@@ -137,10 +138,10 @@ public class GitlabApiClient extends RestClient {
 			if(DELETE_PIPELINE) {			  
 				if(pipelines!=null && !pipelines.isEmpty()) {
 					List<Integer> results3 = removePipelines(projectId, pipelines);
-					LOGGER.log(Level.INFO, "#" + results3.size() + " pipelines removed from project id " + projectId);
+					LOGGER.log(Level.INFO, "#" + results3.size() + " pipelines removed successfully from project " + projectDescAndId);
 				}
 			}else {
-				LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines found for project id " + projectId);
+				LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines found in project " + projectDescAndId);
 			}
 		}
 	}
@@ -322,7 +323,7 @@ public class GitlabApiClient extends RestClient {
 	 * @throws KeyManagementException
 	 * @throws NoSuchAlgorithmException
 	 */
-	private List<JSONObject> createBadges(JSONObject object) {
+	private List<JSONObject> createBadges(JSONObject object) { // TODO: rinominare object in project
 		final String branch = DEFAULT_BRANCH;
 		List<JSONObject> badges = new ArrayList<JSONObject>();
 
@@ -334,9 +335,32 @@ public class GitlabApiClient extends RestClient {
 		// https://example.gitlab.com/%{project_path}/badges/%{default_branch}/badge.svg 
 		// (vedi https://gitlab.iubar.it/help/user/project/badges). 
 		// Nota che in Gitlab, il valore di %{project_path} è scollegato dal valore di <project_name> anche se di default %{project_path} assume il seguente formato <nome_gruppo>/<project_name>.			
+
+/*
+Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-all-projects)
+....		
+   "name": "Diaspora Client",
+    "name_with_namespace": "Diaspora / Diaspora Client",
+    "path": "diaspora-client",
+    "path_with_namespace": "diaspora/diaspora-client",
+    "namespace": {
+      "id": 3,
+      "name": "Diaspora",
+      "path": "diaspora",
+      "kind": "group",
+      "full_path": "diaspora"
+    },
+....
+*/
 		String name = object.getString("name");
 		JSONObject namespace = object.getJSONObject("namespace");
 		String group = namespace.getString("path");
+		String pathWithNamespace = object.getString("path_with_namespace");
+		
+		// TODO: sostituire: 
+		// group + "/" + name
+		// con: 
+		// pathWithNamespace
 
 		if(!isGitlabci(projectId, branch)) {
 			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + projectId);
