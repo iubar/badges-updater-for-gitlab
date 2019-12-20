@@ -20,4 +20,5 @@ Perchè Python ? Perchè ho la libreria anybadge https://github.com/jongracecox/
 In alternativa potrei usae il seguente servizio web 
 - https://shields.io/category/issue-tracking 
 - https://shields.io/endpoint
+Un esempio è quello proposto qui: https://gitlab.com/gitlab-org/gitlab-foss/issues/46188#note_103801317
 
