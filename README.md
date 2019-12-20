@@ -21,6 +21,7 @@ See the config file "config.properties.dist" on the path "src\main\resources".
 ### Riferimenti
 
 - https://docs.gitlab.com/ee/api/
+- https://docs.gitlab.com/ee/api/project_badges.html
 
 ### Other related projects
 
