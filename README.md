@@ -23,7 +23,10 @@ See the config file "config.properties.dist" on the path "src\main\resources".
 - https://docs.gitlab.com/ee/api/
 - https://docs.gitlab.com/ee/api/project_badges.html
 
-(the gitlab's builtin badges are two, see the source code at https://gitlab.com/gitlab-org/gitlab-foss/tree/master/lib/gitlab/badge)
+The gitlab's builtin badges are two, see the source code at https://gitlab.com/gitlab-org/gitlab-foss/tree/master/lib/gitlab/badge
+For example: 
+ - https://gitlab.com/iubar/hello/badges/master/build.svg
+ - https://gitlab.com/iubar/hello/badges/master/coverage.svg
 
 ### Other related projects
 
