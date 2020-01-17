@@ -366,7 +366,8 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + projectId);
 		}else {
 			String link = this.gitlabHost +"/" + group + "/" + name + "/commits/%{default_branch}";
-			String  image = this.gitlabHost + "/" + group + "/" + name + "/badges/%{default_branch}/build.svg";			
+			// https://gitlab.com/gitlab-org/gitlab-foss/issues/41174
+			String  image = this.gitlabHost + "/" + group + "/" + name + "/badges/%{default_branch}/pipeline.svg";			
 			JSONObject badge = new JSONObject().put("link_url", link).put("image_url", image);
 			badges.add(badge);
 		}
