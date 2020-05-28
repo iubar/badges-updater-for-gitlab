@@ -1,8 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  	<parent>
+		<groupId>it.iubar.pom</groupId>
+		<artifactId>iubar-pom-next</artifactId>
+		<version>0.0.1</version>
+	</parent>
   <groupId>it.iubar</groupId>
   <artifactId>SonarQube_badges_into_GitLab</artifactId>
-  <version>1.0.0-RELEASE</version>
+  <version>1.0.1-RELEASE</version>
   <packaging>jar</packaging>
   <build>
   <finalName>${project.artifactId}-${project.version}</finalName>
@@ -107,12 +112,34 @@
 			<artifactId>jersey-hk2</artifactId>
 			<version>2.26</version>
 		</dependency>
+		<!-- Dependencies managed by the parent pom -->
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- / -->
+		<!-- La seguente dipendenza aggiuntiva per junit5 è richiesta per gestire i @ParameterizedTest -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-params</artifactId>
+			<version>${junit.jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- https://howtodoinjava.com/junit5/execute-testcase-eclipse/ -->
+		<!-- https://mvnrepository.com/artifact/org.junit.platform/junit-platform-runner -->		
+        <!--
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-runner</artifactId>
+            <version>${junit.runner.version}</version>
+            <scope>test</scope>
+        </dependency>   
 		
 	</dependencies>
 
