@@ -1,38 +1,46 @@
-package it.iubar.SonarQube_badges_into_GitLab;
+package it.iubar.BadgesUpdater;
 
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 
-public class SonarQube_badges_into_GitLab {
+public class BadgesUpdater {
 
-	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(BadgesUpdater.class.getName());
+	
+	private static final String CONFIG_FILE = "config.properties";
 
 	public static void main(String[] args) throws Exception {
-		try {
-			Properties config = null;
-			if(areEnvVarsSet()) {
+	 
+			Properties config = null;			
+			if(areEnvVarsSet()) {				
 				// Reading config from enviroment variables....
+				LOGGER.info("La configurazione specificata tramite variabili d'ambiente ha la precedenza rispetto a quella indicata nel file " + CONFIG_FILE);				
 				config = new Properties();
 				config.setProperty("sonar.host", System.getenv("SONAR_HOST"));
 				config.setProperty("gitlab.host", System.getenv("GITLAB_HOST"));
 				config.setProperty("gitlab.token", System.getenv("GITLAB_TOKEN"));					  
 			}else {
 				// Reading config from file...
-				PropertiesFile properties = new PropertiesFile();
-				config = properties.getPropertiesFile("config.properties");
+				config = PropertiesUtils.loadPropertiesFile(CONFIG_FILE);
 			}
-			
+
 			if (config.isEmpty()) {
-				LOGGER.warning("ERRORE: File di configurazione vuoto");
+				LOGGER.severe("ERRORE: Impossibile inizializzare la configurazione del programma");
+				System.exit(1);
 			} else {
 				GitlabApiClient client = new GitlabApiClient();
 				client.setProperties(config);
 				client.run();
+				Set<Integer> errors = client.getErrors();
+				if(!errors.isEmpty()) {
+					LOGGER.severe("Done with errors");
+					System.exit(1);
+				}else {
+					LOGGER.info("All done without errors");
+				}
 			}	
-		} catch (Exception e) {
-			LOGGER.severe("ERRORE: " + e.getMessage());
-			throw e;
-		}
+	 
 	}
 
 	private static boolean areEnvVarsSet() {
