@@ -7,5 +7,4 @@ script:
   - mvn clean package # https://docs.travis-ci.com/user/reference/bionic/#jvm-clojure-groovy-java-scala-support
   - cd target
   - ls -la
-  - java -version
   - java -jar BadgesUpdater-jar-with-dependencies.jar
