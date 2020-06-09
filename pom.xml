@@ -7,9 +7,9 @@
 		<version>0.0.1</version>
 	</parent>
 	<groupId>it.iubar</groupId>
-	<artifactId>BadgesUpdater</artifactId>
+	<artifactId>BadgesUpdater</artifactId>	
 	<version>1.0.2-RELEASE</version>
-	<packaging>jar</packaging>
+	<description>...</description>
 	<properties>
 		<maven-assembly-mainclass>it.iubar.BadgesUpdater.BadgesUpdater</maven-assembly-mainclass>
 		<jersey.client.version>2.31</jersey.client.version>
