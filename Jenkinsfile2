@@ -19,10 +19,9 @@ pipeline {
         }
         stage ('Run') {
             steps {
-                sh 'cd target'
-                sh 'ls -la'
+                sh 'ls -la target'
                 sh 'java -version'
-                sh 'java -jar BadgesUpdater-jar-with-dependencies.jar'
+                sh 'cd target && java -jar BadgesUpdater-jar-with-dependencies.jar'
             }
         }        		
     }
