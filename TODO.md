@@ -8,7 +8,7 @@ Per modificare la descrizione del job via api: https://stackoverflow.com/questio
 
 TODO:
 
-Per implementare nuovi badge (ad esenpio numero degli issue aprti), occorre scrivere script python da utilizzare su server http che traduca richiesta GET in immagine png 
+Per implementare nuovi badge (ad esenpio numero degli issue aperti), occorre scrivere script python da utilizzare su server http che traduca richiesta GET in immagine png 
 Vedi come implementare server http in python:
 - https://stackabuse.com/serving-files-with-pythons-simplehttpserver-module/
 Esempio di implementazione (stessa implementazione in versioni diverse, sempre più ottimizzate):
@@ -17,7 +17,7 @@ Esempio di implementazione (stessa implementazione in versioni diverse, sempre p
 - https://gist.github.com/elbosso/cbce113805735478e926c28a9079cede
 - https://gist.github.com/elbosso/6637702612991bb454d205d936dd04dc
 Perchè Python ? Perchè ho la libreria anybadge https://github.com/jongracecox/anybadge 
-In alternativa potrei usae il seguente servizio web 
+In alternativa potrei usare il seguente servizio web 
 - https://shields.io/category/issue-tracking 
 - https://shields.io/endpoint
 Un esempio è quello proposto qui: https://gitlab.com/gitlab-org/gitlab-foss/issues/46188#note_103801317
