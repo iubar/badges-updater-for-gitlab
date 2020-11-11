@@ -3,15 +3,15 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>it.iubar</groupId>
 	<artifactId>BadgesUpdater</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 	<description>...</description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<jdk.source.version>1.8</jdk.source.version>
 		<jdk.target.version>${jdk.source.version}</jdk.target.version>
-		<junit.jupiter.version>5.7.0-M1</junit.jupiter.version>
-		<surefire.plugin.version>3.0.0-M4</surefire.plugin.version>		
+		<junit.jupiter.version>5.7.0</junit.jupiter.version>
+		<surefire.plugin.version>3.0.0-M5</surefire.plugin.version>		
 		<jersey.client.version>2.31</jersey.client.version>
 		<jackson.version>2.11.0</jackson.version>
 		<maven-assembly-mainclass>it.iubar.BadgesUpdater.BadgesUpdater</maven-assembly-mainclass>
@@ -85,18 +85,17 @@
 			<version>${junit.jupiter.version}</version>
 			<scope>test</scope>
 		</dependency>
- 
- 
- 
+  
 		<dependency>
 			<groupId>javax.activation</groupId>
 			<artifactId>activation</artifactId>
 			<version>1.1.1</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.json/json -->
 		<dependency>
-			<groupId>org.json</groupId>
-			<artifactId>json</artifactId>
-			<version>20180813</version>
+		    <groupId>org.json</groupId>
+		    <artifactId>json</artifactId>
+		    <version>20200518</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.jersey.core</groupId>

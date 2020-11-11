@@ -33,7 +33,7 @@ public class GitlabApiClient extends RestClient {
 	private String gitlabHost = null;
 	private String gitlabToken = null;
 	private Properties config = null;
-	private Set<Integer> errors = new HashSet<Integer>();
+	private Set<String> errors = new HashSet<>();
 
 	public GitlabApiClient() {
 		super();
@@ -133,11 +133,12 @@ public class GitlabApiClient extends RestClient {
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode()) {
-			LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode);
+			String error = "Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode;
+			LOGGER.severe(error);
 			if(Config.FAIL_FAST) {
 				System.exit(1);
 			}else {
-				this.errors.add(projectId);
+				this.errors.add(error);
 			}
 		}else {
 		String json2 = response.readEntity(String.class);		
@@ -173,13 +174,10 @@ public class GitlabApiClient extends RestClient {
 				if(statusCode==Status.NO_CONTENT.getStatusCode()) {
 					pipelineIds.add(pipelineId);
 				}else {
-					LOGGER.severe("Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode);
-					if(Config.FAIL_FAST) {
-						System.exit(1);
-					}else {
-						this.errors.add(projectId);
-						break;
-					}				
+					String error = "Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode;
+					error = error + " (Nota che l'errore si potrebbe manifestare quando la pipeline è in esecuzione).";
+					LOGGER.severe(error);
+					this.errors.add(error);				
 				}
 			}
 		}
@@ -209,11 +207,12 @@ public class GitlabApiClient extends RestClient {
 					// LOGGER.info("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
 					badgeIds.add(badgeId);
 				}else {
-					LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);						 
+					String error = "Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode;
+					LOGGER.severe(error);						 
 					if(Config.FAIL_FAST) {
 						System.exit(1);
 					}else {
-						this.errors.add(projectId);
+						this.errors.add(error);
 						break;
 					}						 
 				}
@@ -240,11 +239,12 @@ public class GitlabApiClient extends RestClient {
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode()) {
-			LOGGER.severe("Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode);
+			String msg = "Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode;
+			LOGGER.severe(msg);
 			if(Config.FAIL_FAST) {
 				System.exit(1);
 			}else {
-				this.errors.add(projectId);
+				this.errors.add(msg);
 			}
 		}else {
 			String json = response.readEntity(String.class);
@@ -274,11 +274,12 @@ public class GitlabApiClient extends RestClient {
 				int badgeId = object.getInt("id");
 				badgeIds.add(badgeId);
 			}else {
-				LOGGER.severe("Impossibile aggiungere il badge " + badge.toString() + ". Status code: " + statusCode);
+				String msg = "Impossibile aggiungere il badge " + badge.toString() + ". Status code: " + statusCode;
+				LOGGER.severe(msg);
 				if(Config.FAIL_FAST) {
 					System.exit(1);
 				}else {
-					this.errors.add(projectId);
+					this.errors.add(msg);
 					break;
 				}								
 			}
@@ -439,7 +440,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		return b;		
 	}
 
-	public Set<Integer> getErrors() {
+	public Set<String> getErrors() {
 		return this.errors;
 	}
 
@@ -465,11 +466,11 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		}
 
 		if(statusCode!=Status.OK.getStatusCode()) {
-			LOGGER.severe("Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectId + ". Status code: " + statusCode);
+			String msg = "Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectId + ". Status code: " + statusCode;
 			if(Config.FAIL_FAST) {
 				System.exit(1);
-			}else {
-				this.errors.add(projectId);
+			} else {
+				this.errors.add(msg);
 			}
 		}else {
 			String json = response2.readEntity(String.class);		

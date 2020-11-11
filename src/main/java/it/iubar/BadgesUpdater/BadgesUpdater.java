@@ -30,9 +30,12 @@ public class BadgesUpdater {
 				GitlabApiClient client = new GitlabApiClient();
 				client.setProperties(config);
 				client.run();
-				Set<Integer> errors = client.getErrors();
+				Set<String> errors = client.getErrors();
 				if(!errors.isEmpty()) {
-					LOGGER.severe("Done with errors");
+					LOGGER.severe("Errors found: " + errors.size());
+					for (String errorMsg : errors) {
+						LOGGER.severe(errorMsg);
+					}
 					System.exit(1);
 				}else {
 					LOGGER.info("All done without errors");
