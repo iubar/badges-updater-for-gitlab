@@ -24,13 +24,14 @@ pipeline {
         }
         stage('Analyze') {
             steps {
-				script {
-					try {
-						sh 'sonar-scanner'
-					} catch (err){
-						echo "SonarQube: analyze failed !!!"
-					}
-				}
+				sh '''
+					echo "SKIP_SONARQUBE: ${SKIP_SONARQUBE}"
+					if [ $SKIP_SONARQUBE = true ]; then												
+						echo "Skipping sonar-scanner analysis"
+            		else
+               			sonar-scanner
+                	fi
+				'''						
             }
         }		
         stage('Quality gate') {	
