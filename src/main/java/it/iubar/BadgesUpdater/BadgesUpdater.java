@@ -7,22 +7,20 @@ import java.util.logging.Logger;
 public class BadgesUpdater {
 
 	private static final Logger LOGGER = Logger.getLogger(BadgesUpdater.class.getName());
-	
-	private static final String CONFIG_FILE = "config.properties";
 
 	public static void main(String[] args) throws Exception {
 	 
 			Properties config = null;			
 			if(areEnvVarsSet()) {				
 				// Reading config from enviroment variables....
-				LOGGER.info("La configurazione specificata tramite variabili d'ambiente ha la precedenza rispetto a quella indicata nel file " + CONFIG_FILE);				
+				LOGGER.info("La configurazione specificata tramite variabili d'ambiente ha la precedenza rispetto a quella indicata nel file " + Config.CONFIG_FILE);				
 				config = new Properties();
 				config.setProperty("sonar.host", System.getenv("SONAR_HOST"));
 				config.setProperty("gitlab.host", System.getenv("GITLAB_HOST"));
 				config.setProperty("gitlab.token", System.getenv("GITLAB_TOKEN"));					  
 			}else {
 				// Reading config from file...
-				config = PropertiesUtils.loadPropertiesFile(CONFIG_FILE);
+				config = PropertiesUtils.loadPropertiesFile(Config.CONFIG_FILE);
 			}
 
 			if (config.isEmpty()) {

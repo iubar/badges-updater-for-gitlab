@@ -27,31 +27,6 @@ import org.json.JSONObject;
 
 public class GitlabApiClient extends RestClient {
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	private static final boolean FAIL_FAST = true;
-
-	private static final boolean UPDATE_BADGES = true;
-
-	private static final boolean DELETE_PIPELINE = true;
-
-	private static final String DEFAULT_BRANCH = "master";
-	
-	// Verranno cancellate tutte le pipelines ad esclusione delle ultime 5
-	private static final int SKIP_PIPELINES_QNT = 5;
-
-	// Di default il numero massimo di record restituiti da ogni chiamata all'Api è 20
-	private static final int MAX_RECORDS_PER_RESPONSE = 200;
-	private static final String PER_PAGE = "?per_page=" + MAX_RECORDS_PER_RESPONSE; // @see https://docs.gitlab.com/ee/api/#pagination
-	
-	private static final String GITLAB_API_VER = "v4";
-
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	private static final String GITLAB_FILE = ".gitlab-ci.yml";
-
-	private static final String SONAR_FILE = "sonar-project.properties";
-
 	private static final Logger LOGGER = Logger.getLogger(GitlabApiClient.class.getName());
 
 	private String sonarHost = null;
@@ -80,7 +55,7 @@ public class GitlabApiClient extends RestClient {
 
 	private JSONArray getProjects() {
 		JSONArray projects = new JSONArray();				
-		String route = "projects" + PER_PAGE; // @see https://docs.gitlab.com/ee/api/projects.html#list-all-projects
+		String route = "projects" + Config.PER_PAGE; // @see https://docs.gitlab.com/ee/api/projects.html#list-all-projects
 		Response response = doGet(route);
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
@@ -113,7 +88,7 @@ public class GitlabApiClient extends RestClient {
 			String projectDescAndId =  path + " (id " + projectId + ")";
 			LOGGER.info("Project " + projectDescAndId);
 
-			if(UPDATE_BADGES){
+			if(Config.UPDATE_BADGES){
 				// Rimuovo i badges esistenti dal progetto
 				List<Integer> results = removeBadges(projectId);
 				if(results.isEmpty()) {
@@ -134,8 +109,8 @@ public class GitlabApiClient extends RestClient {
 				}
 			}
 
-			JSONArray pipelines = getPipelines(projectId, DEFAULT_BRANCH);
-			if(DELETE_PIPELINE) {			  
+			JSONArray pipelines = getPipelines(projectId, Config.DEFAULT_BRANCH);
+			if(Config.DELETE_PIPELINE) {			  
 				if(pipelines!=null && !pipelines.isEmpty()) {
 					List<Integer> results3 = removePipelines(projectId, pipelines);
 					LOGGER.log(Level.INFO, "#" + results3.size() + " pipelines removed successfully from project " + projectDescAndId);
@@ -154,12 +129,12 @@ public class GitlabApiClient extends RestClient {
 	 */
 	private JSONArray getPipelines(int projectId, String branch) {
 		JSONArray pipelines = new JSONArray();	
-		String route = "projects/" + projectId + "/pipelines" + PER_PAGE + "&ref=" + branch;
+		String route = "projects/" + projectId + "/pipelines" + Config.PER_PAGE + "&ref=" + branch;
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode);
-			if(FAIL_FAST) {
+			if(Config.FAIL_FAST) {
 				System.exit(1);
 			}else {
 				this.errors.add(projectId);
@@ -185,11 +160,11 @@ public class GitlabApiClient extends RestClient {
 	 */
 	private List<Integer> removePipelines(int projectId, JSONArray pipelines) {
 		List<Integer> pipelineIds = new ArrayList<Integer>();		
-		if(pipelines.length()<=SKIP_PIPELINES_QNT) {
-			LOGGER.info("#" + pipelines.length() + " pipelines found <= " + SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
+		if(pipelines.length()<=Config.SKIP_PIPELINES_QNT) {
+			LOGGER.info("#" + pipelines.length() + " pipelines found <= " + Config.SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
 		}else {
 			LOGGER.info("#" + pipelines.length() + " pipelines found for project id " + projectId);
-			for (int j = 0 + SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
+			for (int j = 0 + Config.SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
 				JSONObject pipeline = pipelines.getJSONObject(j);
 				int pipelineId = pipeline.getInt("id");	// The ID of a pipeline									
 				String route3 = "projects/" + projectId + "/pipelines/" + pipelineId; 		
@@ -199,7 +174,7 @@ public class GitlabApiClient extends RestClient {
 					pipelineIds.add(pipelineId);
 				}else {
 					LOGGER.severe("Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode);
-					if(FAIL_FAST) {
+					if(Config.FAIL_FAST) {
 						System.exit(1);
 					}else {
 						this.errors.add(projectId);
@@ -235,7 +210,7 @@ public class GitlabApiClient extends RestClient {
 					badgeIds.add(badgeId);
 				}else {
 					LOGGER.severe("Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);						 
-					if(FAIL_FAST) {
+					if(Config.FAIL_FAST) {
 						System.exit(1);
 					}else {
 						this.errors.add(projectId);
@@ -266,7 +241,7 @@ public class GitlabApiClient extends RestClient {
 		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode);
-			if(FAIL_FAST) {
+			if(Config.FAIL_FAST) {
 				System.exit(1);
 			}else {
 				this.errors.add(projectId);
@@ -300,7 +275,7 @@ public class GitlabApiClient extends RestClient {
 				badgeIds.add(badgeId);
 			}else {
 				LOGGER.severe("Impossibile aggiungere il badge " + badge.toString() + ". Status code: " + statusCode);
-				if(FAIL_FAST) {
+				if(Config.FAIL_FAST) {
 					System.exit(1);
 				}else {
 					this.errors.add(projectId);
@@ -324,7 +299,7 @@ public class GitlabApiClient extends RestClient {
 	 * @throws NoSuchAlgorithmException
 	 */
 	private List<JSONObject> createBadges(JSONObject object) { // TODO: rinominare object in project
-		final String branch = DEFAULT_BRANCH;
+		final String branch = Config.DEFAULT_BRANCH;
 		List<JSONObject> badges = new ArrayList<JSONObject>();
 
 		// Determino l'id del progetto 
@@ -363,7 +338,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		// pathWithNamespace
 
 		if(!isGitlabci(projectId, branch)) {
-			LOGGER.warning("File " + GITLAB_FILE + " assente per il progetto " + projectId);
+			LOGGER.warning("File " + Config.GITLAB_FILE + " assente per il progetto " + projectId);
 		}else {
 			String link = this.gitlabHost +"/" + group + "/" + name + "/commits/%{default_branch}";
 			// https://gitlab.com/gitlab-org/gitlab-foss/issues/41174
@@ -373,10 +348,10 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		}
 
 		if(!isSonar(projectId, branch)) {
-			LOGGER.warning("File " + SONAR_FILE + " assente per il progetto " + projectId);
+			LOGGER.warning("File " + Config.SONAR_FILE + " assente per il progetto " + projectId);
 		}else {
 
-			String sonarProjectContent = getFileContent(projectId, SONAR_FILE, branch);
+			String sonarProjectContent = getFileContent(projectId, Config.SONAR_FILE, branch);
 			Properties properties = PropertiesUtils.parsePropertiesString(sonarProjectContent); // sonar.projectKey è un file di configurazione nel formato Java Properties
 			Object obj = properties.get("sonar.projectKey");
 			String sonarProjectKeyActual = null;
@@ -423,15 +398,15 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 
 	@Override
 	protected URI getBaseURI() {
-		return UriBuilder.fromUri(this.gitlabHost + "/api/" + GITLAB_API_VER + "/").build();
+		return UriBuilder.fromUri(this.gitlabHost + "/api/" + Config.GITLAB_API_VER + "/").build();
 	}
 
 	private boolean isGitlabci(int projectId, String branch){
-		return isFile(projectId, GITLAB_FILE, branch);
+		return isFile(projectId, Config.GITLAB_FILE, branch);
 	}
 
 	private boolean isSonar(int projectId, String branch){
-		return isFile(projectId, SONAR_FILE, branch);
+		return isFile(projectId, Config.SONAR_FILE, branch);
 	}	
 
 	/**
@@ -444,7 +419,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 	 */
 	private boolean isFile(int projectId, String fileName, String branch){
 		boolean b = false;		
-		String route = "projects/" + projectId + "/repository/tree" + PER_PAGE + "&ref=" + branch;
+		String route = "projects/" + projectId + "/repository/tree" + Config.PER_PAGE + "&ref=" + branch;
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if (response.getStatus() != Status.OK.getStatusCode()) {
@@ -491,7 +466,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 
 		if(statusCode!=Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectId + ". Status code: " + statusCode);
-			if(FAIL_FAST) {
+			if(Config.FAIL_FAST) {
 				System.exit(1);
 			}else {
 				this.errors.add(projectId);

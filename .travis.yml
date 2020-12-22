@@ -2,10 +2,10 @@ dist: bionic # https://docs.travis-ci.com/user/reference/bionic/
 language: java
 jdk: openjdk10 # https://docs.travis-ci.com/user/reference/bionic/#jvm-clojure-groovy-java-scala-support
 sudo: false
+install: true # Without that statement, Travis will run 'mvn install' on pom.xml before the script step.
 script:
   - mvn -version
-  - mvn clean package # https://docs.travis-ci.com/user/reference/bionic/#jvm-clojure-groovy-java-scala-support
+  - mvn -f pom_travis.xml clean package # https://docs.travis-ci.com/user/reference/bionic/#jvm-clojure-groovy-java-scala-support
   - cd target
   - ls -la
-  - java -version
   - java -jar BadgesUpdater-jar-with-dependencies.jar
