@@ -31,6 +31,7 @@ public class BadgesUpdater {
 				client.setProperties(config);
 				client.run();
 				Set<String> errors = client.getErrors();
+				LOGGER.severe("***** SUMMARY *****");
 				if(!errors.isEmpty()) {
 					LOGGER.severe("Errors found: " + errors.size());
 					for (String errorMsg : errors) {

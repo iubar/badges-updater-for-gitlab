@@ -1,6 +1,10 @@
 package it.iubar.BadgesUpdater;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -8,8 +12,10 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
@@ -21,9 +27,15 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
+ 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonWriterFactory;
+import jakarta.json.stream.JsonGenerator;
 
 public class GitlabApiClient extends RestClient {
 
@@ -53,8 +65,8 @@ public class GitlabApiClient extends RestClient {
 		LOGGER.info("gitlabToken = " + this.gitlabToken);
 	}
 
-	private JSONArray getProjects() {
-		JSONArray projects = new JSONArray();				
+	private JsonArray getProjects() {
+		JsonArray projects = null;		
 		String route = "projects" + Config.PER_PAGE; // @see https://docs.gitlab.com/ee/api/projects.html#list-all-projects
 		Response response = doGet(route);
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
@@ -63,28 +75,41 @@ public class GitlabApiClient extends RestClient {
 			LOGGER.severe("Impossibile recuperare l'elenco dei progetti. Status code: " + statusCode);
 			System.exit(1);
 		}else {
-
-			// Dalla chiamata GET prendo il file JSON che ci restituisce e lo scrivo in una stringa
-			String json = response.readEntity(String.class);
-
-			// Il file JSON è un array di altri oggetti json, per questo lo vado a mettere dentro un oggetto JSONArray
-			projects = new JSONArray(json);
+			String jsonString = response.readEntity(String.class);
+			projects = readArray(jsonString); 
 		}
 		return projects;
 	}
 
+	private JsonObject readObject(String jsonString) {
+		JsonReader reader = Json.createReader(new StringReader(jsonString));
+		JsonObject object = reader.readObject();
+		return object;
+	}
+	
+	private JsonArray readArray(String jsonString) {
+		JsonReader reader = Json.createReader(new StringReader(jsonString));
+		JsonArray array = reader.readArray();
+		return array;
+	}	
+
 	public void run(){
 		loadConfig();
-		JSONArray projects = getProjects();
-		LOGGER.info("#" + projects.length() + " projects read from repository");
+		 JsonArray projects = getProjects();
+		LOGGER.info("#" + projects.size() + " projects read from repository");
 
+		boolean debug = true;
+		
 		// Effettuo una serie di operazioni su tutti i progetti
-		for (int i = 0; i < projects.length(); i++) {
-
-			JSONObject project = projects.getJSONObject(i);
+		for (int i = 0; i < projects.size(); i++) {
+			JsonObject project = projects.getJsonObject(i);						
+			if(debug){
+				LOGGER.log(Level.INFO, "Pretty printing project info...");
+				prettyPrint(project);
+			} 
+			
 			int projectId = project.getInt("id");
-
-			String path = project.getString("path_with_namespace"); // TODO: rinominare path in pathWithNamespace
+			String path = project.getString("path_with_namespace");
 			String projectDescAndId =  path + " (id " + projectId + ")";
 			LOGGER.info("Project " + projectDescAndId);
 
@@ -98,7 +123,7 @@ public class GitlabApiClient extends RestClient {
 				}
 
 				// Aggiungo i nuovi badges al progetto
-				List<JSONObject> badges = createBadges(project);
+				List<JsonObject> badges = createBadges(project);
 				if(!badges.isEmpty()) {
 					List<Integer> results2 = insertBadges(projectId, badges);
 					if(results2.isEmpty()) {
@@ -109,16 +134,37 @@ public class GitlabApiClient extends RestClient {
 				}
 			}
 
-			JSONArray pipelines = getPipelines(projectId, Config.DEFAULT_BRANCH);
+			JsonArray pipelines = getPipelines(projectId, Config.DEFAULT_BRANCH);
 			if(Config.DELETE_PIPELINE) {			  
 				if(pipelines!=null && !pipelines.isEmpty()) {
 					List<Integer> results3 = removePipelines(projectId, pipelines);
 					LOGGER.log(Level.INFO, "#" + results3.size() + " pipelines removed successfully from project " + projectDescAndId);
 				}
 			}else {
-				LOGGER.log(Level.INFO, "#" + pipelines.length() + " pipelines found in project " + projectDescAndId);
+				LOGGER.log(Level.INFO, "#" + pipelines.size() + " pipelines found in project " + projectDescAndId);
 			}
 		}
+	}
+
+	private void prettyPrint(JsonObject jsonObject) {
+		try {
+			String prettyString = prettyPrintFormat(jsonObject);
+			System.out.println(prettyString);				
+		} catch (IOException ex) {
+			LOGGER.log(Level.SEVERE, "Can't print json", ex);
+		} 
+	}
+
+	private String prettyPrintFormat(JsonObject jsonObject) throws IOException {
+		String jsonString = null; 
+		Map<String, Boolean> config = new HashMap<>();
+		config.put(JsonGenerator.PRETTY_PRINTING, true);		        
+		JsonWriterFactory writerFactory = Json.createWriterFactory(config);		        	 
+		try(Writer writer = new StringWriter()) {
+		    writerFactory.createWriter(writer).write(jsonObject);
+		    jsonString = writer.toString();
+		}
+		return jsonString;
 	}
 
 	/**
@@ -127,8 +173,8 @@ public class GitlabApiClient extends RestClient {
 	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
 	 * @return
 	 */
-	private JSONArray getPipelines(int projectId, String branch) {
-		JSONArray pipelines = new JSONArray();	
+	private JsonArray getPipelines(int projectId, String branch) {
+		JsonArray pipelines = null;	
 		String route = "projects/" + projectId + "/pipelines" + Config.PER_PAGE + "&ref=" + branch;
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
@@ -141,8 +187,8 @@ public class GitlabApiClient extends RestClient {
 				this.errors.add(error);
 			}
 		}else {
-		String json2 = response.readEntity(String.class);		
-		pipelines = new JSONArray(json2);
+			String jsonString = response.readEntity(String.class);		
+			pipelines = readArray(jsonString); 
 		}
 		return pipelines;
 	}
@@ -159,14 +205,16 @@ public class GitlabApiClient extends RestClient {
 	 * @param pipelines JSONArray
 	 * @return
 	 */
-	private List<Integer> removePipelines(int projectId, JSONArray pipelines) {
+	private List<Integer> removePipelines(int projectId, JsonArray pipelines) {
 		List<Integer> pipelineIds = new ArrayList<Integer>();		
-		if(pipelines.length()<=Config.SKIP_PIPELINES_QNT) {
-			LOGGER.info("#" + pipelines.length() + " pipelines found <= " + Config.SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
+		if(pipelines.size()<=Config.SKIP_PIPELINES_QNT) {
+			LOGGER.info("#" + pipelines.size() + " pipelines found <= " + Config.SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
 		}else {
-			LOGGER.info("#" + pipelines.length() + " pipelines found for project id " + projectId);
-			for (int j = 0 + Config.SKIP_PIPELINES_QNT ; j < pipelines.length(); j++) {
-				JSONObject pipeline = pipelines.getJSONObject(j);
+			LOGGER.info("#" + pipelines.size() + " pipelines found for project id " + projectId);
+			for (int j = 0 + Config.SKIP_PIPELINES_QNT ; j < pipelines.size(); j++) {
+				String msg = "Removing " + (j+1-Config.SKIP_PIPELINES_QNT) + "/" + (pipelines.size()-Config.SKIP_PIPELINES_QNT) + " pipeline for project " + projectId + " (I will keep the last " + Config.SKIP_PIPELINES_QNT + "/" + pipelines.size() + " pipelines)";
+				LOGGER.info(msg);
+				JsonObject pipeline = pipelines.getJsonObject(j);
 				int pipelineId = pipeline.getInt("id");	// The ID of a pipeline									
 				String route3 = "projects/" + projectId + "/pipelines/" + pipelineId; 		
 				Response response3 = doDelete(route3);
@@ -174,14 +222,19 @@ public class GitlabApiClient extends RestClient {
 				if(statusCode==Status.NO_CONTENT.getStatusCode()) {
 					pipelineIds.add(pipelineId);
 				}else {
-					String error = "Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + ". Status code: " + statusCode;
-					error = error + " (Nota che l'errore si potrebbe manifestare quando la pipeline è in esecuzione).";
+					String error = "Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + " (" + getProjectUrl(projectId) + "). Status code: " + statusCode;
+					error = error + " (Nota che l'errore si potrebbe manifestare quando la pipeline è in esecuzione oppure un proceddo è archiviato e quindi è in sola lettura).";
 					LOGGER.severe(error);
-					this.errors.add(error);				
+					this.errors.add(error);	
+					break; // satrebbe inutile continuare
 				}
 			}
 		}
 		return pipelineIds;
+	}
+
+	private String getProjectUrl(int projectId) {
+		return this.gitlabHost + "/projects/" + projectId;
 	}
 
 	/**
@@ -194,9 +247,9 @@ public class GitlabApiClient extends RestClient {
 	 */
 	private List<Integer> removeBadges(int projectId){
 		List<Integer> badgeIds = new ArrayList<Integer>();	
-		JSONArray badges = getBadgesList(projectId);
-		for (int i = 0; i < badges.length(); i++) {						
-			JSONObject object = badges.getJSONObject(i);
+		JsonArray badges = getBadgesList(projectId);
+		for (int i = 0; i < badges.size(); i++) {						
+			JsonObject object = badges.getJsonObject(i);
 			int badgeId = object.getInt("id");			
 			try {
 				String route = "projects/" + projectId + "/badges/" + badgeId;
@@ -233,8 +286,8 @@ public class GitlabApiClient extends RestClient {
 	 * @param projectId
 	 * @return
 	 */
-	private JSONArray getBadgesList(int projectId) {
-		JSONArray badges = new JSONArray();
+	private JsonArray getBadgesList(int projectId) {
+		JsonArray badges = null;
 		String route = "projects/" + projectId + "/badges";
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
@@ -247,9 +300,9 @@ public class GitlabApiClient extends RestClient {
 				this.errors.add(msg);
 			}
 		}else {
-			String json = response.readEntity(String.class);
-			badges = new JSONArray(json);
-			LOGGER.info("#" + badges.length() + " badges exist for project id " + projectId);
+			String jsonString = response.readEntity(String.class);
+			badges = readArray(jsonString); 
+			LOGGER.info("#" + badges.size() + " badges exist for project id " + projectId);
 		}
 		return badges;
 	}
@@ -261,16 +314,15 @@ public class GitlabApiClient extends RestClient {
 	 * @param badges
 	 * @return
 	 */
-	private List<Integer> insertBadges(int projectId, List<JSONObject> badges) {
+	private List<Integer> insertBadges(int projectId, List<JsonObject> badges) {
 		List<Integer> badgeIds = new ArrayList<Integer>();
-
-		for (JSONObject badge : badges) {	
+		for (JsonObject badge : badges) {	
 			String route = "projects/" + projectId + "/badges";
 			Response response = doPost(route, Entity.json(badge.toString()));
 			int statusCode = response.getStatus();
 			if(statusCode==Status.CREATED.getStatusCode()) {
-				String json = response.readEntity(String.class);			
-				JSONObject object = new JSONObject(json);
+				String jsonString = response.readEntity(String.class);			
+				JsonObject object = readObject(jsonString);
 				int badgeId = object.getInt("id");
 				badgeIds.add(badgeId);
 			}else {
@@ -299,9 +351,9 @@ public class GitlabApiClient extends RestClient {
 	 * @throws KeyManagementException
 	 * @throws NoSuchAlgorithmException
 	 */
-	private List<JSONObject> createBadges(JSONObject object) { // TODO: rinominare object in project
+	private List<JsonObject> createBadges(JsonObject object) { // TODO: rinominare object in project
 		final String branch = Config.DEFAULT_BRANCH;
-		List<JSONObject> badges = new ArrayList<JSONObject>();
+		List<JsonObject> badges = new ArrayList<>();
 
 		// Determino l'id del progetto 
 		int projectId = object.getInt("id");
@@ -329,7 +381,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 ....
 */
 		String name = object.getString("name");
-		JSONObject namespace = object.getJSONObject("namespace");
+		JsonObject namespace = object.getJsonObject("namespace");
 		String group = namespace.getString("path");
 		String pathWithNamespace = object.getString("path_with_namespace");
 		
@@ -344,8 +396,8 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			String link = this.gitlabHost +"/" + group + "/" + name + "/commits/%{default_branch}";
 			// https://gitlab.com/gitlab-org/gitlab-foss/issues/41174
 			String  image = this.gitlabHost + "/" + group + "/" + name + "/badges/%{default_branch}/pipeline.svg";			
-			JSONObject badge = new JSONObject().put("link_url", link).put("image_url", image);
-			badges.add(badge);
+			JsonObjectBuilder  builder = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+			badges.add(builder.build());
 		}
 
 		if(!isSonar(projectId, branch)) {
@@ -367,31 +419,32 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			if(!sonarProjectKeyExpected.equals(sonarProjectKeyActual)) {
 				LOGGER.warning("Il valore di sonar.projectKey del progetto " + projectId + " non rispetta le nostre linee guida. Valore atteso: " + sonarProjectKeyExpected + " valore attuale: " + sonarProjectKeyActual);
 			}
-			
+
+ 
 			String link = this.sonarHost + "/dashboard?id=" + sonarProjectKeyActual;
 			String image = this.sonarHost + "/api/badges/gate?key=" + sonarProjectKeyActual;
-			JSONObject badge = new JSONObject().put("link_url", link).put("image_url", image);
-			badges.add(badge);
+			JsonObjectBuilder  builder1 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+			badges.add(builder1.build());
 			link = this.sonarHost + "/component_measures?metric=Reliability&id=" + sonarProjectKeyActual;	
 			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=bugs";
-			badge = new JSONObject().put("link_url", link).put("image_url", image);
-			badges.add(badge);
+			JsonObjectBuilder  builder2 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+			badges.add(builder2.build());
 			link = this.sonarHost + "/component_measures?metric=code_smells&id=" + sonarProjectKeyActual;			
 			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=code_smells";
-			badge = new JSONObject().put("link_url", link).put("image_url", image);
-			badges.add(badge);
+			JsonObjectBuilder  builder3 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+			badges.add(builder3.build());
 			link = this.sonarHost + "/component_measures?metric=ncloc_language_distribution&id=" + sonarProjectKeyActual;
 			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=ncloc_language_distribution";
-			badge = new JSONObject().put("link_url", link).put("image_url", image);
-			badges.add(badge);
+			JsonObjectBuilder  builder4 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+			badges.add(builder4.build());
 			link = this.sonarHost + "/component_measures?metric=classes&id=" + sonarProjectKeyActual;
 			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=classes";
-			badge = new JSONObject().put("link_url", link).put("image_url", image);
-			badges.add(badge);
+			JsonObjectBuilder  builder5 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+			badges.add(builder5.build());
 			link = this.sonarHost + "/component_measures?metric=functions&id=" + sonarProjectKeyActual;
 			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=functions";
-			badge = new JSONObject().put("link_url", link).put("image_url", image);
-			badges.add(badge);
+			JsonObjectBuilder  badge6 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+			badges.add(badge6.build());
 		}
 
 		return badges;
@@ -426,11 +479,12 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		if (response.getStatus() != Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile determinare se il file " + fileName + " è parte del progetto. Status code: " + statusCode);
 		}else {
-			String json = response.readEntity(String.class);			
-			JSONArray files = new JSONArray(json);		
-			for (int i=0; i<files.length(); i++) {
-				JSONObject object = files.getJSONObject(i);
-				String _fileName = object.getString("name");			
+			String jsonString = response.readEntity(String.class);	
+			JsonArray files = readArray(jsonString); 
+ 	
+			for (int i=0; i<files.size(); i++) {
+				 JsonObject jsonObject = files.getJsonObject(i);
+				String _fileName = jsonObject.getString("name");			
 				if (_fileName.equals(fileName)) {
 					b=true;
 					break;
@@ -473,10 +527,11 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 				this.errors.add(msg);
 			}
 		}else {
-			String json = response2.readEntity(String.class);		
-			JSONObject object = new JSONObject(json);
-			BigInteger size = object.getBigInteger("size");
-			String base64 = object.getString("content");
+			String jsonString = response2.readEntity(String.class);		
+			JsonObject jsonObject = readObject(jsonString);
+			// Integer size = jsonObject.getInt("size"); // Integer/int max value is 0x7fffffff = 2.147.483.647			
+			JsonNumber size = jsonObject.getJsonNumber("size"); 
+			String base64 = jsonObject.getString("content");
 			byte[] decoded = Base64.getDecoder().decode(base64);
 			try {
 				content = new String(decoded, "UTF-8");
