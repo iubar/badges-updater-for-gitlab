@@ -224,9 +224,13 @@ public class GitlabApiClient extends RestClient {
 				}else {
 					String error = "Impossibile eliminare la pipeline " + pipelineId + " del progetto " + projectId + " (" + getProjectUrl(projectId) + "). Status code: " + statusCode;
 					error = error + " (Nota che l'errore si potrebbe manifestare quando la pipeline è in esecuzione oppure un proceddo è archiviato e quindi è in sola lettura).";
-					LOGGER.severe(error);
-					this.errors.add(error);	
-					break; // satrebbe inutile continuare
+					LOGGER.warning(error);
+//					if(Config.FAIL_FAST) {
+//						System.exit(1);
+//					} else {					
+//						this.errors.add(error);
+//						break; // satrebbe inutile continuare
+//					}
 				}
 			}
 		}
