@@ -155,18 +155,6 @@ public class GitlabApiClient extends RestClient {
 		} 
 	}
 
-	private String prettyPrintFormat(JsonObject jsonObject) throws IOException {
-		String jsonString = null; 
-		Map<String, Boolean> config = new HashMap<>();
-		config.put(JsonGenerator.PRETTY_PRINTING, true);		        
-		JsonWriterFactory writerFactory = Json.createWriterFactory(config);		        	 
-		try(Writer writer = new StringWriter()) {
-		    writerFactory.createWriter(writer).write(jsonObject);
-		    jsonString = writer.toString();
-		}
-		return jsonString;
-	}
-
 	/**
 	 * @see https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines	
 	 * 
@@ -551,5 +539,24 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		Builder builder = super.getBuilder(target).header("PRIVATE-TOKEN", this.gitlabToken);
 		return builder;
 	}
+	
+
+	private static JsonObject parseJsonString(String jsonString) {
+		JsonReader reader = Json.createReader(new StringReader(jsonString));
+		JsonObject jsonObject = reader.readObject();
+		return jsonObject;
+	}
+	
+	private String prettyPrintFormat(JsonObject jsonObject) throws IOException {
+		String jsonString = null; 
+		Map<String, Boolean> config = new HashMap<>();
+		config.put(JsonGenerator.PRETTY_PRINTING, true);		        
+		JsonWriterFactory writerFactory = Json.createWriterFactory(config);		        	 
+		try(Writer writer = new StringWriter()) {
+		    writerFactory.createWriter(writer).write(jsonObject);
+		    jsonString = writer.toString();
+		}
+		return jsonString;
+	}	
 
 }
