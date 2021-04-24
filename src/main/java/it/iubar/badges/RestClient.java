@@ -1,4 +1,4 @@
-package it.iubar.BadgesUpdater;
+package it.iubar.badges;
 
 import java.net.URI;
 import java.security.KeyManagementException;

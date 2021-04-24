@@ -1,4 +1,4 @@
-package it.iubar.BadgesUpdater;
+package it.iubar.badges;
 
 public class Config {
 

@@ -1,4 +1,4 @@
-package it.iubar.BadgesUpdater;
+package it.iubar.badges;
 
 import java.util.Properties;
 import java.util.Set;
