@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>it.iubar</groupId>
-	<artifactId>BadgesUpdater</artifactId>
+	<artifactId>badgesupdater</artifactId>
 	<version>1.0.4</version>
 	<description>...</description>
 	<properties>
@@ -14,7 +14,7 @@
 		<surefire.plugin.version>3.0.0-M5</surefire.plugin.version>		
 		<jersey.client.version>2.33</jersey.client.version>
 		<jackson.version>2.11.0</jackson.version>
-		<maven-assembly-mainclass>it.iubar.BadgesUpdater.BadgesUpdater</maven-assembly-mainclass>
+		<maven-assembly-mainclass>it.iubar.badges.BadgesUpdater</maven-assembly-mainclass>
 	</properties>
 	<build>
 	<finalName>${project.artifactId}</finalName>

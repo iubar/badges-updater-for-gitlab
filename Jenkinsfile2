@@ -26,10 +26,16 @@ pipeline {
             }
         }
         stage ('Run') {
+			environment {
+				// @see https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#readmavenpom-read-a-maven-project-file
+				// Make sure the Pipeline Utility Steps plugin is installed in Jenkins "Manage Plugins". If you do not have the plugin installed you may see an error: java.lang.NoSuchMethodError: No such DSL method 'readMavenPom' .			
+    			APP_VER = readMavenPom().getVersion()
+				APP_NAME = readMavenPom().getArtifactId()
+			}        
             steps {
                 sh 'ls -la target'
                 sh 'java -version'
-                sh 'cd target && java -jar BadgesUpdater-jar-with-dependencies.jar'
+                sh 'cd target && java -jar ${APP_NAME}-jar-with-dependencies.jar'
             }
         }        		
     }
