@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class PropertiesUtils {
@@ -15,10 +16,7 @@ public class PropertiesUtils {
 		Properties fileProperties = new Properties();
 		FileInputStream objFileInputStream = null;
 		//InputStream objInputStream = null;
-
 		try {
-
-
 			// Metodo 1 (Funziona! interno al JAR)
 			//ClassLoader loader = Thread.currentThread().getContextClassLoader();
 			//objInputStream = loader.getResourceAsStream(propertiesFilename);
@@ -37,15 +35,13 @@ public class PropertiesUtils {
 			//                 objFileInputStream = new FileInputStream(propertiesFile);
 			//             }
 
-
-
 			fileProperties.load(objFileInputStream);
 
 		} catch (FileNotFoundException ex) {
-			LOGGER.warning("ERRORE: File di configurazione non trovato: " + propertiesFilename);
+			LOGGER.log(Level.WARNING, "ERRORE: File di configurazione non trovato: " + propertiesFilename);
 			throw ex;
 		}catch (IOException ex) {
-			LOGGER.warning("ERRORE: Impossibile leggere il file: " + propertiesFilename);
+			LOGGER.log(Level.WARNING, "ERRORE: Impossibile leggere il file: " + propertiesFilename);
 			throw ex;
 		}
 

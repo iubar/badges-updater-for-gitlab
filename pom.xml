@@ -12,7 +12,7 @@
 	<description>...</description>
 	<properties>
 		<maven-assembly-mainclass>it.iubar.badges.BadgesUpdater</maven-assembly-mainclass>
-		<jersey.client.version>2.33</jersey.client.version>
+		<jersey.client.version>3.0.0</jersey.client.version>
 	</properties>
 	<build>
 		<finalName>${project.artifactId}</finalName>
@@ -59,12 +59,6 @@
 		</plugins>
 	</build>
 	<dependencies>
-		<!-- https://mvnrepository.com/artifact/javax.activation/activation -->
-		<dependency>
-		    <groupId>javax.activation</groupId>
-		    <artifactId>activation</artifactId>
-		    <version>1.1.1</version>
-		</dependency>
 		<!-- JSON-P Default Provider (JSR-353) -->		
 		<!-- https://mvnrepository.com/artifact/org.glassfish/jakarta.json -->
 		<dependency>
