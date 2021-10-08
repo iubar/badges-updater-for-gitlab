@@ -37,17 +37,21 @@ pipeline {
         stage('Quality gate') {	
             steps {
 				sh '''
-					SONAR_PROJECTKEY=$(grep sonar.projectKey sonar-project.properties | cut -d '=' -f2)
-					echo "SONAR_PROJECTKEY: ${SONAR_PROJECTKEY}"				
-				    QUALITYGATE=$(curl --data-urlencode "projectKey=${SONAR_PROJECTKEY}" ${SONAR_URL}/api/qualitygates/project_status | jq '.projectStatus.status')
-				    QUALITYGATE=$(echo "$QUALITYGATE" | sed -e 's/^"//' -e 's/"$//')
-				    echo "QUALITYGATE: ${QUALITYGATE}"
-                    if [ $QUALITYGATE = OK ]; then
-                       echo "High five !"
-                    else
-                       echo "Poor quality !"
-					   echo "( see ${SONAR_URL}/dashboard?id=${SONAR_PROJECTKEY})"
-                       exit 1
+					if [ $SKIP_SONARQUBE = true ]; then												
+						echo "Skipping sonar-scanner analysis"
+            		else	
+						SONAR_PROJECTKEY=$(grep sonar.projectKey sonar-project.properties | cut -d '=' -f2)
+						echo "SONAR_PROJECTKEY: ${SONAR_PROJECTKEY}"				
+					    QUALITYGATE=$(curl --data-urlencode "projectKey=${SONAR_PROJECTKEY}" ${SONAR_URL}/api/qualitygates/project_status | jq '.projectStatus.status')
+					    QUALITYGATE=$(echo "$QUALITYGATE" | sed -e 's/^"//' -e 's/"$//')
+					    echo "QUALITYGATE: ${QUALITYGATE}"
+	                    if [ $QUALITYGATE = OK ]; then
+	                       echo "High five !"
+	                    else
+	                       echo "Poor quality !"
+						   echo "( see ${SONAR_URL}/dashboard?id=${SONAR_PROJECTKEY})"
+	                       exit 1
+	                    fi
                     fi				    
 				'''
             }
