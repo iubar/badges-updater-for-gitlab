@@ -38,7 +38,7 @@ pipeline {
             steps {
 				sh 'wget http://192.168.0.119:8081/artifactory/ext-release-local/jenkins/jenkins-sonar-quality-gate-check.sh --no-check-certificate'
 				sh 'chmod +x ./jenkins-sonar-quality-gate-check.sh'
-				sh './jenkins-sonar-quality-gate-check.sh false # true / false = Ignore or not the quality gate score
+				sh './jenkins-sonar-quality-gate-check.sh false # true / false = Ignore or not the quality gate score'
             }
         }
 		stage ('Deploy') {
