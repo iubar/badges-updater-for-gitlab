@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.com/iubar/badges-updater-for-gitlab.svg?branch=master)](https://travis-ci.com/iubar/badges-updater-for-gitlab)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2781d3e900d042d792c472621d8e7831)](https://www.codacy.com/app/Iubar/badges-updater-for-gitlab?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=iubar/badges-updater-for-gitlab&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://app.travis-ci.com/iubar/badges-updater-for-gitlab.svg?branch=master)](https://app.travis-ci.com/github/iubar/badges-updater-for-gitlab)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2781d3e900d042d792c472621d8e7831)](https://app.codacy.com/manual/Iubar/badges-updater-for-gitlab/dashboard)
 
 # Badges updater for GitLab
 
