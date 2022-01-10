@@ -116,7 +116,7 @@ public class GitlabApiClient extends RestClient {
 				// Rimuovo i badges esistenti dal progetto
 				List<Integer> results = removeBadges(projectId);
 				if(results.isEmpty()) {
-					LOGGER.warning("removeBadges() returns no results for project " + projectDescAndId + ". That could be a BUG.");
+				LOGGER.warning("removeBadges() returns no results for project " + projectDescAndId + ". That could be a BUG.");
 				}else {
 					LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted successfully from project " + projectDescAndId);
 				}
@@ -166,7 +166,7 @@ public class GitlabApiClient extends RestClient {
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if(statusCode!=Status.OK.getStatusCode()) {
-			String error = "Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode;
+			String error = "Impossibile recuperare l'elenco delle pipeline per il progetto " + projectId + ". Status code: " + statusCode + ". Verificare che la feature CI/CD sia abilitata per il progetto.";
 			LOGGER.severe(error);
 			if(Config.FAIL_FAST) {
 				System.exit(1);
