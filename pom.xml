@@ -12,7 +12,7 @@
 	<description>...</description>
 	<properties>
 		<maven-assembly-mainclass>it.iubar.badges.BadgesUpdater</maven-assembly-mainclass>
-		<jersey.client.version>3.0.3</jersey.client.version>
+		<jersey.client.version>3.0.4</jersey.client.version>
 	</properties>
 	<build>
 		<finalName>${project.artifactId}</finalName>
