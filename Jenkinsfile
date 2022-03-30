@@ -22,7 +22,13 @@ pipeline {
                 }
             }
         }
-        stage('Analyze') {
+        stage('Quality') {
+			agent { 
+				docker {    		
+					image 'iubar-sonar'
+					label 'docker'
+				}
+			}				
             steps {
 				sh '''
 					echo "SKIP_SONARQUBE: ${SKIP_SONARQUBE}"
@@ -30,15 +36,11 @@ pipeline {
 						echo "Skipping sonar-scanner analysis"
             		else
                			sonar-scanner
+						wget --user=${ARTIFACTORY_USER} --password=${ARTIFACTORY_PASS} http://192.168.0.119:8082/artifactory/iubar-repo-local/jenkins/jenkins-sonar-quality-gate-check.sh --no-check-certificate
+						chmod +x ./jenkins-sonar-quality-gate-check.sh
+						./jenkins-sonar-quality-gate-check.sh false # true / false = Ignore or not the quality gate score
                 	fi
-				'''						
-            }
-        }		
-        stage('Quality gate') {	
-            steps {
-				sh 'wget --user=${ARTIFACTORY_USER} --password=${ARTIFACTORY_PASS} http://192.168.0.119:8082/artifactory/iubar-repo-local/jenkins/jenkins-sonar-quality-gate-check.sh --no-check-certificate'
-				sh 'chmod +x ./jenkins-sonar-quality-gate-check.sh'
-				sh './jenkins-sonar-quality-gate-check.sh false # true / false = Ignore or not the quality gate score'
+				'''
             }
         }
 		stage ('Deploy') {
