@@ -1,5 +1,7 @@
+/* job: run-badges-updater-for-gitlab */
+/* job: badges-updater-for-gitlab */
 pipeline {
-    agent {    
+    agent {
     	docker {   	
     		image 'iubar-maven-alpine'
     		label 'docker'
@@ -7,48 +9,39 @@ pipeline {
     	} 
     }
 	options {
-		// Apply the ansi terminal for all stages and steps in pipeline
 		ansiColor('xterm')
-	}
+	}    
 	environment {
-		MAVEN_CLI_OPTS = '--batch-mode --errors --fail-fast --show-version --quiet'
-		MAVEN_OPTS = '-Dmaven.test.failure.ignore=false -Dstyle.color=always -Djava.awt.headless=true -Dhttps.protocols=TLSv1.2'
-    }
+		MAVEN_ARGS = '--show-version --batch-mode'
+		MAVEN_OPTS = '-Dstyle.color=always -Djava.awt.headless=true -Dhttps.protocols=TLSv1.2'
+	}    
     stages {
-		stage('Package') {
+        stage ('Build') {
             steps {
-                sh 'mvn $MAVEN_CLI_OPTS clean package'
+                sh 'mvn $MAVEN_ARGS $MAVEN_OPTS clean package'
             }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml' // show junit log in Jenkins 
-                }
-            }
-        }
+        }	
+    }
         stage ('Run') {
-			environment {
-				// @see https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#readmavenpom-read-a-maven-project-file
-				// Make sure the Pipeline Utility Steps plugin is installed in Jenkins "Manage Plugins". If you do not have the plugin installed you may see an error: java.lang.NoSuchMethodError: No such DSL method 'readMavenPom' .			
-    			APP_VER = readMavenPom().getVersion()
-				APP_NAME = readMavenPom().getArtifactId()
-			}        
+		environment {
+			// @see https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#readmavenpom-read-a-maven-project-file
+			// Make sure the Pipeline Utility Steps plugin is installed in Jenkins "Manage Plugins". If you do not have the plugin installed you may see an error: java.lang.NoSuchMethodError: No such DSL method 'readMavenPom' .			
+			APP_VER = readMavenPom().getVersion()
+			APP_NAME = readMavenPom().getArtifactId()
+		}        
             steps {
                 sh 'ls -la target'
-                sh 'java -version'
                 sh 'cd target && java -jar ${APP_NAME}-jar-with-dependencies.jar'
             }
-        }        		
-    }
-	post {
+        }     
+post {
         changed {
-        	echo "CURRENT STATUS: ${currentBuild.currentResult}"
             sh "curl -H 'JENKINS: Pipeline Hook Iubar' -i -X GET -G ${env.IUBAR_WEBHOOK_URL} -d status=${currentBuild.currentResult} -d project_name='${JOB_NAME}'"
         }
-		cleanup {
-			cleanWs()
-			dir("${env.WORKSPACE}@tmp") {				
-				deleteDir()
-			}
-        }
-    }    
+	cleanup {
+		cleanWs()
+        }		
+    }     
 }
+ 
+ 
