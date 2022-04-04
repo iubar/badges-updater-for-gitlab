@@ -1,13 +1,12 @@
 pipeline {
     agent {    
     	docker {   	
-    		image 'iubar-maven-alpine'
+    		image 'iubar-java-alpine'
     		label 'docker'
-    		args '-v ${HOME}/.m2:/home/jenkins/.m2:rw,z -v ${HOME}/.sonar:/home/jenkins/.sonar:rw,z'
+    		args '-v ${HOME}/.m2:/home/jenkins/.m2:rw,z'
     	} 
     }
 	options {
-		// Apply the ansi terminal for all stages and steps in pipeline
 		ansiColor('xterm')
 	}
 	environment {
@@ -25,7 +24,7 @@ pipeline {
                 }
             }
         }
-        stage ('Run') {
+        stage('Run') {
 			environment {
 				// @see https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#readmavenpom-read-a-maven-project-file
 				// Make sure the Pipeline Utility Steps plugin is installed in Jenkins "Manage Plugins". If you do not have the plugin installed you may see an error: java.lang.NoSuchMethodError: No such DSL method 'readMavenPom' .			
@@ -41,14 +40,10 @@ pipeline {
     }
 	post {
         changed {
-        	echo "CURRENT STATUS: ${currentBuild.currentResult}"
             sh "curl -H 'JENKINS: Pipeline Hook Iubar' -i -X GET -G ${env.IUBAR_WEBHOOK_URL} -d status=${currentBuild.currentResult} -d project_name='${JOB_NAME}'"
         }
 		cleanup {
 			cleanWs()
-			dir("${env.WORKSPACE}@tmp") {				
-				deleteDir()
-			}
         }
     }    
 }
