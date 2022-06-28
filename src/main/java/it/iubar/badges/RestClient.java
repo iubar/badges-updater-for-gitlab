@@ -32,7 +32,6 @@ public abstract class RestClient {
 	/**
 	 * Crea il client e ignora la validità del certificato SSL
 	 * 
-	 * @return
 	 */
 	public static Client factoryClient()  {
 		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {

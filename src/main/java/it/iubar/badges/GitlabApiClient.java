@@ -195,11 +195,11 @@ public class GitlabApiClient extends RestClient {
 	private List<Integer> removePipelines(int projectId, JsonArray pipelines) {
 		List<Integer> pipelineIds = new ArrayList<Integer>();		
 		if(pipelines.size()<=Config.SKIP_PIPELINES_QNT) {
-			LOGGER.info("#" + pipelines.size() + " pipelines found <= " + Config.SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
+			LOGGER.info("Pipelines found #" + pipelines.size() + " <= " + Config.SKIP_PIPELINES_QNT + ", so there is no pipelines to delete for project id " + projectId);
 		}else {
 			LOGGER.info("#" + pipelines.size() + " pipelines found for project id " + projectId);
 			for (int j = 0 + Config.SKIP_PIPELINES_QNT ; j < pipelines.size(); j++) {
-				String msg = "Removing " + (j+1-Config.SKIP_PIPELINES_QNT) + "/" + (pipelines.size()-Config.SKIP_PIPELINES_QNT) + " pipeline for project " + projectId + " (I will keep the last " + Config.SKIP_PIPELINES_QNT + "/" + pipelines.size() + " pipelines)";
+				String msg = "Removing " + (j+1-Config.SKIP_PIPELINES_QNT) + "/" + (pipelines.size()-Config.SKIP_PIPELINES_QNT) + " pipeline for project id " + projectId + " (I will keep the last " + Config.SKIP_PIPELINES_QNT + "/" + pipelines.size() + " pipelines)";
 				LOGGER.info(msg);
 				JsonObject pipeline = pipelines.getJsonObject(j);
 				int pipelineId = pipeline.getInt("id");	// The ID of a pipeline									
