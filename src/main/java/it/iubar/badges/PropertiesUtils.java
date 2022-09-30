@@ -36,18 +36,17 @@ public class PropertiesUtils {
 			//             }
 
 			fileProperties.load(objFileInputStream);
-
 		} catch (FileNotFoundException ex) {
 			LOGGER.log(Level.WARNING, "ERRORE: File di configurazione non trovato: " + propertiesFilename);
 			throw ex;
-		}catch (IOException ex) {
+		} catch (IOException ex) {
 			LOGGER.log(Level.WARNING, "ERRORE: Impossibile leggere il file: " + propertiesFilename);
 			throw ex;
 		}
 
 		return fileProperties;
 	}
-	
+
 	public static Properties parsePropertiesString(String s) {
 		Properties p = new Properties();
 		try {
@@ -56,6 +55,5 @@ public class PropertiesUtils {
 			e.printStackTrace();
 		}
 		return p;
-	}	
-
+	}
 }
