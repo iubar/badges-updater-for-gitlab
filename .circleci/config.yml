@@ -15,9 +15,9 @@ jobs:
       - run:
           name: Build
           command: |
-          "java --version"
-          "mvn -v"
-          "mvn -f pom_circleci.xml -Dmaven.test.skip=true clean package"
+            java --version
+            mvn -v
+            mvn -f pom_circleci.xml -Dmaven.test.skip=true clean package
       - run:
           name: Testing
           command: npm run test-ci          
@@ -27,9 +27,9 @@ jobs:
       - run:
           name: Run
           command: | 
-          cd target
-          "ls -la"
-          "java -jar badgesupdater-jar-with-dependencies.jar"
+            cd target
+            ls -la
+            java -jar badgesupdater-jar-with-dependencies.jar
 
 #
 #
