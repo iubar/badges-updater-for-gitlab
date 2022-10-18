@@ -8,7 +8,7 @@ jobs:
       # https://github.com/CircleCI-Public/cimg-openjdk
       # https://hub.docker.com/r/cimg/openjdk
       # https://circleci.com/developer/images/image/cimg/openjdk
-      
+
     steps:
       - checkout
       # - run: ./mvnw -Dmaven.test.skip=true package
@@ -17,8 +17,8 @@ jobs:
           command: |
             java --version
             mvn -v
-            mvn -f pom_circleci.xml test 
-      - run:         
+            mvn -f pom_circleci.xml test
+      - run:
           name: Packaging
           command: mvn -f pom_circleci.xml -Dmaven.test.skip=true clean package
       - run:
@@ -26,7 +26,7 @@ jobs:
           command: mvn -f pom_circleci.xml versions:display-dependency-updates
       - run:
           name: Run
-          command: | 
+          command: |
             cd target
             ls -la
             java -jar badgesupdater-jar-with-dependencies.jar

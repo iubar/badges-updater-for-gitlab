@@ -131,8 +131,6 @@ public class GitlabApiClient extends RestClient {
 		}
 	}
 
-
-
 	/**
 	 * @see https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines
 	 *
@@ -555,8 +553,4 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		Builder builder = super.getBuilder(target).header("PRIVATE-TOKEN", this.gitlabToken);
 		return builder;
 	}
-
-
-
-
 }
