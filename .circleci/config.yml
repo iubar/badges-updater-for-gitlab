@@ -13,17 +13,17 @@ jobs:
       - checkout
       # - run: ./mvnw -Dmaven.test.skip=true package
       - run:
-          name: Build
+          name: Testing
           command: |
             java --version
             mvn -v
-            mvn -f pom_circleci.xml -Dmaven.test.skip=true clean package
-      - run:
-          name: Testing
-          command: npm run test-ci          
+            mvn -f pom_circleci.xml test 
+      - run:         
+          name: Packaging
+          command: mvn -f pom_circleci.xml -Dmaven.test.skip=true clean package
       - run:
           name: Outdated
-          command: mvn versions:display-dependency-updates
+          command: mvn -f pom_circleci.xml versions:display-dependency-updates
       - run:
           name: Run
           command: | 
