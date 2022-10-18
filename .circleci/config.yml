@@ -1,0 +1,70 @@
+version: 2.1
+# see https://circleci.com/docs/language-java-maven/
+jobs:
+  build:
+    working_directory: ~/repo
+    docker:
+      - image: cimg/openjdk:17.0.1
+      # https://github.com/CircleCI-Public/cimg-openjdk
+      # https://hub.docker.com/r/cimg/openjdk
+      # https://circleci.com/developer/images/image/cimg/openjdk
+      
+    steps:
+      - checkout
+      # - run: ./mvnw -Dmaven.test.skip=true package
+      - run:
+          name: Build
+          command: |
+          mvn -v
+          mvn -f pom_circleci.xml -Dmaven.test.skip=true clean package
+      - run:
+          name: Testing
+          command: npm run test-ci          
+      - run:
+          name: Outdated
+          command: mvn versions:display-dependency-updates
+      - run:
+          name: Run
+          command: | 
+          cd target
+          ls -la
+          java -jar badgesupdater-jar-with-dependencies.jar
+
+#
+#
+# Visual Editor: https://circleci-public.github.io/visual-config-editor/
+# References:
+#   https://circleci.com/continuous-integration/
+#   https://circleci.com/docs/configuration-reference
+#   https://app.circleci.com/settings/user/notifications
+#   https://circleci.com/docs/variables
+# Immagini:
+#   https://circleci.com/docs/circleci-images
+#   https://github.com/circleci/circleci-images
+#   https://circleci.com/developer/images
+#   https://hub.docker.com/u/cimg
+#   https://circleci.com/blog/announcing-our-next-generation-convenience-images-smaller-faster-more-deterministic/
+# Integrazioni:
+#   https://circleci.com/docs/webhooks
+#   https://circleci.com/blog/circleci-slack-integration/
+#   https://circleci.com/blog/continuous-integration-slack-twilio/
+# Orb Registry: https://circleci.com/developer/orbs
+# Orbs:
+#   https://github.com/woltsu/telegram-orb
+#   https://circleci.com/developer/orbs/orb/woltsu/telegram
+#   https://circleci.com/developer/orbs/orb/circleci/slack
+#   https://github.com/CircleCI-Public/slack-orb/wiki
+# Examples
+#   https://github.com/CircleCI-Public/circleci-demo-react-native/blob/master/.circleci/config.yml
+#   https://github.com/orgs/CircleCI-Public/repositories?type=all
+#
+# Languages
+#   Java
+#     https://circleci.com/docs/language-java-maven
+#     https://circleci.com/docs/language-java
+#   Android
+#     https://circleci.com/docs/language-android
+#   JS
+#     https://circleci.com/docs/language-javascript
+# DB
+#   https://circleci.com/docs/postgres-config#example-mysql-project

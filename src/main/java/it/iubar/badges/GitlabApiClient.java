@@ -73,21 +73,9 @@ public class GitlabApiClient extends RestClient {
 			System.exit(1);
 		} else {
 			String jsonString = response.readEntity(String.class);
-			projects = readArray(jsonString);
+			projects = JsonUtils.readArray(jsonString);
 		}
 		return projects;
-	}
-
-	private JsonObject readObject(String jsonString) {
-		JsonReader reader = Json.createReader(new StringReader(jsonString));
-		JsonObject object = reader.readObject();
-		return object;
-	}
-
-	private JsonArray readArray(String jsonString) {
-		JsonReader reader = Json.createReader(new StringReader(jsonString));
-		JsonArray array = reader.readArray();
-		return array;
 	}
 
 	public void run() {
@@ -102,7 +90,7 @@ public class GitlabApiClient extends RestClient {
 			JsonObject project = projects.getJsonObject(i);
 			if (debug) {
 				LOGGER.log(Level.INFO, "Pretty printing project info...");
-				prettyPrint(project);
+				JsonUtils.prettyPrint(project);
 			}
 
 			int projectId = project.getInt("id");
@@ -143,14 +131,7 @@ public class GitlabApiClient extends RestClient {
 		}
 	}
 
-	private void prettyPrint(JsonObject jsonObject) {
-		try {
-			String prettyString = prettyPrintFormat(jsonObject);
-			System.out.println(prettyString);
-		} catch (IOException ex) {
-			LOGGER.log(Level.SEVERE, "Can't print json", ex);
-		}
-	}
+
 
 	/**
 	 * @see https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines
@@ -178,7 +159,7 @@ public class GitlabApiClient extends RestClient {
 			}
 		} else {
 			String jsonString = response.readEntity(String.class);
-			pipelines = readArray(jsonString);
+			pipelines = JsonUtils.readArray(jsonString);
 		}
 		return pipelines;
 	}
@@ -322,7 +303,7 @@ public class GitlabApiClient extends RestClient {
 			}
 		} else {
 			String jsonString = response.readEntity(String.class);
-			badges = readArray(jsonString);
+			badges = JsonUtils.readArray(jsonString);
 			LOGGER.info("#" + badges.size() + " badges exist for project id " + projectId);
 		}
 		return badges;
@@ -343,7 +324,7 @@ public class GitlabApiClient extends RestClient {
 			int statusCode = response.getStatus();
 			if (statusCode == Status.CREATED.getStatusCode()) {
 				String jsonString = response.readEntity(String.class);
-				JsonObject object = readObject(jsonString);
+				JsonObject object = JsonUtils.readObject(jsonString);
 				int badgeId = object.getInt("id");
 				badgeIds.add(badgeId);
 			} else {
@@ -506,7 +487,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			LOGGER.severe("Impossibile determinare se il file " + fileName + " è parte del progetto. Status code: " + statusCode);
 		} else {
 			String jsonString = response.readEntity(String.class);
-			JsonArray files = readArray(jsonString);
+			JsonArray files = JsonUtils.readArray(jsonString);
 
 			for (int i = 0; i < files.size(); i++) {
 				JsonObject jsonObject = files.getJsonObject(i);
@@ -555,7 +536,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			}
 		} else {
 			String jsonString = response2.readEntity(String.class);
-			JsonObject jsonObject = readObject(jsonString);
+			JsonObject jsonObject = JsonUtils.readObject(jsonString);
 			// Integer size = jsonObject.getInt("size"); // Integer/int max value is 0x7fffffff = 2.147.483.647
 			JsonNumber size = jsonObject.getJsonNumber("size");
 			String base64 = jsonObject.getString("content");
@@ -575,21 +556,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		return builder;
 	}
 
-	private static JsonObject parseJsonString(String jsonString) {
-		JsonReader reader = Json.createReader(new StringReader(jsonString));
-		JsonObject jsonObject = reader.readObject();
-		return jsonObject;
-	}
 
-	private String prettyPrintFormat(JsonObject jsonObject) throws IOException {
-		String jsonString = null;
-		Map<String, Boolean> config = new HashMap<>();
-		config.put(JsonGenerator.PRETTY_PRINTING, true);
-		JsonWriterFactory writerFactory = Json.createWriterFactory(config);
-		try (Writer writer = new StringWriter()) {
-			writerFactory.createWriter(writer).write(jsonObject);
-			jsonString = writer.toString();
-		}
-		return jsonString;
-	}
+
+
 }
