@@ -351,12 +351,12 @@ public class GitlabApiClient extends RestClient {
 	 * @throws KeyManagementException
 	 * @throws NoSuchAlgorithmException
 	 */
-	private List<JsonObject> createBadges(JsonObject object) { // TODO: rinominare object in project
+	private List<JsonObject> createBadges(JsonObject project) {
 		final String branch = Config.DEFAULT_BRANCH;
 		List<JsonObject> badges = new ArrayList<>();
 
 		// Determino l'id del progetto
-		int projectId = object.getInt("id");
+		int projectId = project.getInt("id");
 		// Determino altri valori come il nome ed il gruppo del progetto
 		// In alternativa alla lettura dei dati dal parametro "object", potrei utilizzare le variabili gitlab %{project_path} e %{default_branch} nella costruzione del link al pipeline badge.
 		// Ad esempio un link valido sarebbe:
@@ -367,7 +367,7 @@ public class GitlabApiClient extends RestClient {
 		/*
 Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-all-projects)
 ....		
-   "name": "Diaspora Client",
+    "name": "Diaspora Client",
     "name_with_namespace": "Diaspora / Diaspora Client",
     "path": "diaspora-client",
     "path_with_namespace": "diaspora/diaspora-client",
@@ -380,21 +380,17 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
     },
 ....
 */
-		String name = object.getString("name");
-		JsonObject namespaceJsonObj = object.getJsonObject("namespace");
+		String name = project.getString("name");
+		JsonObject namespaceJsonObj = project.getJsonObject("namespace");
 		String namespacePath = namespaceJsonObj.getString("path");
-		String pathWithNamespace = object.getString("path_with_namespace");
-
-		// TODO: sostituire:
-		// group + "/" + name
-		// con:
-		// pathWithNamespace
-
+		String pathWithNamespace = project.getString("path_with_namespace");
+			
 		if (!isGitlabci(projectId, branch)) {
 			LOGGER.warning("File " + Config.GITLAB_FILE + " assente per il progetto " + projectId);
 		} else {
 			// see https://gitlab.com/gitlab-org/gitlab-foss/issues/41174
-			String link = this.gitlabHost + "/" + pathWithNamespace + "/commits/%{default_branch}";
+			//String link = this.gitlabHost + "/" + pathWithNamespace + "/commits/%{default_branch}";
+			String link = this.gitlabHost + "/" + pathWithNamespace + "/-/pipelines";
 			String image = this.gitlabHost + "/" + pathWithNamespace + "/badges/%{default_branch}/pipeline.svg";
 			JsonObjectBuilder builder = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
 			badges.add(builder.build());
