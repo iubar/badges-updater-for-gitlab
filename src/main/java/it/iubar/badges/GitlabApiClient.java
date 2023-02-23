@@ -381,8 +381,8 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 ....
 */
 		String name = object.getString("name");
-		JsonObject namespace = object.getJsonObject("namespace");
-		String group = namespace.getString("path");
+		JsonObject namespaceJsonObj = object.getJsonObject("namespace");
+		String namespacePath = namespaceJsonObj.getString("path");
 		String pathWithNamespace = object.getString("path_with_namespace");
 
 		// TODO: sostituire:
@@ -394,8 +394,8 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			LOGGER.warning("File " + Config.GITLAB_FILE + " assente per il progetto " + projectId);
 		} else {
 			// see https://gitlab.com/gitlab-org/gitlab-foss/issues/41174
-			String link = this.gitlabHost + "/" + group + "/" + projectId + "/commits/%{default_branch}";
-			String image = this.gitlabHost + "/" + group + "/" + projectId + "/badges/%{default_branch}/pipeline.svg";
+			String link = this.gitlabHost + "/" + pathWithNamespace + "/commits/%{default_branch}";
+			String image = this.gitlabHost + "/" + pathWithNamespace + "/badges/%{default_branch}/pipeline.svg";
 			JsonObjectBuilder builder = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
 			badges.add(builder.build());
 		}
@@ -414,7 +414,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 				LOGGER.severe("Impossibile recuperare il valore di sonar.projectKey");
 				System.exit(1);
 			}
-			String sonarProjectKeyExpected = group + ":" + name; // il carattere ":" equivale a "%3A"
+			String sonarProjectKeyExpected = namespacePath + ":" + name; // il carattere ":" equivale a "%3A"
 			if (!sonarProjectKeyExpected.equals(sonarProjectKeyActual)) {
 				LOGGER.warning(
 					"Il valore di sonar.projectKey del progetto " +
