@@ -10,13 +10,13 @@ pipeline {
         ansiColor('xterm')
     }
     environment {
-        MAVEN_CLI_OPTS = '--batch-mode --errors --fail-fast --show-version --quiet'
+        MAVEN_ARGS = '--batch-mode --errors --fail-fast --show-version --quiet'
         MAVEN_OPTS = '-Dmaven.test.failure.ignore=false -Dstyle.color=always -Djava.awt.headless=true -Dhttps.protocols=TLSv1.2'
     }
     stages {
         stage('Package') {
             steps {
-                sh 'mvn $MAVEN_CLI_OPTS clean package'
+                sh 'mvn $MAVEN_ARGS clean package'
             }
             post {
                 always {

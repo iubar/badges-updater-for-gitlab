@@ -393,9 +393,9 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		if (!isGitlabci(projectId, branch)) {
 			LOGGER.warning("File " + Config.GITLAB_FILE + " assente per il progetto " + projectId);
 		} else {
-			String link = this.gitlabHost + "/" + group + "/" + name + "/commits/%{default_branch}";
-			// https://gitlab.com/gitlab-org/gitlab-foss/issues/41174
-			String image = this.gitlabHost + "/" + group + "/" + name + "/badges/%{default_branch}/pipeline.svg";
+			// see https://gitlab.com/gitlab-org/gitlab-foss/issues/41174
+			String link = this.gitlabHost + "/" + group + "/" + projectId + "/commits/%{default_branch}";
+			String image = this.gitlabHost + "/" + group + "/" + projectId + "/badges/%{default_branch}/pipeline.svg";
 			JsonObjectBuilder builder = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
 			badges.add(builder.build());
 		}

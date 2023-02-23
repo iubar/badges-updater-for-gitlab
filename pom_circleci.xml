@@ -6,15 +6,16 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>it.iubar</groupId>
   <artifactId>badgesupdater</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
   <description>...</description>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <jdk.source.version>1.8</jdk.source.version>
     <jdk.target.version>${jdk.source.version}</jdk.target.version>
-    <junit.jupiter.version>5.8.2</junit.jupiter.version>
-    <surefire.plugin.version>3.0.0-M5</surefire.plugin.version>
+    <junit.jupiter.version>5.9.2</junit.jupiter.version>
+    <surefire.plugin.version>3.0.0-M9</surefire.plugin.version>
     <jersey.client.version>3.0.8</jersey.client.version>
     <maven-assembly-mainclass>it.iubar.badges.BadgesUpdater</maven-assembly-mainclass>
   </properties>
@@ -26,7 +27,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.10.0</version>
+        <version>3.10.1</version>
         <configuration>
           <source>${jdk.source.version}</source>
           <target>${jdk.target.version}</target>
@@ -35,7 +36,7 @@
       <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.4.1</version>
+        <version>3.5.0</version>
         <configuration>
           <!-- <outputDirectory>build/maven/${pom.artifactId}/target</outputDirectory> -->
           <archive>
@@ -71,7 +72,31 @@
             <version>${surefire.plugin.version}</version>
           </dependency>
         </dependencies>
+      </plugin>      
+  
+<!-- https://maven.apache.org/enforcer/enforcer-rules/requireMavenVersion.html -->  
+<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-enforcer-plugin -->        
+	<plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>3.5</version>
+                </requireMavenVersion>
+              </rules>    
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
+            
     </plugins>
   </build>
   <dependencies>

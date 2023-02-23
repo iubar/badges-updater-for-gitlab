@@ -45,11 +45,20 @@ public class BadgesUpdater {
 			}
 		}
 	}
-
-	private static boolean areEnvVarsSet() {
-		if (System.getenv("SONAR_HOST") != null && System.getenv("GITLAB_HOST") != null && System.getenv("GITLAB_TOKEN") != null) {
-			return true;
+	
+	private static boolean isEmpty(String s) {
+		if(s!=null) {
+			if(!s.isEmpty()) {
+				return false;
+			}
 		}
-		return false;
+		return true;
+	}
+	
+	private static boolean areEnvVarsSet() {
+		if (isEmpty(System.getenv("SONAR_HOST")) || isEmpty(System.getenv("GITLAB_HOST")) || isEmpty(System.getenv("GITLAB_TOKEN"))) {			
+			return false;
+		}
+		return true;
 	}
 }

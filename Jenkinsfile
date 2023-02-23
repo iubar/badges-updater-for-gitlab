@@ -10,18 +10,18 @@ pipeline {
         ansiColor('xterm')
     }
     environment {
-        MAVEN_ARGS = '--show-version --batch-mode'
+        MAVEN_ARGS = '--batch-mode --errors --fail-fast --show-version --quiet'
         MAVEN_OPTS = '-Djava.awt.headless=true'
     }
     stages {
         stage('Build') {
             steps {
-                sh 'mvn $MAVEN_OPTS clean compile'
+                sh 'mvn $MAVEN_ARGS clean compile'
             }
         }
         stage('Test') {
             steps {
-                sh 'mvn $MAVEN_OPTS test'
+                sh 'mvn $MAVEN_ARGS test'
             }
             post {
                 always {
@@ -46,7 +46,7 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                sh 'mvn $MAVEN_OPTS -DskipTests deploy'
+                sh 'mvn $MAVEN_ARGS -DskipTests deploy'
             }
         }
     }
