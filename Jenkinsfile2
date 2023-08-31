@@ -1,53 +1,52 @@
 pipeline {
-    agent {    
-    	docker {   	
-    		image 'iubar-maven-alpine'
-    		label 'docker'
-    		args '-v ${HOME}/.m2:/home/jenkins/.m2:rw,z -v ${HOME}/.sonar:/home/jenkins/.sonar:rw,z'
-    	} 
+    agent {
+        docker {
+            image 'iubar-java-alpine'
+            label 'docker'
+            args '-v ${HOME}/.m2:/home/jenkins/.m2:rw,z'
+        }
     }
-	options {
-		// Apply the ansi terminal for all stages and steps in pipeline
-		ansiColor('xterm')
-	}
-	environment {
-		MAVEN_CLI_OPTS = '--batch-mode --errors --fail-fast --show-version --quiet'
-		MAVEN_OPTS = '-Dmaven.test.failure.ignore=false -Dstyle.color=always -Djava.awt.headless=true -Dhttps.protocols=TLSv1.2'
+    options {
+        ansiColor('xterm')
+    }
+    environment {
+        MAVEN_ARGS = '--batch-mode --errors --fail-fast --show-version --quiet'
+        MAVEN_OPTS = '-Dmaven.test.failure.ignore=false -Dstyle.color=always -Djava.awt.headless=true -Dhttps.protocols=TLSv1.2'
     }
     stages {
-		stage('Package') {
+        stage('Package') {
             steps {
-                sh 'mvn $MAVEN_CLI_OPTS clean package'
+                sh 'mvn $MAVEN_ARGS clean package'
             }
             post {
                 always {
-                    junit 'target/surefire-reports/*.xml' // show junit log in Jenkins 
+                    junit 'target/surefire-reports/*.xml' // show junit log in Jenkins
                 }
             }
         }
-        stage ('Run') {
-			environment {
-				// @see https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#readmavenpom-read-a-maven-project-file
-				// Make sure the Pipeline Utility Steps plugin is installed in Jenkins "Manage Plugins". If you do not have the plugin installed you may see an error: java.lang.NoSuchMethodError: No such DSL method 'readMavenPom' .			
-    			APP_VER = readMavenPom().getVersion()
-				APP_NAME = readMavenPom().getArtifactId()
-			}        
+        stage('Run') {
+            environment {
+                // @see https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#readmavenpom-read-a-maven-project-file
+                // Make sure the Pipeline Utility Steps plugin is installed in Jenkins "Manage Plugins". If you do not have the plugin installed you may see an error: java.lang.NoSuchMethodError: No such DSL method 'readMavenPom' .
+                APP_VER = readMavenPom().getVersion()
+                APP_NAME = readMavenPom().getArtifactId()
+            }
             steps {
                 sh 'ls -la target'
                 sh 'java -version'
                 sh 'cd target && java -jar ${APP_NAME}-jar-with-dependencies.jar'
             }
-        }        		
+        }
     }
-	post {
+    post {
 		always { // oppure utilizzare changed
 			sh "curl -H 'JENKINS: Pipeline Hook Iubar' -i -X GET -G ${env.IUBAR_WEBHOOK_URL} -d status=${currentBuild.currentResult} -d job_name='${JOB_NAME}' -d build_number='${BUILD_NUMBER}'"
 		}
-		cleanup {
-			cleanWs()
-			dir("${env.WORKSPACE}@tmp") {				
-				deleteDir()
-			}
+        cleanup {
+            cleanWs()
+            dir("${WORKSPACE}@tmp") {
+                deleteDir()
+            }
         }
-    }    
+    }
 }

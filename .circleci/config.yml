@@ -1,0 +1,27 @@
+version: 2.1
+jobs:
+  build:
+    working_directory: ~/repo
+    docker:
+      - image: cimg/openjdk:11.0      
+    steps:
+      - checkout
+      - run:
+          name: Testing
+          command: |
+            java --version
+            mvn -v
+            mvn -f pom_circleci.xml test
+      - run:
+          name: Packaging
+          command: mvn -f pom_circleci.xml -Dmaven.test.skip=true clean package
+      - run:
+          name: Outdated
+          command: mvn -f pom_circleci.xml versions:display-dependency-updates
+      - run:
+          name: Run
+          command: |
+            cd target
+            ls -la
+            java -jar badgesupdater-jar-with-dependencies.jar
+
