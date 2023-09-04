@@ -51,9 +51,9 @@ pipeline {
         }
     }
     post {
-        changed {
-            sh "curl -H 'JENKINS: Pipeline Hook Iubar' -i -X GET -G ${env.IUBAR_WEBHOOK_URL} -d status=${currentBuild.currentResult} -d project_name='${JOB_NAME}'"
-        }
+		always { // oppure utilizzare changed
+			sh "curl -H 'JENKINS: Pipeline Hook Iubar' -i -X GET -G ${env.IUBAR_WEBHOOK_URL} -d status=${currentBuild.currentResult} -d job_name='${JOB_NAME}' -d build_number='${BUILD_NUMBER}'"
+		}
         cleanup {
             cleanWs()
             dir("${WORKSPACE}@tmp") {
