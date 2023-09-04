@@ -62,9 +62,12 @@ public class GitlabApiClient extends RestClient {
 		LOGGER.info("gitlabToken = " + this.gitlabToken);
 	}
 
+	/**
+	 * @see https://docs.gitlab.com/ee/api/projects.html#list-all-projects
+	 */	
 	private JsonArray getProjects() {
 		JsonArray projects = null;
-		String route = "projects" + Config.PER_PAGE; // @see https://docs.gitlab.com/ee/api/projects.html#list-all-projects
+		String route = "projects" + Config.PER_PAGE;
 		Response response = doGet(route);
 		//Salvo in questa variabile il codice di risposta alla chiamata GET
 		int statusCode = response.getStatus();
@@ -135,7 +138,6 @@ public class GitlabApiClient extends RestClient {
 	 * @see https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines
 	 *
 	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
-	 * @return
 	 */
 	private JsonArray getPipelines(int projectId, String branch) {
 		JsonArray pipelines = null;
@@ -171,8 +173,7 @@ public class GitlabApiClient extends RestClient {
 	 * @see https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/administration/job_artifacts.md#storing-job-artifacts
 	 *
 	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
-	 * @param pipelines JSONArray
-	 * @return
+	 * @param pipelines JsonArray
 	 */
 	private List<Integer> removePipelines(int projectId, JsonArray pipelines) {
 		List<Integer> pipelineIds = new ArrayList<Integer>();
@@ -238,13 +239,15 @@ public class GitlabApiClient extends RestClient {
 		return this.gitlabHost + "/projects/" + projectId;
 	}
 
+	
 	/**
 	 *
+	 * @see https://docs.gitlab.com/ee/api/project_badges.html#remove-a-badge-from-a-project
+	 * 
 	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
 	 *
 	 * Elimina tutti i badges configurati per il progetto identificato da projectId
-	 * @param projectId
-	 * @return
+	 * 
 	 */
 	private List<Integer> removeBadges(int projectId) {
 		List<Integer> badgeIds = new ArrayList<Integer>();
@@ -280,11 +283,7 @@ public class GitlabApiClient extends RestClient {
 	}
 
 	/**
-	 *
 	 * @see https://docs.gitlab.com/ee/api/project_badges.html#list-all-badges-of-a-project
-	 *
-	 * @param projectId
-	 * @return
 	 */
 	private JsonArray getBadgesList(int projectId) {
 		JsonArray badges = null;
@@ -312,7 +311,6 @@ public class GitlabApiClient extends RestClient {
 	 *
 	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
 	 * @param badges
-	 * @return
 	 */
 	private List<Integer> insertBadges(int projectId, List<JsonObject> badges) {
 		List<Integer> badgeIds = new ArrayList<Integer>();
@@ -470,7 +468,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 	 *
 	 * @param projectId The ID or URL-encoded path of the project owned by the authenticated user
 	 * @param fileName
-	 * @return
+	 * @param branch
 	 */
 	private boolean isFile(int projectId, String fileName, String branch) {
 		boolean b = false;
@@ -505,7 +503,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 	 *
 	 * @param projectId
 	 * @param filePath Url encoded full path to new file
-	 * @return
+	 * @param branch
 	 */
 	private String getFileContent(int projectId, String filePath, String branch) {
 		String content = "";
