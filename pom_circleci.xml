@@ -14,9 +14,9 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <jdk.source.version>1.8</jdk.source.version>
     <jdk.target.version>${jdk.source.version}</jdk.target.version>
-    <junit.jupiter.version>5.10.0</junit.jupiter.version>
-    <surefire.plugin.version>3.1.2</surefire.plugin.version>
-    <jersey.client.version>3.0.11</jersey.client.version> <!-- 3.0.x is the last version supporting jdk8 --> <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->
+    <junit.jupiter.version>5.10.1</junit.jupiter.version>
+    <surefire.plugin.version>3.2.2</surefire.plugin.version>
+    <jersey.client.version>3.0.12</jersey.client.version> <!-- 3.0.x is the last version supporting jdk8 --> <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->
     <maven-assembly-mainclass>it.iubar.badges.BadgesUpdater</maven-assembly-mainclass>
   </properties>
   <build>
@@ -36,7 +36,7 @@
       <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1</version>
         <configuration>
           <!-- <outputDirectory>build/maven/${pom.artifactId}/target</outputDirectory> -->
           <archive>
@@ -79,7 +79,7 @@
 	<plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
         <executions>
           <execution>
             <id>enforce-maven</id>
@@ -112,6 +112,7 @@
       <version>${junit.jupiter.version}</version>
       <scope>test</scope>
     </dependency>
+	<!-- JSON-P Default Provider (JSR-353) -->   
     <!-- https://mvnrepository.com/artifact/org.glassfish/jakarta.json -->
     <dependency>
       <groupId>org.glassfish</groupId>
