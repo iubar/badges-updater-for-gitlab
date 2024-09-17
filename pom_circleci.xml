@@ -27,7 +27,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
+        <version>3.13.0</version>
         <configuration>
           <source>${jdk.source.version}</source>
           <target>${jdk.target.version}</target>
@@ -36,7 +36,7 @@
       <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.6.1</version>
+        <version>3.8.0</version>
         <configuration>
           <!-- <outputDirectory>build/maven/${pom.artifactId}/target</outputDirectory> -->
           <archive>
@@ -79,7 +79,7 @@
 	<plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.4.1</version>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <id>enforce-maven</id>
