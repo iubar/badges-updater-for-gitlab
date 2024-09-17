@@ -36,7 +36,7 @@
       <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.8.0</version>
+        <version>3.7.1</version>
         <configuration>
           <!-- <outputDirectory>build/maven/${pom.artifactId}/target</outputDirectory> -->
           <archive>
