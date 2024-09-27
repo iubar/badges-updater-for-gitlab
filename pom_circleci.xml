@@ -17,7 +17,7 @@
     <junit.jupiter.version>5.10.1</junit.jupiter.version>
     <surefire.plugin.version>3.2.2</surefire.plugin.version>
     <jersey.client.version>3.0.12</jersey.client.version> <!-- 3.0.x is the last version supporting jdk8 --> <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->
-    <maven-assembly-mainclass>it.iubar.badges.BadgesUpdater</maven-assembly-mainclass>
+    <maven-assembly-mainclass>it.iubar.badges.ProjectsUpdater</maven-assembly-mainclass>
   </properties>
   <build>
     <finalName>${project.artifactId}</finalName>

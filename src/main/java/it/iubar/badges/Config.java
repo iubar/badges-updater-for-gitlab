@@ -4,9 +4,11 @@ public class Config {
 
 	public static final boolean FAIL_FAST = true;
 
-	public static final boolean UPDATE_BADGES = true;
+	public static final boolean UPDATE_BADGES = false;
 
-	public static final boolean DELETE_PIPELINE = true;
+	public static final boolean DELETE_PIPELINES = false;
+
+	public static final boolean UPDATE_WEBHOOKS = true;
 
 	public static final String DEFAULT_BRANCH = "master";
 

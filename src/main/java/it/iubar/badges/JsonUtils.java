@@ -4,6 +4,7 @@ import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
+import jakarta.json.JsonValue;
 import jakarta.json.JsonWriterFactory;
 import jakarta.json.stream.JsonGenerator;
 import java.io.IOException;
@@ -25,7 +26,7 @@ public class JsonUtils {
 		return jsonObject;
 	}
 
-	private static String prettyPrintFormat(JsonObject jsonObject) throws IOException {
+	public static String prettyPrintFormat(JsonObject jsonObject) {
 		String jsonString = null;
 		Map<String, Boolean> config = new HashMap<>();
 		config.put(JsonGenerator.PRETTY_PRINTING, true);
@@ -33,17 +34,28 @@ public class JsonUtils {
 		try (Writer writer = new StringWriter()) {
 			writerFactory.createWriter(writer).write(jsonObject);
 			jsonString = writer.toString();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		return jsonString;
 	}
 
-	public static void prettyPrint(JsonObject jsonObject) {
-		try {
-			String prettyString = prettyPrintFormat(jsonObject);
-			System.out.println(prettyString);
-		} catch (IOException ex) {
-			LOGGER.log(Level.SEVERE, "Can't print json", ex);
+	public static void prettyPrint(JsonArray jsonArray) {
+		if (jsonArray != null) {
+			for (JsonValue jsonValue : jsonArray) {
+				if (jsonValue instanceof JsonArray) {
+					prettyPrint(jsonValue.asJsonArray());
+				} else if (jsonValue instanceof JsonObject) {
+					prettyPrint(jsonValue.asJsonObject());
+				} else {
+					throw new RuntimeException("Error in prettyPrint()");
+				}
+			}
 		}
+	}
+
+	public static void prettyPrint(JsonObject jsonObject) {
+		System.out.println(prettyPrintFormat(jsonObject));
 	}
 
 	public static JsonObject readObject(String jsonString) {

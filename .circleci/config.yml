@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: ~/repo
     docker:
-      - image: cimg/openjdk:11.0      
+      - image: cimg/openjdk:11.0
     steps:
       - checkout
       - run:
@@ -24,4 +24,3 @@ jobs:
             cd target
             ls -la
             java -jar badgesupdater-jar-with-dependencies.jar
-

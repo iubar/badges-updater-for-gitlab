@@ -19,3 +19,10 @@ Vedi come implementare server http in python:
 - https://shields.io/category/issue-tracking
 - https://shields.io/endpoint
   Un esempio è quello proposto qui: https://gitlab.com/gitlab-org/gitlab-foss/issues/46188#note_103801317
+
+> > > TODO: RINOMINARE PROGETTO IN iubar-gitlab-maintenance <<<
+
+TODO:
+leggere Config.UPDATE_BADGES da file Config
+leggere Config.DELETE_PIPELINE da file Config
+leggere Config.UPDATE_WEBHOOKS da file Config
