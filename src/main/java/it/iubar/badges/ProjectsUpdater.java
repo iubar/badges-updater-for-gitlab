@@ -4,6 +4,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import it.iubar.badges.Config.UpdateType;
+
 public class ProjectsUpdater {
 
 	private static final Logger LOGGER = Logger.getLogger(ProjectsUpdater.class.getName());
@@ -35,13 +37,13 @@ public class ProjectsUpdater {
 			BadgesUpdater badgesUpdater = new BadgesUpdater(config);
 			PipelinesUpdater pipelinesUpdater = new PipelinesUpdater(config);
 			WebhooksUpdater webhooksUpdater = new WebhooksUpdater(config);
-			if (Config.UPDATE_BADGES) {
+			if (Config.UPDATE_BADGES!=UpdateType.DISABLED) {
 				badgesUpdater.run();
 			}
 			if (Config.DELETE_PIPELINES) {
 				pipelinesUpdater.run();
 			}
-			if (Config.UPDATE_WEBHOOKS) {
+			if (Config.UPDATE_WEBHOOKS!=UpdateType.DISABLED) {
 				webhooksUpdater.run();
 			}
 			AbstractUpdater.printErrors();

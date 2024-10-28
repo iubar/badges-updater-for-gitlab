@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import it.iubar.badges.Config.UpdateType;
+
 /**
  * @see https://docs.gitlab.com/ee/api/project_webhooks.html
  */
@@ -47,41 +49,42 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 
 			JsonArray webhooks = getWebhooks(projectId); // list-webhooks-for-a-project
 
-			if (Config.UPDATE_WEBHOOKS) {
+			if (Config.UPDATE_WEBHOOKS == UpdateType.DELETE_AND_ADD) {				
 				if(webhooks.size()==0) {
 					addWebhook(projectId);
 				}else {
-				for (int j = 0; j < webhooks.size(); j++) {
-					JsonObject webhook = webhooks.getJsonObject(j);
-					JsonUtils.prettyPrint(webhook);
-					int hookId = Integer.parseInt(webhook.get("id").toString());
-
-					// Recupero i detagli sul webhook, ma forse non mi servono queste informazioni
-					JsonObject detail = getDetail(projectId, hookId);
-					JsonUtils.prettyPrint(detail);
-
-					if (!webhook.isEmpty()) {
-						// Aggiorno il primo webhook e cancello i restanti
-						if (j == 0) {
-							editWebhook(projectId, hookId, webhook);
+					for (int j = 0; j < webhooks.size(); j++) {
+						JsonObject webhook = webhooks.getJsonObject(j);
+						JsonUtils.prettyPrint(webhook);
+						int hookId = Integer.parseInt(webhook.get("id").toString());
+						// Recupero i detagli sul webhook, ma forse non mi servono queste informazioni
+						JsonObject detail = getDetail(projectId, hookId);
+						JsonUtils.prettyPrint(detail);
+						if (!webhook.isEmpty()) {
+							// STRATEGIA : Aggiorno SOLO il primo webhook e cancello TUTTI i restanti
+							if (j == 0) {
+								editWebhook(projectId, hookId, webhook);
+							} else {
+								deleteWebhook(projectId, hookId);
+							}
 						} else {
-							deleteWebhook(projectId, hookId);
-						}
-					} else {
-						LOGGER.warning("Webook " + hookId + " is blank for project " + projectDescAndId);
-					}
-					/*
-					if() {
-						List<Integer> results2 = editWebhook(projectId, webhook);
-						if (results2.isEmpty()) {
-							LOGGER.severe("No results for project " + projectDescAndId);
-						} else {
-							LOGGER.log(Level.INFO, "#" + results2.size() + " OK " + projectDescAndId);
+							LOGGER.warning("Webook " + hookId + " is blank for project " + projectDescAndId);
 						}
 					}
-					*/
-
 				}
+			}else if (Config.UPDATE_WEBHOOKS == UpdateType.DELETE_ALL) {
+				if(webhooks.size()>0) {
+					for (int j = 0; j < webhooks.size(); j++) {
+						JsonObject webhook = webhooks.getJsonObject(j);
+						JsonUtils.prettyPrint(webhook);
+						int hookId = Integer.parseInt(webhook.get("id").toString());
+						if (!webhook.isEmpty()) { 
+							deleteWebhook(projectId, hookId);
+						} else {
+							LOGGER.warning("Webook " + hookId + " is blank for project " + projectDescAndId);
+						}
+
+					}
 				}
 			}
 		}
@@ -97,13 +100,13 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		int statusCode = response.getStatus();
 		if (statusCode != Status.OK.getStatusCode()) {
 			String error =
-				"Impossibile eliminare il dettaglio del webhook per il progetto " +
-				projectId +
-				" con hook_id " +
-				hookId +
-				". Status code: " +
-				statusCode +
-				". Verificare che la feature CI/CD sia abilitata per il progetto.";
+					"Impossibile eliminare il dettaglio del webhook per il progetto " +
+							projectId +
+							" con hook_id " +
+							hookId +
+							". Status code: " +
+							statusCode +
+							". Verificare che la feature CI/CD sia abilitata per il progetto.";
 			LOGGER.severe(error);
 			if (Config.FAIL_FAST) {
 				System.exit(1);
@@ -127,13 +130,13 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		int statusCode = response.getStatus();
 		if (statusCode != Status.OK.getStatusCode()) {
 			String error =
-				"Impossibile recuperare il dettaglio del webhook per il progetto " +
-				projectId +
-				" con hook_id " +
-				hookId +
-				". Status code: " +
-				statusCode +
-				". Verificare che la feature CI/CD sia abilitata per il progetto.";
+					"Impossibile recuperare il dettaglio del webhook per il progetto " +
+							projectId +
+							" con hook_id " +
+							hookId +
+							". Status code: " +
+							statusCode +
+							". Verificare che la feature CI/CD sia abilitata per il progetto.";
 			LOGGER.severe(error);
 			if (Config.FAIL_FAST) {
 				System.exit(1);
@@ -157,11 +160,11 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		int statusCode = response.getStatus();
 		if (statusCode != Status.OK.getStatusCode()) {
 			String error =
-				"Impossibile recuperare l'elenco dei webhooks per il progetto " +
-				projectId +
-				". Status code: " +
-				statusCode +
-				". Verificare che la feature CI/CD sia abilitata per il progetto.";
+					"Impossibile recuperare l'elenco dei webhooks per il progetto " +
+							projectId +
+							". Status code: " +
+							statusCode +
+							". Verificare che la feature CI/CD sia abilitata per il progetto.";
 			LOGGER.severe(error);
 			if (Config.FAIL_FAST) {
 				System.exit(1);
@@ -201,7 +204,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 			}
 		}
 	}
-	
+
 	/*
 	 * @see https://docs.gitlab.com/ee/api/project_webhooks.html#edit-a-project-webhook
 	 */
@@ -228,5 +231,5 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 			}
 		}
 	}
-	
+
 }

@@ -21,6 +21,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.glassfish.jersey.client.ClientResponse;
 
+import it.iubar.badges.Config.UpdateType;
+
 /**
  * @see https://docs.gitlab.com/ee/api/project_badges.html
  */
@@ -50,8 +52,8 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 			String projectDescAndId = path + " (id " + projectId + ")";
 			LOGGER.info("Project " + projectDescAndId);
 
-			if (Config.UPDATE_BADGES) {
-				// Rimuovo i badges esistenti dal progetto
+			if (Config.UPDATE_BADGES == UpdateType.DELETE_AND_ADD) {
+				// Rimuovo TUTTI i badges esistenti dal progetto
 				List<Integer> results = removeBadges(projectId);
 				if (results.isEmpty()) {
 					LOGGER.warning("removeBadges() returns no results for project " + projectDescAndId + ". That could be a BUG.");
@@ -223,26 +225,33 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			String image = this.sonarHost + "/api/badges/gate?key=" + sonarProjectKeyActual;
 			JsonObjectBuilder builder1 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
 			badges.add(builder1.build());
-			link = this.sonarHost + "/component_measures?metric=Reliability&id=" + sonarProjectKeyActual;
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=bugs";
-			JsonObjectBuilder builder2 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
-			badges.add(builder2.build());
-			link = this.sonarHost + "/component_measures?metric=code_smells&id=" + sonarProjectKeyActual;
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=code_smells";
-			JsonObjectBuilder builder3 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
-			badges.add(builder3.build());
-			link = this.sonarHost + "/component_measures?metric=ncloc_language_distribution&id=" + sonarProjectKeyActual;
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=ncloc_language_distribution";
-			JsonObjectBuilder builder4 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
-			badges.add(builder4.build());
-			link = this.sonarHost + "/component_measures?metric=classes&id=" + sonarProjectKeyActual;
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=classes";
-			JsonObjectBuilder builder5 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
-			badges.add(builder5.build());
-			link = this.sonarHost + "/component_measures?metric=functions&id=" + sonarProjectKeyActual;
-			image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=functions";
-			JsonObjectBuilder badge6 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
-			badges.add(badge6.build());
+			
+			if(Config.ADD_SONAR_BADGES) {
+				link = this.sonarHost + "/component_measures?metric=Reliability&id=" + sonarProjectKeyActual;
+				image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=bugs";
+				JsonObjectBuilder builder2 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+				badges.add(builder2.build());
+				
+				link = this.sonarHost + "/component_measures?metric=code_smells&id=" + sonarProjectKeyActual;
+				image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=code_smells";
+				JsonObjectBuilder builder3 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+				badges.add(builder3.build());
+				
+				link = this.sonarHost + "/component_measures?metric=ncloc_language_distribution&id=" + sonarProjectKeyActual;
+				image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=ncloc_language_distribution";
+				JsonObjectBuilder builder4 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+				badges.add(builder4.build());
+				
+				link = this.sonarHost + "/component_measures?metric=classes&id=" + sonarProjectKeyActual;
+				image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=classes";
+				JsonObjectBuilder builder5 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+				badges.add(builder5.build());
+				
+				link = this.sonarHost + "/component_measures?metric=functions&id=" + sonarProjectKeyActual;
+				image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=functions";
+				JsonObjectBuilder badge6 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+				badges.add(badge6.build());
+			}
 		}
 
 		return badges;

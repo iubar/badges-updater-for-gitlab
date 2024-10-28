@@ -2,13 +2,21 @@ package it.iubar.badges;
 
 public class Config {
 
+	public enum UpdateType { 
+	    DELETE_AND_ADD,
+	    DELETE_ALL, 
+	    DISABLED
+	}
+	
 	public static final boolean FAIL_FAST = true;
 
-	public static final boolean UPDATE_BADGES = false;
+	public static final UpdateType UPDATE_BADGES = UpdateType.DELETE_AND_ADD;
+	
+	public static final UpdateType UPDATE_WEBHOOKS = UpdateType.DELETE_AND_ADD;
+	
+	public static final boolean ADD_SONAR_BADGES = true;
 
-	public static final boolean DELETE_PIPELINES = false;
-
-	public static final boolean UPDATE_WEBHOOKS = true;
+	public static final boolean DELETE_PIPELINES = true;
 
 	public static final String DEFAULT_BRANCH = "master";
 
