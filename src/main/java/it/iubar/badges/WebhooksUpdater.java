@@ -45,9 +45,12 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 			String projectDescAndId = path + " (id " + projectId + ")";
 			LOGGER.info("Project " + projectDescAndId);
 
-			JsonArray webhooks = getWebhooks(projectId);
+			JsonArray webhooks = getWebhooks(projectId); // list-webhooks-for-a-project
 
 			if (Config.UPDATE_WEBHOOKS) {
+				if(webhooks.size()==0) {
+					addWebhook(projectId);
+				}else {
 				for (int j = 0; j < webhooks.size(); j++) {
 					JsonObject webhook = webhooks.getJsonObject(j);
 					JsonUtils.prettyPrint(webhook);
@@ -60,10 +63,12 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 					if (!webhook.isEmpty()) {
 						// Aggiorno il primo webhook e cancello i restanti
 						if (j == 0) {
-							updateWebhook(projectId, hookId, webhook);
+							editWebhook(projectId, hookId, webhook);
 						} else {
 							deleteWebhook(projectId, hookId);
 						}
+					} else {
+						LOGGER.warning("Webook " + hookId + " is blank for project " + projectDescAndId);
 					}
 					/*
 					if() {
@@ -76,6 +81,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 					}
 					*/
 
+				}
 				}
 			}
 		}
@@ -170,9 +176,36 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 	}
 
 	/*
+	 * @see https://docs.gitlab.com/ee/api/project_webhooks.html#add-a-webhook-to-a-project
+	 */
+	private void addWebhook(int projectId) {
+		JsonObjectBuilder builder = Json.createObjectBuilder().add("url", this.webhookUrl);
+		JsonObject jsonObject2 = builder.build();
+
+		String route = "projects/" + projectId + "/hooks";
+		Response response = doPost(route, Entity.json(jsonObject2.toString()));
+		int statusCode = response.getStatus();
+		if (statusCode == Status.CREATED.getStatusCode()) {
+			String jsonString = response.readEntity(String.class);
+			JsonObject object = JsonUtils.readObject(jsonString);
+			JsonUtils.prettyPrint(object);
+			String msg = "OK : added. Status code: " + statusCode;
+			LOGGER.info(msg);
+		} else {
+			String msg = "Impossibile aggiungere il webhook. Status code: " + statusCode;
+			LOGGER.severe(msg);
+			if (Config.FAIL_FAST) {
+				System.exit(1);
+			} else {
+				AbstractUpdater.errors.add(msg);
+			}
+		}
+	}
+	
+	/*
 	 * @see https://docs.gitlab.com/ee/api/project_webhooks.html#edit-a-project-webhook
 	 */
-	private void updateWebhook(int projectId, int hookId, JsonObject oldValue) {
+	private void editWebhook(int projectId, int hookId, JsonObject oldValue) {
 		JsonObjectBuilder builder = Json.createObjectBuilder().add("url", this.webhookUrl);
 		JsonObject jsonObject2 = builder.build();
 
@@ -195,4 +228,5 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 			}
 		}
 	}
+	
 }
