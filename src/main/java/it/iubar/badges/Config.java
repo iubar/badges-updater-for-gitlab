@@ -1,5 +1,8 @@
 package it.iubar.badges;
 
+/**
+ * @todo la config seguente è tutta hard-coded, potrei pensare di spostare qualcosa nel file config.properties
+ */
 public class Config {
 
 	public enum UpdateType { 
