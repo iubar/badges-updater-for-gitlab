@@ -16,7 +16,7 @@ pipeline {
     stages {
         stage('Package') {
             steps {
-                sh 'mvn $MAVEN_ARGS clean package'
+                sh 'mvn $MAVEN_ARGS $MAVEN_OPTS clean package'
             }
             post {
                 always {

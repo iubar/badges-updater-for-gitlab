@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'iubar-maven-alpine'
+            image 'iubar-java-alpine'
             label 'docker'
             args '-v ${HOME}/.m2:/home/jenkins/.m2:rw,z -v ${HOME}/.sonar:/home/jenkins/.sonar:rw,z'
         }
@@ -11,17 +11,17 @@ pipeline {
     }
     environment {
         MAVEN_ARGS = '--batch-mode --errors --fail-fast --show-version --quiet'
-        MAVEN_OPTS = '-Djava.awt.headless=true'
+        MAVEN_OPTS = '-Dstyle.color=always -Djava.awt.headless=true'
     }
     stages {
         stage('Build') {
             steps {
-                sh 'mvn $MAVEN_ARGS clean compile'
+                sh 'mvn $MAVEN_ARGS $MAVEN_OPTS clean compile'
             }
         }
         stage('Test') {
             steps {
-                sh 'mvn $MAVEN_ARGS test'
+                sh 'mvn $MAVEN_ARGS $MAVEN_OPTS test'
             }
             post {
                 always {
@@ -37,7 +37,7 @@ pipeline {
             }
             steps {
                 sh '''
-                       sonar-scanner
+                    sonar-scanner
                     wget --user=${ARTIFACTORY_USER} --password=${ARTIFACTORY_PASS} http://192.168.0.119:8082/artifactory/iubar-repo-local/jenkins/jenkins-sonar-quality-gate-check.sh --no-check-certificate
                     chmod +x ./jenkins-sonar-quality-gate-check.sh
                     ./jenkins-sonar-quality-gate-check.sh false # true / false = Ignore or not the quality gate score
@@ -46,7 +46,7 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                sh 'mvn $MAVEN_ARGS -DskipTests deploy'
+                sh 'mvn $MAVEN_ARGS $MAVEN_OPTS -DskipTests deploy'
             }
         }
     }

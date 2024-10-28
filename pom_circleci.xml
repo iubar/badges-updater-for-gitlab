@@ -2,7 +2,8 @@
 <project
   xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
   <modelVersion>4.0.0</modelVersion>
   <groupId>it.iubar</groupId>
   <artifactId>badgesupdater</artifactId>
@@ -16,8 +17,10 @@
     <jdk.target.version>${jdk.source.version}</jdk.target.version>
     <junit.jupiter.version>5.10.1</junit.jupiter.version>
     <surefire.plugin.version>3.2.2</surefire.plugin.version>
-    <jersey.client.version>3.0.12</jersey.client.version> <!-- 3.0.x is the last version supporting jdk8 --> <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->
-    <maven-assembly-mainclass>it.iubar.badges.ProjectsUpdater</maven-assembly-mainclass>
+    <jersey.client.version
+    >3.0.12</jersey.client.version> <!-- 3.0.x is the last version supporting jdk8 --> <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->
+    <maven-assembly-mainclass
+    >it.iubar.badges.ProjectsUpdater</maven-assembly-mainclass>
   </properties>
   <build>
     <finalName>${project.artifactId}</finalName>
@@ -42,7 +45,8 @@
           <archive>
             <manifest>
               <mainClass>${maven-assembly-mainclass}</mainClass>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultImplementationEntries
+              >true</addDefaultImplementationEntries>
             </manifest>
           </archive>
           <descriptorRefs>
