@@ -23,10 +23,6 @@ public class PipelinesUpdater extends AbstractUpdater implements IUpdater {
 		this.client = factoryClient(this.gitlabToken);
 	}
 
-	private String getProjectUrl(int projectId) {
-		return this.gitlabHost + "/projects/" + projectId;
-	}
-
 	@Override
 	public void run() {
 		JsonArray projects = getProjects();
@@ -72,10 +68,10 @@ public class PipelinesUpdater extends AbstractUpdater implements IUpdater {
 		if (statusCode != Status.OK.getStatusCode()) {
 			String msg =
 				"Impossibile recuperare l'elenco delle pipeline per il progetto " +
-				projectId +
+						projectToUrl(projectId) +
 				". Status code: " +
 				statusCode +
-				". Verificare che la feature CI/CD sia abilitata per il progetto.";
+				". Verificare che la feature CI/CD sia abilitata.";
 			logError(msg, response);
 		} else {
 			String jsonString = response.readEntity(String.class);
@@ -127,17 +123,11 @@ public class PipelinesUpdater extends AbstractUpdater implements IUpdater {
 				String route3 = "projects/" + projectId + "/pipelines/" + pipelineId;
 				Response response = doDelete(route3);
 				int statusCode = response.getStatus();
-				if (statusCode == Status.NO_CONTENT.getStatusCode()) {
+				if (statusCode == Status.NO_CONTENT.getStatusCode()) { // OK
 					pipelineIds.add(pipelineId);
 				} else {
 					String error =
-						"Impossibile eliminare la pipeline " +
-						pipelineId +
-						" del progetto " +
-						projectId +
-						" (" +
-						getProjectUrl(projectId) +
-						"). Status code: " +
+						"Impossibile eliminare la pipeline  del progetto " + projectToUrl(projectId) + ". Status code: " +
 						statusCode;
 					error = error +
 					" (Nota che l'errore si potrebbe manifestare quando la pipeline è in esecuzione oppure un proceddo è archiviato e quindi è in sola lettura).";

@@ -97,19 +97,17 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		String route = "projects/" + projectId + "/hooks/" + hookId;
 		Response response = doDelete(route);
 		int statusCode = response.getStatus();
-		if (statusCode != Status.OK.getStatusCode()) {
+		if (statusCode == Status.NO_CONTENT.getStatusCode()) { // true
+			String jsonString = response.readEntity(String.class);
+			webhook = JsonUtils.readObject(jsonString);
+		} else {
 			String msg =
-					"Impossibile eliminare il dettaglio del webhook per il progetto " +
-							projectId +
-							" con hook_id " +
-							hookId +
+					"Impossibile eliminare il dettaglio del webhook " + hookId + " per il progetto " +
+							projectToUrl(projectId) +
 							". Status code: " +
 							statusCode +
 							". Verificare che la feature CI/CD sia abilitata per il progetto.";
 			logError(msg, response);
-		} else {
-			String jsonString = response.readEntity(String.class);
-			webhook = JsonUtils.readObject(jsonString);
 		}
 		return webhook;
 	}
@@ -125,7 +123,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		if (statusCode != Status.OK.getStatusCode()) {
 			String msg =
 					"Impossibile recuperare il dettaglio del webhook per il progetto " +
-							projectId +
+							projectToUrl(projectId) +
 							" con hook_id " +
 							hookId +
 							". Status code: " +
@@ -150,7 +148,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		if (statusCode != Status.OK.getStatusCode()) {
 			String msg =
 					"Impossibile recuperare l'elenco dei webhooks per il progetto " +
-							projectId +
+							projectToUrl(projectId) +
 							". Status code: " +
 							statusCode +
 							". Verificare che la feature CI/CD sia abilitata per il progetto.";
@@ -161,6 +159,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		}
 		return webhooks;
 	}
+
 
 	/*
 	 * @see https://docs.gitlab.com/ee/api/project_webhooks.html#add-a-webhook-to-a-project
@@ -179,7 +178,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 			String msg = "OK : added. Status code: " + statusCode;
 			LOGGER.info(msg);
 		} else {
-			String msg = "Impossibile aggiungere il webhook per il progetto " + projectId + ". Status code: " + statusCode;
+			String msg = "Impossibile aggiungere il webhook per il progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
 			logError(msg, response);
 		}
 	}
@@ -204,7 +203,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 			String msg = "OK : updated. Status code: " + statusCode;
 			LOGGER.info(msg);
 		} else {
-			String msg = "Impossibile modificare il webhook " + hookId + ". Status code: " + statusCode;
+			String msg = "Impossibile modificare il webhook " + hookId + " per il progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
 			logError(msg, response);
 		}
 	}

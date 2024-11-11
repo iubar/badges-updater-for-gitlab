@@ -146,6 +146,4 @@ public abstract class RestClient {
 		}
 	}
 	
-	
-	
 }

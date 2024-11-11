@@ -92,7 +92,7 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if (statusCode != Status.OK.getStatusCode()) {
-			String msg = "Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode;
+			String msg = "Impossibile recuperare l'elenco dei badge per il progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
 			logError(msg, response);
 		} else {
 			String jsonString = response.readEntity(String.class);
@@ -114,13 +114,13 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 			String route = "projects/" + projectId + "/badges";
 			Response response = doPost(route, Entity.json(badge.toString()));
 			int statusCode = response.getStatus();
-			if (statusCode == Status.CREATED.getStatusCode()) {
+			if (statusCode == Status.CREATED.getStatusCode()) { // OK
 				String jsonString = response.readEntity(String.class);
 				JsonObject object = JsonUtils.readObject(jsonString);
 				int badgeId = object.getInt("id");
 				badgeIds.add(badgeId);
 			} else {
-				String error = "Impossibile aggiungere il badge " + badge.toString() + ". Status code: " + statusCode;
+				String error = "Impossibile aggiungere il badge " + badge.toString() + " per il progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
 				LOGGER.severe(error);
 				logError(response);
 				if (Config.FAIL_FAST) {
@@ -273,12 +273,11 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 				String route = "projects/" + projectId + "/badges/" + badgeId;
 				Response response = doDelete(route);
 				int statusCode = response.getStatus();
-				if (statusCode == Status.NO_CONTENT.getStatusCode()) {
-					// OK
+				if (statusCode == Status.NO_CONTENT.getStatusCode()) { // OK
 					// LOGGER.info("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
 					badgeIds.add(badgeId);
 				} else {
-					String error = "Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode;
+					String error = "Impossibile eliminare il badge " + badgeId + " del progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
 					LOGGER.severe(error);
 					logError(response);
 					if (Config.FAIL_FAST) {
@@ -352,7 +351,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 
 		if (statusCode != Status.OK.getStatusCode()) {
 			String msg =
-				"Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectId + ". Status code: " + statusCode;
+				"Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
 			logError(msg, response);
 		} else {
 			String jsonString = response.readEntity(String.class);

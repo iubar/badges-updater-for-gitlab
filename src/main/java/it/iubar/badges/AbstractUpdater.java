@@ -132,4 +132,11 @@ public abstract class AbstractUpdater extends RestClient {
 			LOGGER.info("All done without errors");
 		}
 	}
+	
+	protected String projectToUrl(int projectId) {
+		String url = this.gitlabHost + "/projects/" + projectId;
+		String str = projectId + " (" + url + ")";
+		return str;
+	}
+ 
 }
