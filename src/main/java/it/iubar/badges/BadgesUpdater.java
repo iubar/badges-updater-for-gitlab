@@ -152,6 +152,7 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 
 		// Determino l'id del progetto
 		int projectId = project.getInt("id");
+		boolean archived = project.getBoolean("archived");
 		// Determino altri valori come il nome ed il gruppo del progetto
 		// In alternativa alla lettura dei dati dal parametro "object", potrei utilizzare le variabili gitlab %{project_path} e %{default_branch} nella costruzione del link al pipeline badge.
 		// Ad esempio un link valido sarebbe:

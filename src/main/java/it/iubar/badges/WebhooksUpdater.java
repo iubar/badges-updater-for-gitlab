@@ -39,14 +39,17 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 			}
 
 			int projectId = project.getInt("id");
+			boolean archived = project.getBoolean("archived");
 			String path = project.getString("path_with_namespace");
 			String projectDescAndId = path + " (id " + projectId + ")";
 			LOGGER.info("Project " + projectDescAndId);
 
 			JsonArray webhooks = getWebhooks(projectId); // list-webhooks-for-a-project
 
-			if (Config.UPDATE_WEBHOOKS == UpdateType.DELETE_AND_ADD) {				
-				if(webhooks.size()==0) {
+			if (Config.UPDATE_WEBHOOKS == UpdateType.DELETE_AND_ADD) {
+				if(archived) {
+					LOGGER.warning("SKipped. Project " + projectDescAndId + " was archived.");
+				}else if(webhooks.size()==0) {
 					addWebhook(projectId);
 				}else {
 					for (int j = 0; j < webhooks.size(); j++) {
