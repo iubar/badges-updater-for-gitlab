@@ -51,10 +51,43 @@ public abstract class AbstractUpdater extends RestClient {
 		this.gitlabToken = String.valueOf(this.config.get("gitlab.token"));
 		this.webhookUrl = String.valueOf(this.config.get("webhook.url"));
 		LOGGER.info("Configurazione attuale:");
-		LOGGER.info("sonarHost = " + this.sonarHost);
-		LOGGER.info("gitlabHost = " + this.gitlabHost);
-		LOGGER.info("gitlabToken = " + this.gitlabToken);
-		LOGGER.info("webhookUrl = " + this.webhookUrl);
+		if(isNotEmpty(this.sonarHost)) {
+			LOGGER.info("sonarHost = " + this.sonarHost);
+		}else {
+			LOGGER.severe("Configurazione assente: " + "sonar.host");
+		}
+		if(isNotEmpty(this.gitlabHost)) {
+			LOGGER.info("gitlabHost = " + this.gitlabHost);
+		}else {
+			LOGGER.severe("Configurazione assente: " + "gitlab.host");
+		}
+		if(isNotEmpty(this.gitlabToken)) {
+			LOGGER.info("gitlabToken = " + this.gitlabToken);
+		}else {
+			LOGGER.severe("Configurazione assente: " + "gitlab.token");
+		}
+		if(isNotEmpty(this.webhookUrl)) {
+			LOGGER.info("webhookUrl = " + this.webhookUrl);
+		}else {
+			LOGGER.severe("Configurazione assente: " + "webhook.url");
+		}
+	}
+
+	public static boolean isEmpty(String str) {
+		if (str != null) {
+			if (!str.isEmpty()) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	protected static boolean isEmpty2(String str) {
+		return (str==null) || (str.length()==0);
+	}
+	
+	public static boolean isNotEmpty(String str) {
+		return !isEmpty(str);
 	}
 
 	/**
