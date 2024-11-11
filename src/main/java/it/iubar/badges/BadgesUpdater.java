@@ -93,12 +93,7 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 		int statusCode = response.getStatus();
 		if (statusCode != Status.OK.getStatusCode()) {
 			String msg = "Impossibile recuperare l'elenco dei badge per il progetto " + projectId + ". Status code: " + statusCode;
-			LOGGER.severe(msg);
-			if (Config.FAIL_FAST) {
-				System.exit(1);
-			} else {
-				AbstractUpdater.errors.add(msg);
-			}
+			logError(msg, response);
 		} else {
 			String jsonString = response.readEntity(String.class);
 			badges = JsonUtils.readArray(jsonString);
@@ -125,12 +120,13 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 				int badgeId = object.getInt("id");
 				badgeIds.add(badgeId);
 			} else {
-				String msg = "Impossibile aggiungere il badge " + badge.toString() + ". Status code: " + statusCode;
-				LOGGER.severe(msg);
+				String error = "Impossibile aggiungere il badge " + badge.toString() + ". Status code: " + statusCode;
+				LOGGER.severe(error);
+				logError(response);
 				if (Config.FAIL_FAST) {
 					System.exit(1);
 				} else {
-					AbstractUpdater.errors.add(msg);
+					AbstractUpdater.errors.add(error);
 					break;
 				}
 			}
@@ -274,8 +270,8 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			int badgeId = object.getInt("id");
 			try {
 				String route = "projects/" + projectId + "/badges/" + badgeId;
-				Response response2 = doDelete(route);
-				int statusCode = response2.getStatus();
+				Response response = doDelete(route);
+				int statusCode = response.getStatus();
 				if (statusCode == Status.NO_CONTENT.getStatusCode()) {
 					// OK
 					// LOGGER.info("No content per badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode);
@@ -283,6 +279,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 				} else {
 					String error = "Impossibile eliminare il badge " + badgeId + " del progetto " + projectId + ". Status code: " + statusCode;
 					LOGGER.severe(error);
+					logError(response);
 					if (Config.FAIL_FAST) {
 						System.exit(1);
 					} else {
@@ -341,26 +338,23 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 	private String getFileContent(int projectId, String filePath, String branch) {
 		String content = "";
 		int statusCode = 0;
-		Response response2 = null;
+		Response response = null;
 		try {
 			String filePathEncoded = URLEncoder.encode(filePath, "UTF-8");
 			String route = "projects/" + projectId + "/repository/files/" + filePathEncoded + "?ref=" + branch;
-			response2 = doGet(route);
-			statusCode = response2.getStatus();
+			response = doGet(route);
+			statusCode = response.getStatus();
 		} catch (UnsupportedEncodingException e1) {
 			e1.printStackTrace();
+			return null;
 		}
 
 		if (statusCode != Status.OK.getStatusCode()) {
 			String msg =
 				"Impossibile recuperare il contenuto del file " + filePath + " per il progetto " + projectId + ". Status code: " + statusCode;
-			if (Config.FAIL_FAST) {
-				System.exit(1);
-			} else {
-				AbstractUpdater.errors.add(msg);
-			}
+			logError(msg, response);
 		} else {
-			String jsonString = response2.readEntity(String.class);
+			String jsonString = response.readEntity(String.class);
 			JsonObject jsonObject = JsonUtils.readObject(jsonString);
 			// Integer size = jsonObject.getInt("size"); // Integer/int max value is 0x7fffffff = 2.147.483.647
 			JsonNumber size = jsonObject.getJsonNumber("size");

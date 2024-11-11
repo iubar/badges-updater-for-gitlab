@@ -61,10 +61,10 @@ public abstract class RestClient {
 			LOGGER.severe("ERRORE: " + e.getMessage());
 		}
 
-		String user = "john";
-		String pass = "abc123";
-		String str = user + ":" + pass;
-		String encodedString = Base64.getEncoder().encodeToString(str.getBytes());
+		//String user = "john";
+		//String pass = "changeme";
+		//String str = user + ":" + pass;
+		//String encodedString = Base64.getEncoder().encodeToString(str.getBytes());
 
 		// Headers for client.
 		ClientRequestFilter clientRequestFilter = new ClientRequestFilter() {
@@ -124,4 +124,28 @@ public abstract class RestClient {
 		Response response = getBuilder(target).post(entity);
 		return response;
 	}
+	
+
+	protected static void logResponse(Response response) {
+		String output = response.readEntity(String.class);
+		LOGGER.log(Level.INFO, "Message : " + output);
+	}
+	
+	protected static void logError(Response response) {
+		String output = response.readEntity(String.class);
+		LOGGER.log(Level.SEVERE, "Message : " + output);
+	}
+	
+	protected void logError(String error, Response response) {
+		LOGGER.log(Level.SEVERE, error);
+		logError(response);
+		if (Config.FAIL_FAST) {
+			System.exit(1);
+		} else {
+			AbstractUpdater.errors.add(error);
+		}
+	}
+	
+	
+	
 }

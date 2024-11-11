@@ -99,7 +99,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		Response response = doDelete(route);
 		int statusCode = response.getStatus();
 		if (statusCode != Status.OK.getStatusCode()) {
-			String error =
+			String msg =
 					"Impossibile eliminare il dettaglio del webhook per il progetto " +
 							projectId +
 							" con hook_id " +
@@ -107,12 +107,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 							". Status code: " +
 							statusCode +
 							". Verificare che la feature CI/CD sia abilitata per il progetto.";
-			LOGGER.severe(error);
-			if (Config.FAIL_FAST) {
-				System.exit(1);
-			} else {
-				AbstractUpdater.errors.add(error);
-			}
+			logError(msg, response);
 		} else {
 			String jsonString = response.readEntity(String.class);
 			webhook = JsonUtils.readObject(jsonString);
@@ -129,7 +124,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if (statusCode != Status.OK.getStatusCode()) {
-			String error =
+			String msg =
 					"Impossibile recuperare il dettaglio del webhook per il progetto " +
 							projectId +
 							" con hook_id " +
@@ -137,12 +132,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 							". Status code: " +
 							statusCode +
 							". Verificare che la feature CI/CD sia abilitata per il progetto.";
-			LOGGER.severe(error);
-			if (Config.FAIL_FAST) {
-				System.exit(1);
-			} else {
-				AbstractUpdater.errors.add(error);
-			}
+			logError(msg, response);
 		} else {
 			String jsonString = response.readEntity(String.class);
 			webhook = JsonUtils.readObject(jsonString);
@@ -159,18 +149,13 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if (statusCode != Status.OK.getStatusCode()) {
-			String error =
+			String msg =
 					"Impossibile recuperare l'elenco dei webhooks per il progetto " +
 							projectId +
 							". Status code: " +
 							statusCode +
 							". Verificare che la feature CI/CD sia abilitata per il progetto.";
-			LOGGER.severe(error);
-			if (Config.FAIL_FAST) {
-				System.exit(1);
-			} else {
-				AbstractUpdater.errors.add(error);
-			}
+			logError(msg, response);
 		} else {
 			String jsonString = response.readEntity(String.class);
 			webhooks = JsonUtils.readArray(jsonString);
@@ -188,22 +173,20 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		String route = "projects/" + projectId + "/hooks";
 		Response response = doPost(route, Entity.json(jsonObject2.toString()));
 		int statusCode = response.getStatus();
-		if (statusCode == Status.CREATED.getStatusCode()) {
+		if (statusCode == Status.CREATED.getStatusCode()) { // l'errore 422 per i nuovi progetti 
 			String jsonString = response.readEntity(String.class);
 			JsonObject object = JsonUtils.readObject(jsonString);
 			JsonUtils.prettyPrint(object);
 			String msg = "OK : added. Status code: " + statusCode;
 			LOGGER.info(msg);
 		} else {
-			String msg = "Impossibile aggiungere il webhook. Status code: " + statusCode;
-			LOGGER.severe(msg);
-			if (Config.FAIL_FAST) {
-				System.exit(1);
-			} else {
-				AbstractUpdater.errors.add(msg);
-			}
+			String msg = "Impossibile aggiungere il webhook per il progetto " + projectId + ". Status code: " + statusCode;
+			logError(msg, response);
 		}
 	}
+
+
+
 
 	/*
 	 * @see https://docs.gitlab.com/ee/api/project_webhooks.html#edit-a-project-webhook
@@ -223,12 +206,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 			LOGGER.info(msg);
 		} else {
 			String msg = "Impossibile modificare il webhook " + hookId + ". Status code: " + statusCode;
-			LOGGER.severe(msg);
-			if (Config.FAIL_FAST) {
-				System.exit(1);
-			} else {
-				AbstractUpdater.errors.add(msg);
-			}
+			logError(msg, response);
 		}
 	}
 

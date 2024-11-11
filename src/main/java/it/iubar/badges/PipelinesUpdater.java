@@ -67,18 +67,13 @@ public class PipelinesUpdater extends AbstractUpdater implements IUpdater {
 		Response response = doGet(route);
 		int statusCode = response.getStatus();
 		if (statusCode != Status.OK.getStatusCode()) {
-			String error =
+			String msg =
 				"Impossibile recuperare l'elenco delle pipeline per il progetto " +
 				projectId +
 				". Status code: " +
 				statusCode +
 				". Verificare che la feature CI/CD sia abilitata per il progetto.";
-			LOGGER.severe(error);
-			if (Config.FAIL_FAST) {
-				System.exit(1);
-			} else {
-				AbstractUpdater.errors.add(error);
-			}
+			logError(msg, response);
 		} else {
 			String jsonString = response.readEntity(String.class);
 			pipelines = JsonUtils.readArray(jsonString);
@@ -127,8 +122,8 @@ public class PipelinesUpdater extends AbstractUpdater implements IUpdater {
 				JsonObject pipeline = pipelines.getJsonObject(j);
 				int pipelineId = pipeline.getInt("id"); // The ID of a pipeline
 				String route3 = "projects/" + projectId + "/pipelines/" + pipelineId;
-				Response response3 = doDelete(route3);
-				int statusCode = response3.getStatus();
+				Response response = doDelete(route3);
+				int statusCode = response.getStatus();
 				if (statusCode == Status.NO_CONTENT.getStatusCode()) {
 					pipelineIds.add(pipelineId);
 				} else {
@@ -144,6 +139,7 @@ public class PipelinesUpdater extends AbstractUpdater implements IUpdater {
 					error = error +
 					" (Nota che l'errore si potrebbe manifestare quando la pipeline è in esecuzione oppure un proceddo è archiviato e quindi è in sola lettura).";
 					LOGGER.warning(error);
+					logError(error, response);
 					//					if(Config.FAIL_FAST) {
 					//						System.exit(1);
 					//					} else {
