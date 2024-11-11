@@ -20,10 +20,10 @@ public class ProjectsUpdater {
 				Config.CONFIG_FILE
 			);
 			config = new Properties();
-			config.setProperty("sonar.host", System.getenv("SONAR_HOST"));
-			config.setProperty("gitlab.host", System.getenv("GITLAB_HOST"));
-			config.setProperty("gitlab.token", System.getenv("GITLAB_TOKEN"));
-			config.setProperty("webhook.url", System.getenv("WEBHOOK_URL"));
+			setProperty(config, "sonar.host", System.getenv("SONAR_HOST"));
+			setProperty(config, "gitlab.host", System.getenv("GITLAB_HOST"));
+			setProperty(config, "gitlab.token", System.getenv("GITLAB_TOKEN"));
+			setProperty(config, "webhook.url", System.getenv("WEBHOOK_URL"));
 		} else {
 			// Reading config from file...
 			config = PropertiesUtils.loadPropertiesFile(Config.CONFIG_FILE);
@@ -50,6 +50,14 @@ public class ProjectsUpdater {
 		}
 	}
 
+	public static void setProperty(Properties prop, String key, String value) {
+		if (value != null) {
+			prop.setProperty(key, value);
+		} else {
+			prop.setProperty(key, "");
+		}
+	}
+	
 	private static boolean isEmpty(String s) {
 		if (s != null) {
 			if (!s.isEmpty()) {
