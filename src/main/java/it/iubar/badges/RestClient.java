@@ -124,7 +124,6 @@ public abstract class RestClient {
 		Response response = getBuilder(target).post(entity);
 		return response;
 	}
-	
 
 	protected static void logResponse(Response response) {
 		String output = response.readEntity(String.class);
@@ -133,7 +132,7 @@ public abstract class RestClient {
 	
 	protected static void logError(Response response) {
 		String output = response.readEntity(String.class);
-		LOGGER.log(Level.SEVERE, "Message : " + output);
+		LOGGER.log(Level.SEVERE, "Error : " + output);
 	}
 	
 	protected void logError(String error, Response response) {
