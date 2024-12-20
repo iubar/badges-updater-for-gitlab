@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'iubar-maven-ubuntu:jdk11'
+            image 'iubar-java-alpine'
             label 'docker'
             args '-v ${HOME}/.m2:/home/jenkins/.m2:rw,z -v ${HOME}/.sonar:/home/jenkins/.sonar:rw,z'
         }
