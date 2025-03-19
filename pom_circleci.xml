@@ -13,11 +13,11 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <jdk.source.version>1.8</jdk.source.version>
+    <jdk.source.version>11</jdk.source.version>
     <jdk.target.version>${jdk.source.version}</jdk.target.version>
     <junit.jupiter.version>5.10.1</junit.jupiter.version>
     <surefire.plugin.version>3.2.2</surefire.plugin.version>
-    <jersey.client.version>3.1.9</jersey.client.version> <!-- 3.0.x is the last version supporting jdk8 --> <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->
+    <jersey.client.version>3.1.10</jersey.client.version> <!-- 3.0.x is the last version supporting jdk8 --> <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->
     <maven-assembly-mainclass
     >it.iubar.badges.ProjectsUpdater</maven-assembly-mainclass>
   </properties>
