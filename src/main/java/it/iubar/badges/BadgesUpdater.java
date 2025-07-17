@@ -19,6 +19,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.glassfish.jersey.client.ClientResponse;
 
 import it.iubar.badges.Config.UpdateType;
@@ -52,15 +55,16 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 			String projectDescAndId = path + " (id " + projectId + ")";
 			LOGGER.info("Project " + projectDescAndId);
 
+			// Rimuovo TUTTI i badges esistenti dal progetto
+			List<Integer> results = removeBadges(projectId);
+			if (results.isEmpty()) {
+				LOGGER.warning("removeBadges() returns no results for project " + projectDescAndId + ". That could be a BUG.");
+			} else {
+				LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted successfully from project " + projectDescAndId);
+			}
+			
+			
 			if (Config.UPDATE_BADGES == UpdateType.DELETE_AND_ADD) {
-				// Rimuovo TUTTI i badges esistenti dal progetto
-				List<Integer> results = removeBadges(projectId);
-				if (results.isEmpty()) {
-					LOGGER.warning("removeBadges() returns no results for project " + projectDescAndId + ". That could be a BUG.");
-				} else {
-					LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted successfully from project " + projectDescAndId);
-				}
-
 				// Aggiungo i nuovi badges al progetto
 				List<JsonObject> badges = createBadges(project);
 				if (!badges.isEmpty()) {
@@ -71,7 +75,7 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 						LOGGER.log(Level.INFO, "#" + results2.size() + " badges added to project " + projectDescAndId);
 					}
 				}
-			}
+			} 
 		}
 	}
 
@@ -147,12 +151,14 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 	 * @throws NoSuchAlgorithmException
 	 */
 	private List<JsonObject> createBadges(JsonObject project) {
-		final String branch = Config.DEFAULT_BRANCH;
+		String branch = project.getString("default_branch");
 		List<JsonObject> badges = new ArrayList<>();
 
-		// Determino l'id del progetto
+		// Determino l'id del progetto		
 		int projectId = project.getInt("id");
+		
 		boolean archived = project.getBoolean("archived");
+		
 		// Determino altri valori come il nome ed il gruppo del progetto
 		// In alternativa alla lettura dei dati dal parametro "object", potrei utilizzare le variabili gitlab %{project_path} e %{default_branch} nella costruzione del link al pipeline badge.
 		// Ad esempio un link valido sarebbe:
@@ -160,7 +166,7 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 		// (vedi https://gitlab.iubar.it/help/user/project/badges).
 		// Nota che in Gitlab, il valore di %{project_path} è scollegato dal valore di <project_name> anche se di default %{project_path} assume il seguente formato <nome_gruppo>/<project_name>.
 
-		/*
+/*
 Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-all-projects)
 ....		
     "name": "Diaspora Client",
@@ -195,6 +201,9 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		if (!isSonar(projectId, branch)) {
 			LOGGER.warning("File " + Config.SONAR_FILE + " assente per il progetto " + projectId);
 		} else {
+			
+			if(Config.ADD_SONAR_BADGES) {
+				
 			String sonarProjectContent = getFileContent(projectId, Config.SONAR_FILE, branch);
 			Properties properties = PropertiesUtils.parsePropertiesString(sonarProjectContent); // sonar.projectKey è un file di configurazione nel formato Java Properties
 			Object obj = properties.get("sonar.projectKey");
@@ -204,7 +213,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			}
 			if (sonarProjectKeyActual == null) {
 				LOGGER.severe("Impossibile recuperare il valore di sonar.projectKey");
-				System.exit(1);
+				System.exit(1); // TODO: meglio lanciare eccezione ?
 			}
 			String sonarProjectKeyExpected = namespacePath + ":" + name; // il carattere ":" equivale a "%3A"
 			if (!sonarProjectKeyExpected.equals(sonarProjectKeyActual)) {
@@ -218,12 +227,14 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 				);
 			}
 
+
+				
 			String link = this.sonarHost + "/dashboard?id=" + sonarProjectKeyActual;
 			String image = this.sonarHost + "/api/badges/gate?key=" + sonarProjectKeyActual;
 			JsonObjectBuilder builder1 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
 			badges.add(builder1.build());
 			
-			if(Config.ADD_SONAR_BADGES) {
+
 				link = this.sonarHost + "/component_measures?metric=Reliability&id=" + sonarProjectKeyActual;
 				image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=bugs";
 				JsonObjectBuilder builder2 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
@@ -248,10 +259,112 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 				image = this.sonarHost + "/api/badges/measure?key=" + sonarProjectKeyActual + "&metric=functions";
 				JsonObjectBuilder badge6 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
 				badges.add(badge6.build());
+			}		
+		}
+		
+		if(Config.ADD_VERSION_BADGES) {
+			VersionInfo versionInfo = getVersion(projectId, branch);
+			if(versionInfo!=null) {
+			String verNumber = versionInfo.getNumber();
+			String verFile = versionInfo.getFilename();						
+			String link = this.gitlabHost + "/" + pathWithNamespace + "/-/blob/master/" + verFile + "?ref_type=heads";
+			String image = "https://img.shields.io/badge/version-" + verNumber + "-blue";
+			JsonObjectBuilder badge6 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
+			badges.add(badge6.build());
 			}
 		}
 
 		return badges;
+	}
+
+	
+	public enum Language {
+	    EXPO("app.json"), JAVASCRIPT("package.json"), PHP("composer.json"), JAVA("pom.xml");
+
+		private String filename;
+
+		Language(String filename) {
+			this.filename = filename;
+		}
+		
+		public String getFilename() {
+			return filename;
+		}
+ 
+	}
+	
+	private VersionInfo getVersion(int projectId, String branch) {
+		VersionInfo versionInfo = null;
+        for (Language lang : Language.values()) {
+        	String fileName = lang.getFilename();
+            boolean b = isFile(projectId, fileName, branch);
+            if(b) {
+            	String content = getFileContent(projectId, fileName, branch);
+            	String number = parseText(content, lang);
+            	if(number!=null) {
+            		versionInfo = new VersionInfo(fileName, number);
+            	}
+            	break;
+            }
+        }
+		return versionInfo;
+	}
+ 
+	private String parseText(String content, Language lang) {	
+		String version = null;
+		Matcher matcher = null;
+		switch (lang) {
+			case EXPO:
+		        // Regex per trovare il valore di "version" all'interno di "expo"
+		        Pattern patternAppJson = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]+)\"");
+		        matcher = patternAppJson.matcher(content);
+
+		        if (matcher.find()) {
+		            version = matcher.group(1);
+		            System.out.println("Version trovata: " + version);
+		        } else {
+		            System.out.println("Version non trovata.");
+		        }
+				break;
+			case JAVASCRIPT:
+		        // Regex per trovare il valore del campo "version"
+		        Pattern patternPackage = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]+)\"");
+		        matcher = patternPackage.matcher(content);
+
+		        if (matcher.find()) {
+		            version = matcher.group(1);
+		            System.out.println("Version trovata: " + version);
+		        } else {
+		            System.out.println("Version non trovata.");
+		        }
+				break;
+			case PHP:
+		        // Regex per trovare il valore di "version": "..."
+		        Pattern patternComposer = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]+)\"");
+		        matcher = patternComposer.matcher(content);
+
+		        if (matcher.find()) {
+		            version = matcher.group(1);
+		            System.out.println("Version trovata: " + version);
+		        } else {
+		            System.out.println("Version non trovata.");
+		        }
+				break;
+			case JAVA:
+		        // Espressione regolare per catturare il contenuto del tag <version> fuori da <dependency>
+		        Pattern patternPom = Pattern.compile("<version>(.*?)</version>");
+		        matcher = patternPom.matcher(content);
+
+		        while (matcher.find()) {
+		            version = matcher.group(1);
+		            System.out.println("Version trovata: " + version);
+		            break; // prende solo la prima <version> trovata (quella del progetto)
+		        }
+				break;				
+			default:
+				break;
+		}
+		return version;
 	}
 
 	/**
@@ -311,6 +424,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		int statusCode = response.getStatus();
 		if (response.getStatus() != Status.OK.getStatusCode()) {
 			LOGGER.severe("Impossibile determinare se il file " + fileName + " è parte del progetto. Status code: " + statusCode);
+			// TODO: valutare se cambiare il messaggio in "Il file  " + fileName + " non è parte del progetto"
 		} else {
 			String jsonString = response.readEntity(String.class);
 			JsonArray files = JsonUtils.readArray(jsonString);
@@ -330,6 +444,11 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 	/**
 	 *
 	 * @see https://docs.gitlab.com/ee/api/repository_files.html#get-file-from-repository
+	 * 
+	 * Allows you to receive information about file in repository like name, size, and content. File content is Base64 encoded. You can access this endpoint without authentication, if the repository is publicly accessible.
+	 * 
+	 * Nota che esiste anche soluzione alternativa : https://docs.gitlab.com/api/repository_files/#get-raw-file-from-repository (GET /projects/:id/repository/files/:file_path/raw )
+	 * 
 	 *
 	 * @param projectId
 	 * @param filePath Url encoded full path to new file

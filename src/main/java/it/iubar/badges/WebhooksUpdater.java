@@ -50,7 +50,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 				if(archived) {
 					LOGGER.warning("SKipped. Project " + projectDescAndId + " was archived.");
 				}else if(webhooks.size()==0) {
-					addWebhook(projectId);
+					addWebhook(projectId); // Nessun webhook presente, ne creo uno.
 				}else {
 					for (int j = 0; j < webhooks.size(); j++) {
 						JsonObject webhook = webhooks.getJsonObject(j);

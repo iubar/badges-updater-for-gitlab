@@ -37,11 +37,12 @@ public class PipelinesUpdater extends AbstractUpdater implements IUpdater {
 
 			int projectId = project.getInt("id");
 			boolean archived = project.getBoolean("archived");
+			String default_branch = project.getString("default_branch");
 			String path = project.getString("path_with_namespace");
 			String projectDescAndId = path + " (id " + projectId + ")";
 			LOGGER.info("Project " + projectDescAndId);
 
-			JsonArray pipelines = getPipelines(projectId, Config.DEFAULT_BRANCH);
+			JsonArray pipelines = getPipelines(projectId, default_branch);
 			if (Config.DELETE_PIPELINES) {
 				if(archived) {
 					LOGGER.warning("SKipped. Project " + projectDescAndId + " was archived.");

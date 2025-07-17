@@ -17,12 +17,12 @@ public class Config {
 	
 	public static final UpdateType UPDATE_WEBHOOKS = UpdateType.DELETE_AND_ADD;
 	
-	public static final boolean ADD_SONAR_BADGES = true;
+	public static final boolean ADD_SONAR_BADGES = false;
+	
+	public static final boolean ADD_VERSION_BADGES = true;
 
 	public static final boolean DELETE_PIPELINES = true;
-
-	public static final String DEFAULT_BRANCH = "master";
-
+ 
 	// Verranno cancellate tutte le pipelines ad esclusione delle ultime 5
 	public static final int SKIP_PIPELINES_QNT = 5;
 
