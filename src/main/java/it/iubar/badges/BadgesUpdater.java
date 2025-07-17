@@ -262,16 +262,19 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 			}		
 		}
 		
+		
 		if(Config.ADD_VERSION_BADGES) {
+			String link = this.gitlabHost + "/" + pathWithNamespace;
+			String image = "https://img.shields.io/badge/version-" + "dev" + "-red";
 			VersionInfo versionInfo = getVersion(projectId, branch);
 			if(versionInfo!=null) {
-			String verNumber = versionInfo.getNumber();
-			String verFile = versionInfo.getFilename();						
-			String link = this.gitlabHost + "/" + pathWithNamespace + "/-/blob/master/" + verFile + "?ref_type=heads";
-			String image = "https://img.shields.io/badge/version-" + verNumber + "-blue";
+				String verNumber = versionInfo.getNumber();
+				String verFile = versionInfo.getFilename();						
+				link = this.gitlabHost + "/" + pathWithNamespace + "/-/blob/master/" + verFile + "?ref_type=heads";
+				image = "https://img.shields.io/badge/version-" + verNumber + "-blue";
+			}
 			JsonObjectBuilder badge6 = Json.createObjectBuilder().add("link_url", link).add("image_url", image);
 			badges.add(badge6.build());
-			}
 		}
 
 		return badges;
@@ -315,7 +318,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		Matcher matcher = null;
 		switch (lang) {
 			case EXPO:
-		        // Regex per trovare il valore di "version" all'interno di "expo"
+		        // Regex per trovare il valore di "version" all'interno di "app.json"
 		        Pattern patternAppJson = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]+)\"");
 		        matcher = patternAppJson.matcher(content);
 
@@ -327,7 +330,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		        }
 				break;
 			case JAVASCRIPT:
-		        // Regex per trovare il valore del campo "version"
+		        // Regex per trovare il valore del campo "version" all'interno di "package.json"
 		        Pattern patternPackage = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]+)\"");
 		        matcher = patternPackage.matcher(content);
 
@@ -339,7 +342,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		        }
 				break;
 			case PHP:
-		        // Regex per trovare il valore di "version": "..."
+		        // Regex per trovare il valore di "version" all'interno di "composer.json"
 		        Pattern patternComposer = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]+)\"");
 		        matcher = patternComposer.matcher(content);
 
@@ -351,7 +354,7 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 		        }
 				break;
 			case JAVA:
-		        // Espressione regolare per catturare il contenuto del tag <version> fuori da <dependency>
+		        // Espressione regolare per catturare il contenuto del tag <version> fuori da <dependency> nel file "pom.xml"
 		        Pattern patternPom = Pattern.compile("<version>(.*?)</version>");
 		        matcher = patternPom.matcher(content);
 
