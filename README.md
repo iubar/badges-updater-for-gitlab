@@ -30,3 +30,7 @@ For example:
 ### Other related projects
 
 - https://github.com/m4tthumphrey/php-gitlab-api (a PHP wrapper to be used with Gitlab's Api)
+
+### Altro
+
+ - https://shields.io/badges

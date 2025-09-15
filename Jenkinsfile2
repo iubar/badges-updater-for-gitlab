@@ -12,7 +12,6 @@ pipeline {
     environment {
         MAVEN_ARGS = '--batch-mode --errors --fail-fast --show-version --quiet'
         MAVEN_OPTS = '-Dmaven.test.failure.ignore=false -Dstyle.color=always -Djava.awt.headless=true -Dhttps.protocols=TLSv1.2'
-        WEBHOOK_URL = 'https://webhook.iubar.it/ci.php'
     }
     stages {
         stage('Package') {
