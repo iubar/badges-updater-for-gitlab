@@ -15,12 +15,16 @@
   <version>1.0.6</version>
   <description>...</description>
   <properties>
-    <maven-assembly-mainclass
-    >it.iubar.badges.ProjectsUpdater</maven-assembly-mainclass>
-	<jdk.source.version>11</jdk.source.version>
-	<jdk.target.version>${jdk.source.version}</jdk.target.version>    
-    <jersey.client.version>3.1.10</jersey.client.version> <!-- 3.0.x is the latest version that supports Java 8 -->
-    													 <!-- 4.x requires Java 17 -->
+    <maven-assembly-mainclass>it.iubar.badges.ProjectsUpdater</maven-assembly-mainclass>
+	<maven.compiler.source>11</maven.compiler.source> 
+	<maven.compiler.target>${maven.compiler.source}</maven.compiler.target>	
+	<!-- PAY ATTENTION for the jersey.client :	-->
+	<!-- 3.0.x is the latest version that supports Java 8 -->
+	<!-- 4.x requires Java 17 -->
+	<!-- See https://eclipse-ee4j.github.io/jersey.github.io/documentation/latest30x/modules-and-dependencies.html#d0e560 -->
+	<!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->	  
+    <jersey.client.version>3.1.11</jersey.client.version>
+
   </properties>
   <build>
     <finalName>${project.artifactId}</finalName>
@@ -67,40 +71,40 @@
     </plugins>
   </build>
   <dependencies>
-<!-- https://mvnrepository.com/artifact/jakarta.activation/jakarta.activation-api -->
-<!-- Risolve l'errore "A class jakarta.activation.DataSource for a default provider MessageBodyWriter<jakarta.activation.DataSource> was not found."-->
-<dependency>
-    <groupId>jakarta.activation</groupId>
-    <artifactId>jakarta.activation-api</artifactId>
-    <version>2.1.3</version> <!-- o l'ultima versione disponibile -->
-</dependency>
-<!-- https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-json-jackson -->
-<!-- Risolve l'errore "org.glassfish.jersey.message.internal.MessageBodyProviderNotFoundException: MessageBodyReader not found for media type=application/json"-->
-<!-- 
-<dependency>
-    <groupId>org.glassfish.jersey.media</groupId>
-    <artifactId>jersey-media-json-jackson</artifactId>
-    <version>${jersey.client.version}</version>
-</dependency>
--->
-
-<!-- Risolve errore : jakarta.json.JsonException: Provider org.eclipse.parsson.JsonProviderImpl not found-->
-<!-- https://mvnrepository.com/artifact/org.eclipse.parsson/parsson -->
-<dependency>
-    <groupId>org.eclipse.parsson</groupId>
-    <artifactId>parsson</artifactId>
-    <version>1.1.7</version>
-</dependency>
+	<!-- E' un fix for "jakarta.activation.DataSource was not found" --> 
+	<!-- A cosa serve:-->
+	<!-- MIME Type handling: Gestisce i tipi MIME per determinare come trattare diversi tipi di contenuto-->
+	<!-- Data binding: Supporta la conversione automatica tra oggetti Java e rappresentazioni (JSON, XML, etc.)-->
+	<!-- MessageBodyReader/Writer: Jersey usa questa API per serializzare/deserializzare automaticamente le entità HTTP-->
+	<!-- In sintesi: È una dipendenza di supporto che Jersey usa internamente per gestire la conversione dei tipi di contenuto HTTP. --> 
+	<!-- Senza di essa potresti avere errori quando Jersey cerca di serializzare/deserializzare automaticamente oggetti.-->
+	<!-- Risolve l'errore "A class jakarta.activation.DataSource for a default provider MessageBodyWriter<jakarta.activation.DataSource> was not found."-->		
+	<!-- https://mvnrepository.com/artifact/jakarta.activation/jakarta.activation-api -->
+	<dependency>
+	    <groupId>jakarta.activation</groupId>
+	    <artifactId>jakarta.activation-api</artifactId>
+	    <version>2.1.3</version> 
+	</dependency>
 
     <!-- JSON-P Default Provider (JSR-353) -->
     <!-- https://mvnrepository.com/artifact/jakarta.json/jakarta.json-api -->
 	<!-- Non puoi usare jakarta.json-api, da sola perchè queta è solo l’interfaccia. -->
 	<!-- Per l'implementazione ho aggiunto la dipendenza Parson' -->
+	<!-- API Jakarta JSON-P -->
 	<dependency>
-	    <groupId>jakarta.json</groupId>
-	    <artifactId>jakarta.json-api</artifactId>
+	    <groupId>jakarta.json</groupId> 
+	    <artifactId>jakarta.json-api</artifactId> <!-- Nota : già incluso in Parsson -->
 	    <version>2.1.3</version>
 	</dependency>
+	<!-- Eclipse Parsson is an implementation of Jakarta JSON Processing specification -->
+	<!-- See https://github.com/eclipse-ee4j/parsson/blob/master/bundles/dist/src/main/resources/README.txt -->
+	<!-- https://mvnrepository.com/artifact/org.eclipse.parsson/parsson -->	
+	<dependency>
+	    <groupId>org.eclipse.parsson</groupId>
+	    <artifactId>parsson</artifactId>
+	    <version>1.1.7</version>
+	</dependency>
+	
     <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client -->
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>

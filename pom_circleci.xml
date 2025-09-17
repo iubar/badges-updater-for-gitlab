@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?> 
 <project
   xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -13,13 +13,20 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <jdk.source.version>11</jdk.source.version>
-    <jdk.target.version>${jdk.source.version}</jdk.target.version>
+	<maven.compiler.source>11</maven.compiler.source> 
+	<maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+	<maven.enforcer.version>3.6.1</maven.enforcer.version> 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-enforcer-plugin -->
+	<maven.version>[3.8.6,)</maven.version>		
     <junit.jupiter.version>5.10.1</junit.jupiter.version>
-    <surefire.plugin.version>3.2.2</surefire.plugin.version>
-    <jersey.client.version>3.1.10</jersey.client.version> <!-- 3.0.x is the last version supporting jdk8 --> <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->
-    <maven-assembly-mainclass
-    >it.iubar.badges.ProjectsUpdater</maven-assembly-mainclass>
+    <surefire.plugin.version>3.2.2</surefire.plugin.version>    
+	<!-- PAY ATTENTION for the jersey.client :	-->
+	<!-- 3.0.x is the latest version that supports Java 8 -->
+	<!-- 4.x requires Java 17 -->
+	<!-- See https://eclipse-ee4j.github.io/jersey.github.io/documentation/latest30x/modules-and-dependencies.html#d0e560 -->
+	<!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->    
+    <jersey.client.version>3.1.11</jersey.client.version> <!-- 3.0.x is the last version supporting jdk8 --> <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client-->
+    
+    <maven-assembly-mainclass>it.iubar.badges.ProjectsUpdater</maven-assembly-mainclass>
   </properties>
   <build>
     <finalName>${project.artifactId}</finalName>
@@ -29,10 +36,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
+        <version>3.14.0</version>
         <configuration>
-          <source>${jdk.source.version}</source>
-          <target>${jdk.target.version}</target>
+			<source>${maven.compiler.source}</source> <!-- non è più necessria la configurazione esplicita del plugin da maven 3.6-->
+        	<target>${maven.compiler.target}</target> <!-- non è più necessria la configurazione esplicita del plugin da maven 3.6-->
         </configuration>
       </plugin>
       <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
@@ -44,8 +51,7 @@
           <archive>
             <manifest>
               <mainClass>${maven-assembly-mainclass}</mainClass>
-              <addDefaultImplementationEntries
-              >true</addDefaultImplementationEntries>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
             </manifest>
           </archive>
           <descriptorRefs>
@@ -82,7 +88,7 @@
 	<plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>${maven.enforcer.version}</version>
         <executions>
           <execution>
             <id>enforce-maven</id>
@@ -92,7 +98,7 @@
             <configuration>
               <rules>
                 <requireMavenVersion>
-                  <version>[3.6.3,)</version>
+                  <version>${maven.version}</version>
                 </requireMavenVersion>
               </rules>    
             </configuration>
@@ -115,13 +121,41 @@
       <version>${junit.jupiter.version}</version>
       <scope>test</scope>
     </dependency>
-	<!-- JSON-P Default Provider (JSR-353) -->   
-	<!-- https://mvnrepository.com/artifact/jakarta.json/jakarta.json-api -->
+
+	<!-- E' un fix for "jakarta.activation.DataSource was not found" --> 
+	<!-- A cosa serve:-->
+	<!-- MIME Type handling: Gestisce i tipi MIME per determinare come trattare diversi tipi di contenuto-->
+	<!-- Data binding: Supporta la conversione automatica tra oggetti Java e rappresentazioni (JSON, XML, etc.)-->
+	<!-- MessageBodyReader/Writer: Jersey usa questa API per serializzare/deserializzare automaticamente le entità HTTP-->
+	<!-- In sintesi: È una dipendenza di supporto che Jersey usa internamente per gestire la conversione dei tipi di contenuto HTTP. --> 
+	<!-- Senza di essa potresti avere errori quando Jersey cerca di serializzare/deserializzare automaticamente oggetti.-->
+	<!-- Risolve l'errore "A class jakarta.activation.DataSource for a default provider MessageBodyWriter<jakarta.activation.DataSource> was not found."-->		
+	<!-- https://mvnrepository.com/artifact/jakarta.activation/jakarta.activation-api -->
 	<dependency>
-	    <groupId>jakarta.json</groupId>
-	    <artifactId>jakarta.json-api</artifactId>
+	    <groupId>jakarta.activation</groupId>
+	    <artifactId>jakarta.activation-api</artifactId>
+	    <version>2.1.3</version> 
+	</dependency>
+		
+    <!-- JSON-P Default Provider (JSR-353) -->
+    <!-- https://mvnrepository.com/artifact/jakarta.json/jakarta.json-api -->
+	<!-- Non puoi usare jakarta.json-api, da sola perchè queta è solo l’interfaccia. -->
+	<!-- Per l'implementazione ho aggiunto la dipendenza Parson' -->
+	<!-- API Jakarta JSON-P -->
+	<dependency>
+	    <groupId>jakarta.json</groupId> 
+	    <artifactId>jakarta.json-api</artifactId> <!-- TODO : già incluso in Parsson -->
 	    <version>2.1.3</version>
 	</dependency>
+	<!-- Implementazione Parsson -->
+	<!-- See https://github.com/eclipse-ee4j/parsson/blob/master/bundles/dist/src/main/resources/README.txt -->
+	<!-- https://mvnrepository.com/artifact/org.eclipse.parsson/parsson -->
+	<dependency>
+	    <groupId>org.eclipse.parsson</groupId>
+	    <artifactId>parsson</artifactId>
+	    <version>1.1.7</version>
+	</dependency>
+	
     <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client -->
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
