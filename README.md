@@ -1,5 +1,5 @@
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/iubar/badges-updater-for-gitlab/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/iubar/badges-updater-for-gitlab/tree/master)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/105ac6deae804246b20d140f976cd232)](https://www.codacy.com/gh/iubar/badges-updater-for-gitlab/dashboard)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/105ac6deae804246b20d140f976cd232)](https://app.codacy.com/gh/iubar/badges-updater-for-gitlab/dashboard)
 
 # Badges updater for GitLab
 
