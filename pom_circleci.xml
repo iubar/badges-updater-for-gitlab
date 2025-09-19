@@ -13,8 +13,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-	<maven.compiler.source>11</maven.compiler.source> 
-	<maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+	<maven.compiler.release>11</maven.compiler.release>
 	<maven.enforcer.version>3.6.1</maven.enforcer.version> 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-enforcer-plugin -->
 	<maven.version>[3.8.6,)</maven.version>		
     <junit.jupiter.version>5.10.1</junit.jupiter.version>
@@ -38,8 +37,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.0</version>
         <configuration>
-			<source>${maven.compiler.source}</source> <!-- non è più necessria la configurazione esplicita del plugin da maven 3.6-->
-        	<target>${maven.compiler.target}</target> <!-- non è più necessria la configurazione esplicita del plugin da maven 3.6-->
+			<release>${maven.compiler.release}</release> <!-- non è più obbligatoria questa configurazione esplicita del plugin da maven 3.6 ma ne migliora la leggibilità -->
         </configuration>
       </plugin>
       <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->

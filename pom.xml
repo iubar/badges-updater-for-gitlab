@@ -16,8 +16,7 @@
   <description>...</description>
   <properties>
     <maven-assembly-mainclass>it.iubar.badges.ProjectsUpdater</maven-assembly-mainclass>
-	<maven.compiler.source>11</maven.compiler.source> 
-	<maven.compiler.target>${maven.compiler.source}</maven.compiler.target>	
+	<maven.compiler.release>11</maven.compiler.release>
 	<!-- PAY ATTENTION for the jersey.client :	-->
 	<!-- 3.0.x is the latest version that supports Java 8 -->
 	<!-- 4.x requires Java 17 -->
