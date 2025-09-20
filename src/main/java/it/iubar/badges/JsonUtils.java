@@ -15,12 +15,13 @@ import jakarta.json.JsonReader;
 import jakarta.json.JsonValue;
 import jakarta.json.JsonWriterFactory;
 import jakarta.json.stream.JsonGenerator;
+import jakarta.ws.rs.client.Entity;
 
 public class JsonUtils {
 
 	private static final Logger LOGGER = Logger.getLogger(JsonUtils.class.getName());
 
-	private static JsonObject parseJsonString(String jsonString) {
+	public static JsonObject parseJsonString(String jsonString) {
 		JsonReader reader = Json.createReader(new StringReader(jsonString));
 		JsonObject jsonObject = reader.readObject();
 		return jsonObject;
@@ -68,5 +69,22 @@ public class JsonUtils {
 		JsonReader reader = Json.createReader(new StringReader(jsonString));
 		JsonArray array = reader.readArray();
 		return array;
+	}
+
+	/**
+	 * Entity: è l’involucro usato dal client JAX-RS per spedire quel contenuto in una richiesta HTTP, con l’informazione sul Content-Type
+	 * Entity è un wrapper per trasportare dati in una richiesta HTTP con Jersey.
+	 * 
+	 * @param entity
+	 */
+	public static void prettyPrint(Entity<?>  entity) {
+		Object data = entity.getEntity(); // il "vero" contenuto
+		if (data instanceof JsonObject) {
+			prettyPrint((JsonObject)data);
+		} else if (data instanceof JsonArray) {
+			prettyPrint((JsonArray)data);
+		} else {
+		    System.out.println("Dato non stampabile : " + data.getClass());
+		}		
 	}
 }

@@ -170,9 +170,9 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 	private JsonObject addWebhook(int projectId) {
 		JsonObject webhook = null;
 		JsonObjectBuilder builder = Json.createObjectBuilder().add("url", this.webhookUrl);
-		JsonObject jsonObject2 = builder.build();
+		JsonObject jsonObject = builder.build();
 		String route = "projects/" + projectId + "/hooks";
-		Response response = doPost(route, Entity.json(jsonObject2));
+		Response response = doPost(route, Entity.json(jsonObject));
 		int statusCode = response.getStatus();
 		if (statusCode == Status.CREATED.getStatusCode()) { // l'errore 422 per i nuovi progetti 
 			webhook = ResponseUtils.readAsStringToJson(response, true);
@@ -194,12 +194,9 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 	private JsonObject editWebhook(int projectId, int hookId, JsonObject oldValue) {
 		JsonObject webhook = null;
 		JsonObjectBuilder builder = Json.createObjectBuilder().add("url", this.webhookUrl);
-		JsonObject jsonObject2 = builder.build();
-
+		JsonObject jsonObject = builder.build();
 		String route = "projects/" + projectId + "/hooks/" + hookId;
-		LOGGER.log(Level.INFO, "Pretty printing data...");
-		JsonUtils.prettyPrint(jsonObject2);
-		Response response = doPut(route, Entity.json(jsonObject2));
+		Response response = doPut(route, Entity.json(jsonObject));
 		int statusCode = response.getStatus();
 		if (statusCode == Status.OK.getStatusCode()) {
 			webhook = ResponseUtils.readAsStringToJson(response, true);			

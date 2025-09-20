@@ -1,5 +1,19 @@
 package it.iubar.badges;
 
+import java.io.IOException;
+import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import org.glassfish.jersey.client.ClientConfig;
+
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.ClientRequestContext;
@@ -8,22 +22,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.MultivaluedHashMap;
-import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import java.io.IOException;
-import java.net.URI;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
-import java.util.Base64;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientResponse;
 
 public abstract class RestClient {
 
@@ -112,6 +111,8 @@ public abstract class RestClient {
 	protected <T> Response doPut(String route, Entity<T> entity) {
 		String uri = getBaseURI() + route;
 		LOGGER.log(Level.INFO, "[PUT] " + uri);
+		LOGGER.log(Level.INFO, "Request body: ");
+		JsonUtils.prettyPrint(entity);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).put(entity);
 		return response;
@@ -120,6 +121,8 @@ public abstract class RestClient {
 	protected <T> Response doPost(String route, Entity<T> entity) {
 		String uri = getBaseURI() + route;
 		LOGGER.log(Level.INFO, "[POST] " + uri);
+		LOGGER.log(Level.INFO, "Request body: ");
+		JsonUtils.prettyPrint(entity);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).post(entity);
 		return response;

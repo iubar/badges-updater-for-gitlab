@@ -1,7 +1,6 @@
 package it.iubar.badges;
 
 import java.util.Properties;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import it.iubar.badges.Config.UpdateType;
