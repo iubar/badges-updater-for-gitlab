@@ -95,7 +95,7 @@ public abstract class RestClient {
 
 	protected Response doGet(String route) {
 		String uri = getBaseURI() + route;
-		LOGGER.log(Level.INFO, "uri : " + uri);
+		LOGGER.log(Level.INFO, "GET : " + uri);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).get(Response.class);
 		return response;
@@ -103,7 +103,7 @@ public abstract class RestClient {
 
 	protected Response doDelete(String route) {
 		String uri = getBaseURI() + route;
-		LOGGER.log(Level.INFO, "uri : " + uri);
+		LOGGER.log(Level.INFO, "DELETE : " + uri);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).delete(Response.class);
 		return response;
@@ -111,7 +111,7 @@ public abstract class RestClient {
 
 	protected <T> Response doPut(String route, Entity<T> entity) {
 		String uri = getBaseURI() + route;
-		LOGGER.log(Level.INFO, "uri : " + uri);
+		LOGGER.log(Level.INFO, "PUT : " + uri);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).put(entity);
 		return response;
@@ -119,7 +119,7 @@ public abstract class RestClient {
 
 	protected <T> Response doPost(String route, Entity<T> entity) {
 		String uri = getBaseURI() + route;
-		LOGGER.log(Level.INFO, "uri : " + uri);
+		LOGGER.log(Level.INFO, "POST : " + uri);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).post(entity);
 		return response;
@@ -127,12 +127,12 @@ public abstract class RestClient {
 
 	protected static void logResponse(Response response) {
 		String output = response.readEntity(String.class);
-		LOGGER.log(Level.INFO, "Message : " + output);
+		LOGGER.log(Level.INFO, "OK " + response.getStatus() + " : " + output);
 	}
 	
 	protected static void logError(Response response) {
 		String output = response.readEntity(String.class);
-		LOGGER.log(Level.SEVERE, "Error : " + output);
+		LOGGER.log(Level.SEVERE, "ERROR " + response.getStatus() + " : " + output);
 	}
 	
 	protected void logError(String error, Response response) {
