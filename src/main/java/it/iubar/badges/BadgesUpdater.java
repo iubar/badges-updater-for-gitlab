@@ -116,7 +116,7 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 		List<Integer> badgeIds = new ArrayList<Integer>();
 		for (JsonObject badge : badges) {
 			String route = "projects/" + projectId + "/badges";
-			Response response = doPost(route, Entity.json(badge.toString()));
+			Response response = doPost(route, Entity.json(badge));
 			int statusCode = response.getStatus();
 			if (statusCode == Status.CREATED.getStatusCode()) { // OK
 				String jsonString = response.readEntity(String.class);

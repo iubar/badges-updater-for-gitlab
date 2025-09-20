@@ -35,6 +35,7 @@ pipeline {
             steps {
                 sh 'ls -la target'
                 sh 'java -version'
+                sh 'ping -c3 webhook.iubar.it'
                 sh 'cd target && java -jar ${APP_NAME}-jar-with-dependencies.jar'
             }
         }
