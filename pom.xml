@@ -116,6 +116,12 @@
       <artifactId>jersey-hk2</artifactId>
       <version>${jersey.client.version}</version>
     </dependency>
+	<!-- https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-json-processing -->    
+	<dependency>
+	    <groupId>org.glassfish.jersey.media</groupId>
+	    <artifactId>jersey-media-json-processing</artifactId>
+	    <version>${jersey.client.version}</version>
+	</dependency>    
     <!-- Dependencies managed by the parent pom -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
