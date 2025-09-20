@@ -95,7 +95,7 @@ public abstract class RestClient {
 
 	protected Response doGet(String route) {
 		String uri = getBaseURI() + route;
-		LOGGER.log(Level.INFO, "GET : " + uri);
+		LOGGER.log(Level.INFO, "[GET] " + uri);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).get(Response.class);
 		return response;
@@ -103,7 +103,7 @@ public abstract class RestClient {
 
 	protected Response doDelete(String route) {
 		String uri = getBaseURI() + route;
-		LOGGER.log(Level.INFO, "DELETE : " + uri);
+		LOGGER.log(Level.INFO, "[DELETE] " + uri);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).delete(Response.class);
 		return response;
@@ -111,7 +111,7 @@ public abstract class RestClient {
 
 	protected <T> Response doPut(String route, Entity<T> entity) {
 		String uri = getBaseURI() + route;
-		LOGGER.log(Level.INFO, "PUT : " + uri);
+		LOGGER.log(Level.INFO, "[PUT] " + uri);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).put(entity);
 		return response;
@@ -119,7 +119,7 @@ public abstract class RestClient {
 
 	protected <T> Response doPost(String route, Entity<T> entity) {
 		String uri = getBaseURI() + route;
-		LOGGER.log(Level.INFO, "POST : " + uri);
+		LOGGER.log(Level.INFO, "[POST] " + uri);
 		WebTarget target = this.client.target(uri);
 		Response response = getBuilder(target).post(entity);
 		return response;
@@ -128,7 +128,7 @@ public abstract class RestClient {
 	protected void logError(String errorMsg, Response response) { 
 		LOGGER.log(Level.SEVERE, errorMsg);
 		String output = ResponseUtils.readAsString(response, false);
-		LOGGER.log(Level.SEVERE, "ERROR " + response.getStatus() + " : " + output);
+		LOGGER.log(Level.SEVERE, "[HTTP " + response.getStatus() + "] " + output);
 		AbstractUpdater.errors.add(errorMsg);
 		if (Config.FAIL_FAST) {
 			System.exit(1);
