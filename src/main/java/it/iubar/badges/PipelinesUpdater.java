@@ -134,12 +134,9 @@ public class PipelinesUpdater extends AbstractUpdater implements IUpdater {
 					" (Nota che l'errore si potrebbe manifestare quando la pipeline è in esecuzione oppure un proceddo è archiviato e quindi è in sola lettura).";
 					LOGGER.warning(error);
 					logError(error, response);
-					//					if(Config.FAIL_FAST) {
-					//						System.exit(1);
-					//					} else {
-					//						this.errors.add(error);
-					//						break; // satrebbe inutile continuare
-					//					}
+					if(Config.BREAK_LOOP_ON_ERROR) {
+							break; // perchè satrebbe comunque inutile continuare il loop
+					}
 				}
 			}
 		}

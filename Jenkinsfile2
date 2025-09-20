@@ -13,6 +13,9 @@ pipeline {
     environment {
         MAVEN_ARGS = '--batch-mode --errors --fail-fast --show-version --quiet'
         MAVEN_OPTS = '-Dmaven.test.failure.ignore=false -Dstyle.color=always -Djava.awt.headless=true -Dhttps.protocols=TLSv1.2'
+		SONAR_HOST = 'https://sonar.iubar.lan'
+		GITLAB_HOST = 'https://gitlab.iubar.it'
+		WEBHOOK_URL = 'https://webhook.iubar.it/ci.php'       
     }
     stages {
         stage('Package') {
@@ -35,7 +38,6 @@ pipeline {
             steps {
                 sh 'ls -la target'
                 sh 'java -version'
-                sh 'ping -c3 webhook.iubar.it'
                 sh 'cd target && java -jar ${APP_NAME}-jar-with-dependencies.jar'
             }
         }

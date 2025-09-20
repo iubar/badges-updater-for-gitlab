@@ -124,25 +124,15 @@ public abstract class RestClient {
 		Response response = getBuilder(target).post(entity);
 		return response;
 	}
-
-	protected static void logResponse(Response response) {
-		String output = response.readEntity(String.class);
-		LOGGER.log(Level.INFO, "OK " + response.getStatus() + " : " + output);
-	}
-	
-	protected static void logError(Response response) {
-		String output = response.readEntity(String.class);
+ 
+	protected void logError(String errorMsg, Response response) { 
+		LOGGER.log(Level.SEVERE, errorMsg);
+		String output = ResponseUtils.readAsString(response, false);
 		LOGGER.log(Level.SEVERE, "ERROR " + response.getStatus() + " : " + output);
-	}
-	
-	protected void logError(String error, Response response) {
-		LOGGER.log(Level.SEVERE, error);
-		logError(response);
+		AbstractUpdater.errors.add(errorMsg);
 		if (Config.FAIL_FAST) {
 			System.exit(1);
-		} else {
-			AbstractUpdater.errors.add(error);
-		}
+		} 
 	}
 	
 }

@@ -10,8 +10,14 @@ public class Config {
 	    DELETE_ALL, 
 	    DISABLED
 	}
+
+	/**
+	 * Nota che ha la precedenza su BREAK_LOOP_ON_ERROR
+	 * Se true in caso di errore viene invocato Syste.exit()
+	 */
+	public static final boolean FAIL_FAST = true; 
 	
-	public static final boolean FAIL_FAST = true;
+	public static final boolean BREAK_LOOP_ON_ERROR=true;
 
 	public static final UpdateType UPDATE_BADGES = UpdateType.DELETE_AND_ADD;
 	

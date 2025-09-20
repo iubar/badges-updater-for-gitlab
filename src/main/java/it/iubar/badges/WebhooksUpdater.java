@@ -97,9 +97,10 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		String route = "projects/" + projectId + "/hooks/" + hookId;
 		Response response = doDelete(route);
 		int statusCode = response.getStatus();
-		if (statusCode == Status.NO_CONTENT.getStatusCode()) { // true
-			String jsonString = response.readEntity(String.class);
-			webhook = JsonUtils.readObject(jsonString);
+		if (statusCode == Status.NO_CONTENT.getStatusCode()) { // true						
+			webhook = ResponseUtils.readAsStringToJson(response, true);	
+			String msg = "OK : deleted. Status code: " + statusCode;
+			LOGGER.info(msg);
 		} else {
 			String msg =
 					"Impossibile eliminare il dettaglio del webhook " + hookId + " per il progetto " +
@@ -111,6 +112,8 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		}
 		return webhook;
 	}
+
+
 
 	/**
 	 * @see https://docs.gitlab.com/ee/api/project_webhooks.html#get-a-project-webhook
@@ -164,23 +167,22 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 	/*
 	 * @see https://docs.gitlab.com/ee/api/project_webhooks.html#add-a-webhook-to-a-project
 	 */
-	private void addWebhook(int projectId) {
+	private JsonObject addWebhook(int projectId) {
+		JsonObject webhook = null;
 		JsonObjectBuilder builder = Json.createObjectBuilder().add("url", this.webhookUrl);
 		JsonObject jsonObject2 = builder.build();
-
 		String route = "projects/" + projectId + "/hooks";
 		Response response = doPost(route, Entity.json(jsonObject2));
 		int statusCode = response.getStatus();
 		if (statusCode == Status.CREATED.getStatusCode()) { // l'errore 422 per i nuovi progetti 
-			String jsonString = response.readEntity(String.class);
-			JsonObject object = JsonUtils.readObject(jsonString);
-			JsonUtils.prettyPrint(object);
+			webhook = ResponseUtils.readAsStringToJson(response, true);
 			String msg = "OK : added. Status code: " + statusCode;
 			LOGGER.info(msg);
 		} else {
 			String msg = "Impossibile aggiungere il webhook per il progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
 			logError(msg, response);
 		}
+		return webhook;
 	}
 
 
@@ -189,7 +191,8 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 	/*
 	 * @see https://docs.gitlab.com/ee/api/project_webhooks.html#edit-a-project-webhook
 	 */
-	private void editWebhook(int projectId, int hookId, JsonObject oldValue) {
+	private JsonObject editWebhook(int projectId, int hookId, JsonObject oldValue) {
+		JsonObject webhook = null;
 		JsonObjectBuilder builder = Json.createObjectBuilder().add("url", this.webhookUrl);
 		JsonObject jsonObject2 = builder.build();
 
@@ -199,15 +202,14 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		Response response = doPut(route, Entity.json(jsonObject2));
 		int statusCode = response.getStatus();
 		if (statusCode == Status.OK.getStatusCode()) {
-			String jsonString = response.readEntity(String.class);
-			JsonObject object = JsonUtils.readObject(jsonString);
-			JsonUtils.prettyPrint(object);
+			webhook = ResponseUtils.readAsStringToJson(response, true);			
 			String msg = "OK : updated. Status code: " + statusCode;
 			LOGGER.info(msg);
 		} else {
 			String msg = "Impossibile modificare il webhook " + hookId + " per il progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
 			logError(msg, response);
 		}
+		return webhook;
 	}
 
 }

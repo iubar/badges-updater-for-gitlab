@@ -15,6 +15,8 @@ public abstract class AbstractUpdater extends RestClient {
 
 	private static final Logger LOGGER = Logger.getLogger(AbstractUpdater.class.getName());
 
+	private static final boolean REQUIRED = true;
+
 	protected boolean debug = true;
 
 	protected static Set<String> errors = new HashSet<>();
@@ -48,24 +50,28 @@ public abstract class AbstractUpdater extends RestClient {
 		LOGGER.info("Configurazione attuale:");
 		if(isNotEmpty(this.sonarHost)) {
 			LOGGER.info("sonarHost = " + this.sonarHost);
-		}else {
-			LOGGER.severe("Configurazione assente: " + "sonar.host");
+		}else if(!REQUIRED) {
+			LOGGER.warning("Configurazione assente: " + "sonar.host");
+			System.exit(1);
 		}
 		if(isNotEmpty(this.gitlabHost)) {
 			LOGGER.info("gitlabHost = " + this.gitlabHost);
-		}else {
+		}else if(REQUIRED) {
 			LOGGER.severe("Configurazione assente: " + "gitlab.host");
+			System.exit(1);
 		}
 		if(isNotEmpty(this.gitlabToken)) {
 			LOGGER.info("gitlabToken = " + this.gitlabToken);
-		}else {
+		}else if(REQUIRED) {
 			LOGGER.severe("Configurazione assente: " + "gitlab.token");
+			System.exit(1);
 		}
 		if(isNotEmpty(this.webhookUrl)) {
 			LOGGER.info("webhookUrl = " + this.webhookUrl);
-		}else {
-			LOGGER.severe("Configurazione assente: " + "webhook.url");
-		}
+		}else if(REQUIRED) {
+				LOGGER.severe("Configurazione assente: " + "webhook.url");
+				System.exit(1);
+			}
 	}
 
 	public static boolean isEmpty(String str) {

@@ -119,20 +119,15 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 			Response response = doPost(route, Entity.json(badge));
 			int statusCode = response.getStatus();
 			if (statusCode == Status.CREATED.getStatusCode()) { // OK
-				String jsonString = response.readEntity(String.class);
-				JsonObject object = JsonUtils.readObject(jsonString);
-				int badgeId = object.getInt("id");
+				JsonObject json = ResponseUtils.readAsStringToJson(response, true);				
+				int badgeId = json.getInt("id");
 				badgeIds.add(badgeId);
 			} else {
 				String error = "Impossibile aggiungere il badge " + badge.toString() + " per il progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
-				LOGGER.severe(error);
-				logError(response);
-				if (Config.FAIL_FAST) {
-					System.exit(1);
-				} else {
-					AbstractUpdater.errors.add(error);
-					break;
-				}
+				logError(error, response);
+				if(Config.BREAK_LOOP_ON_ERROR) {
+					break; // perchè satrebbe comunque inutile continuare il loop
+			}
 			}
 		}
 		return badgeIds;
@@ -394,14 +389,10 @@ Esempio oggeto "object" (see https://docs.gitlab.com/ee/api/projects.html#list-a
 					badgeIds.add(badgeId);
 				} else {
 					String error = "Impossibile eliminare il badge " + badgeId + " del progetto " + projectToUrl(projectId) + ". Status code: " + statusCode;
-					LOGGER.severe(error);
-					logError(response);
-					if (Config.FAIL_FAST) {
-						System.exit(1);
-					} else {
-						AbstractUpdater.errors.add(error);
-						break;
-					}
+					logError(error, response);
+					if(Config.BREAK_LOOP_ON_ERROR) {
+						break; // perchè satrebbe comunque inutile continuare il loop
+				}
 				}
 			} catch (Exception e) {
 				LOGGER.severe("ERRORE: " + e.getMessage());
