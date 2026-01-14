@@ -184,10 +184,7 @@ public class WebhooksUpdater extends AbstractUpdater implements IUpdater {
 		}
 		return webhook;
 	}
-
-
-
-
+ 
 	/*
 	 * @see https://docs.gitlab.com/ee/api/project_webhooks.html#edit-a-project-webhook
 	 */

@@ -39,7 +39,7 @@ public class JsonUtils {
 			e.printStackTrace();
 		}
 		return jsonString;
-	}
+	} 
 
 	public static void prettyPrint(JsonArray jsonArray) {
 		if (jsonArray != null) {
