@@ -19,7 +19,7 @@ public class ProjectsUpdater {
 				Config.CONFIG_FILE
 			);
 			config = new Properties();
-			setProperty(config, "sonar.host", System.getenv("SONAR_HOST"));
+			// setProperty(config, "sonar.host", System.getenv("SONAR_HOST"));
 			setProperty(config, "gitlab.host", System.getenv("GITLAB_HOST"));
 			setProperty(config, "gitlab.token", System.getenv("GITLAB_TOKEN"));
 			setProperty(config, "webhook.url", System.getenv("WEBHOOK_URL"));
@@ -35,12 +35,16 @@ public class ProjectsUpdater {
 			//client.run();
 			BadgesUpdater badgesUpdater = new BadgesUpdater(config);
 			PipelinesUpdater pipelinesUpdater = new PipelinesUpdater(config);
+			CacheCleaner cacheCleaner = new CacheCleaner(config);
 			WebhooksUpdater webhooksUpdater = new WebhooksUpdater(config);
 			if (Config.UPDATE_BADGES!=UpdateType.DISABLED) {
 				badgesUpdater.run();
 			}
 			if (Config.DELETE_PIPELINES) {
 				pipelinesUpdater.run();
+			}
+			if (Config.DELETE_CACHE) {
+				cacheCleaner.run();
 			}
 			if (Config.UPDATE_WEBHOOKS!=UpdateType.DISABLED) {
 				webhooksUpdater.run();

@@ -53,13 +53,14 @@ public class BadgesUpdater extends AbstractUpdater implements IUpdater {
 			LOGGER.info("Project " + projectDescAndId);
 
 			// Rimuovo TUTTI i badges esistenti dal progetto
+			if(	Config.UPDATE_BADGES == UpdateType.DELETE_AND_ADD || Config.UPDATE_BADGES ==  UpdateType.DELETE_ALL) {
 			List<Integer> results = removeBadges(projectId);
 			if (results.isEmpty()) {
 				LOGGER.warning("removeBadges() returns no results for project " + projectDescAndId + ". That could be a BUG.");
 			} else {
 				LOGGER.log(Level.INFO, "#" + results.size() + " badges deleted successfully from project " + projectDescAndId);
 			}
-			
+			}			
 			
 			if (Config.UPDATE_BADGES == UpdateType.DELETE_AND_ADD) {
 				// Aggiungo i nuovi badges al progetto

@@ -118,7 +118,7 @@ public abstract class AbstractUpdater extends RestClient {
 		}
 		return projects;
 	}
-
+	
 	@Override
 	protected URI getBaseURI() {
 		return UriBuilder.fromUri(this.gitlabHost + "/api/" + Config.GITLAB_API_VER + "/").build();

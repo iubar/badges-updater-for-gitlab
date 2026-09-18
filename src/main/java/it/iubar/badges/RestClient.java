@@ -88,7 +88,7 @@ public abstract class RestClient {
 		return client;
 	}
 
-	private Builder getBuilder(WebTarget target) {
+	protected Builder getBuilder(WebTarget target) {
 		return target.request().accept(MediaType.APPLICATION_JSON);
 	}
 
@@ -128,6 +128,17 @@ public abstract class RestClient {
 		return response;
 	}
  
+	protected <T> Response doMutate(Entity<T> entity) {
+		
+		String uri = getBaseURI() + "/graphql";
+		LOGGER.log(Level.INFO, "[POST] " + uri);
+		WebTarget target = this.client.target(uri);		    
+		LOGGER.log(Level.INFO, "Request body: ");
+		JsonUtils.prettyPrint(entity);	 
+		Response response = getBuilder(target).post(entity);
+		return response;
+	}
+	
 	protected void logError(String errorMsg, Response response) { 
 		LOGGER.log(Level.SEVERE, errorMsg);
 		String output = ResponseUtils.readAsString(response, false);

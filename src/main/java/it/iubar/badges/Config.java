@@ -28,6 +28,8 @@ public class Config {
 	public static final boolean ADD_VERSION_BADGES = true;
 
 	public static final boolean DELETE_PIPELINES = true;
+	
+	public static final boolean DELETE_CACHE = true;
  
 	// Verranno cancellate tutte le pipelines ad esclusione delle ultime 5
 	public static final int SKIP_PIPELINES_QNT = 5;
