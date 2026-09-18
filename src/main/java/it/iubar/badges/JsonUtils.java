@@ -5,6 +5,8 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -55,6 +57,41 @@ public class JsonUtils {
 		}
 	}
 
+	public static void prettyPrint(HashMap<?, ?> map, int indent) {
+	    String pad = "  ".repeat(indent);
+	        System.out.println("{");
+	        for (Map.Entry<?, ?> entry : map.entrySet()) {
+	            System.out.print(pad + "  " + entry.getKey() + ": ");
+	            Object value = entry.getValue();
+	            if (value instanceof List) {
+	                prettyPrint((List)value, indent + 1);
+	        	} else if (value instanceof List) {
+	        		prettyPrint((List)value, indent + 1);
+	            } else {
+	                System.out.println(value);
+	            }
+	        }
+	        System.out.println(pad + "}");
+	 
+	}
+	
+	public static void prettyPrint(List<?> list, int indent) {
+		String pad = "  ".repeat(indent);
+        System.out.println("[");
+        for (Object item : list) {
+            System.out.print(pad + "  ");
+            if (item instanceof List) {
+                prettyPrint((List)item, indent + 1);
+        	} else if (item instanceof List) {
+        		prettyPrint((List)item, indent + 1);
+            } else {
+                System.out.println(item);
+            }
+        }
+        System.out.println(pad + "]");		
+	}
+	
+	
 	public static void prettyPrint(JsonObject jsonObject) {
 		System.out.println(prettyPrintFormat(jsonObject));
 	}
@@ -83,6 +120,10 @@ public class JsonUtils {
 			prettyPrint((JsonObject)data);
 		} else if (data instanceof JsonArray) {
 			prettyPrint((JsonArray)data);
+		} else if (data instanceof HashMap) {
+			prettyPrint((HashMap)data, 0);			
+		} else if (data instanceof List<?>){
+			prettyPrint((List<?>)data, 0);				
 		} else {
 		    System.out.println("Dato non stampabile : " + data.getClass());
 		}		
