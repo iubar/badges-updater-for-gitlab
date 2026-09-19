@@ -85,7 +85,28 @@ public class CacheCleaner extends AbstractUpdater implements IUpdater {
             body.put("query", query);
             body.put("variables", variables);
  
-            Response response = doMutate(Entity.entity(body, MediaType.APPLICATION_JSON));
+            // PROBLEMA: Jersey da solo sa serializzare String, byte[], InputStream e poco altro, ma non una Map in application/json. Serve un modulo che fornisca un MessageBodyWriter per JSON.
+            // Il modulo jersey-media-json-processing è presente nelle dipendenze.
+            // Ma il punto è che quel modulo sa serializzare solo i tipi di jakarta.json (JsonObject, JsonArray, JsonStructure), non le Map. Per questo Jersey non trova un MessageBodyWriter per LinkedHashMap
+            // SOLUZIONE 1: Non richiede dipendenze
+            // Json.createObjectBuilder(Map<String, Object>) esiste da JSON-P 1.1 e gestisce String, numeri, Boolean, null, Map annidate e Collection. Va bene quindi per un body GraphQL            
+            JsonObject json = Json.createObjectBuilder(body).build();
+            Response response = doMutate(Entity.entity(json, MediaType.APPLICATION_JSON));
+            // SOLUZIONE 2: JSON-B consente la serializzazione di oggetti diversi da quelli indicati sopra
+            /*
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-binding</artifactId>
+            <version>${jersey.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>3.0.4</version>
+        </dependency>
+        */                               
+            // Response response = doMutate(Entity.entity(body, MediaType.APPLICATION_JSON));
+            
             String result = response.readEntity(String.class);
             System.out.println("Status: " + response.getStatus());
             System.out.println("Response: " + result);
