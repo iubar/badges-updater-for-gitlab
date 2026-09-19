@@ -23,6 +23,7 @@ import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 
 public abstract class RestClient {
 
@@ -128,9 +129,7 @@ public abstract class RestClient {
 		return response;
 	}
  
-	protected <T> Response doMutate(Entity<T> entity) {
-		
-		String uri = getBaseURI() + "/graphql";
+	protected <T> Response doMutate(String uri, Entity<T> entity) {		
 		LOGGER.log(Level.INFO, "[POST] " + uri);
 		WebTarget target = this.client.target(uri);		    
 		LOGGER.log(Level.INFO, "Request body: ");

@@ -33,20 +33,23 @@ public class ProjectsUpdater {
 			System.exit(1);
 		} else {
 			//client.run();
-			BadgesUpdater badgesUpdater = new BadgesUpdater(config);
-			PipelinesUpdater pipelinesUpdater = new PipelinesUpdater(config);
-			CacheCleaner cacheCleaner = new CacheCleaner(config);
-			WebhooksUpdater webhooksUpdater = new WebhooksUpdater(config);
+ 
+			if (Config.DELETE_CACHE) {
+				CacheCleaner cacheCleaner = new CacheCleaner(config);
+				cacheCleaner.run();
+			}
+			
 			if (Config.UPDATE_BADGES!=UpdateType.DISABLED) {
+				BadgesUpdater badgesUpdater = new BadgesUpdater(config);
 				badgesUpdater.run();
 			}
 			if (Config.DELETE_PIPELINES) {
+				PipelinesUpdater pipelinesUpdater = new PipelinesUpdater(config);
 				pipelinesUpdater.run();
 			}
-			if (Config.DELETE_CACHE) {
-				cacheCleaner.run();
-			}
+
 			if (Config.UPDATE_WEBHOOKS!=UpdateType.DISABLED) {
+				WebhooksUpdater webhooksUpdater = new WebhooksUpdater(config);
 				webhooksUpdater.run();
 			}
 			AbstractUpdater.printErrors();
